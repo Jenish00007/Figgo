@@ -57,6 +57,7 @@ import Menu from '../screens/Menu/Menu'
 import Reviews from '../screens/Reviews'
 import useEnvVars from '../../environment'
 import * as Sentry from '@sentry/react-native'
+import Notification from '../screens/Notification/Notification'
 
 const NavigationStack = createStackNavigator()
 const MainStack = createStackNavigator()
@@ -167,6 +168,9 @@ function NoDrawer() {
       <NavigationStack.Screen name='SaveAddress' component={SaveAddress} />
       <NavigationStack.Screen name='Favourite' component={Favourite} />
       <NavigationStack.Screen name='ChatWithRider' component={ChatScreen} />
+
+      <NavigationStack.Screen name='Notification' component={Notification} />
+
     </NavigationStack.Navigator>
   )
 }

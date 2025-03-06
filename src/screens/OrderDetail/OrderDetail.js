@@ -30,8 +30,8 @@ import { PriceRow } from '../../components/OrderDetail/PriceRow'
 import { ORDER_STATUS_ENUM } from '../../utils/enums'
 import { CancelModal } from '../../components/OrderDetail/CancelModal'
 import Button from '../../components/Button/Button'
-import { gql, useMutation } from '@apollo/client'
-import { cancelOrder as cancelOrderMutation } from '../../apollo/mutations'
+//import { gql, useMutation } from '@apollo/client'
+//import { cancelOrder as cancelOrderMutation } from '../../apollo/mutations'
 import { FlashMessage } from '../../ui/FlashMessage/FlashMessage'
 import { calulateRemainingTime } from '../../utils/customFunctions'
 import { Instructions } from '../../components/Checkout/Instructions'
@@ -41,9 +41,9 @@ import useEnvVars from '../../../environment'
 import LottieView from 'lottie-react-native'
 const { height: HEIGHT, width: WIDTH } = Dimensions.get('screen')
 
-const CANCEL_ORDER = gql`
-  ${cancelOrderMutation}
-`
+// const CANCEL_ORDER = gql`
+//   ${cancelOrderMutation}
+// `
 
 function OrderDetail(props) {
   const [cancelModalVisible, setCancelModalVisible] = useState(false)
@@ -59,10 +59,10 @@ function OrderDetail(props) {
   const headerRef = useRef(false)
   const { GOOGLE_MAPS_KEY } = useEnvVars()
   const mapView = useRef(null)
-  const [cancelOrder, { loading: loadingCancel }] = useMutation(CANCEL_ORDER, {
-    onError,
-    variables: { abortOrderId: id }
-  })
+  // const [cancelOrder, { loading: loadingCancel }] = useMutation(CANCEL_ORDER, {
+  //   onError,
+  //   variables: { abortOrderId: id }
+  // })
 
   useEffect(() => {
     async function Track() {

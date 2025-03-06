@@ -31,9 +31,9 @@ const v1options = {
   ]
 }
 
-const PROFILE = gql`
-  ${profile}
-`
+// const PROFILE = gql`
+//   ${profile}
+// `
 
 const UserContext = React.createContext({})
 
@@ -53,17 +53,17 @@ export const UserProvider = props => {
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [errorProfile, setErrorProfile] = useState(null)
   
-  const {
-    called: calledProfile,
+  // const {
+  //   called: calledProfile,
   
-    refetch: refetchProfile,
-    networkStatus
-  } = useQuery(PROFILE, {
-    fetchPolicy: 'network-only',
-    onError,
-    onCompleted,
-    skip: !token
-  })
+  //   refetch: refetchProfile,
+  //   networkStatus
+  // } = useQuery(PROFILE, {
+  //   fetchPolicy: 'network-only',
+  //   onError,
+  //   onCompleted,
+  //   skip: !token
+  // })
 
 
   // Fetch profile data
@@ -73,36 +73,47 @@ export const UserProvider = props => {
         setLoadingProfile(false)
         return
       }
+    setLoadingProfile(true);
 
       try {
         const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/customer/info', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            "X-localization": "en"
           }
         })
-
         const data = await response.json()
 
+
+
         if (response.ok) {
+          console.log("HII response is a",data.f_name, data.l_name, data.email, data.phone)
+          //console.log("User TOken",token)
           setProfile(data)  // Save profile data
-          await Analytics.identify(
-            {
-              userId: data.id,
-              name: data.f_name,
-              email: data.email,
-              phone: data.phone
-            },
-            data.id
-          )
-          await Analytics.track(Analytics.events.USER_RECONNECTED, {
-            userId: data.id
-          })
+          //setFormetedProfileData(data)
+
+          // await Analytics.identify(
+          //   {
+          //     userId: data.id,
+          //     name: data.f_name,
+          //     email: data.email,
+          //     phone: data.phone
+          //   },
+          //   data.id
+          // )
+          // await Analytics.track(Analytics.events.USER_RECONNECTED, {
+          //   userId: data.id
+          // })
         } else {
+          console.log('Error Status:', response.status);  // Log status code for debugging
+          console.log('Error Message:', response.message);  // Log the response body in case of error
           setErrorProfile(data.message || 'Failed to fetch profile')
         }
       } catch (error) {
+         // This will catch network errors (e.g., if the device is offline)
+        console.log('Network request failed:', error);
         setErrorProfile(error.message || 'Error fetching profile')
       } finally {
         setLoadingProfile(false)
@@ -113,10 +124,10 @@ export const UserProvider = props => {
   }, [token])
 
 
-   // Get profile data or set default values
-   const getProfile = () => {
-    return profile || {}
-  }
+  //  // Get profile data or set default values
+  //  const getProfile = () => {
+  //   return profile || {}
+  // }
 
   
 
@@ -272,9 +283,9 @@ export const UserProvider = props => {
     <UserContext.Provider
       value={{
         isLoggedIn: token && dataProfile,
-        loadingProfile: loadingProfile && calledProfile,
+        loadingProfile: loadingProfile, //&& calledProfile,
         errorProfile,
-        profile:null,
+        profile: null,
         logout,
         cart,
         cartCount: numberOfCartItems(),
@@ -287,8 +298,8 @@ export const UserProvider = props => {
         deleteItem,
         restaurant,
         setCartRestaurant,
-        refetchProfile,
-        networkStatus,
+        //refetchProfile,
+        //networkStatus,
         isPickup,
         setIsPickup,
         instructions,

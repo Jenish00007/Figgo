@@ -1,6 +1,7 @@
 import React, {
   useState,
   useRef,
+  useCallback,
   useContext,
   useLayoutEffect,
   useEffect
@@ -15,11 +16,11 @@ import {
   Modal,
   Pressable
 } from 'react-native'
-import { useMutation } from '@apollo/client'
-import gql from 'graphql-tag'
+//import { useMutation } from '@apollo/client'
+//import gql from 'graphql-tag'
 import { TextField, OutlinedTextField } from 'react-native-material-textfield'
 import { scale } from '../../utils/scaling'
-import { updateUser, login, Deactivate } from '../../apollo/mutations'
+//import { updateUser, login, Deactivate } from '../../apollo/mutations'
 import ChangePassword from './ChangePassword'
 import { theme } from '../../utils/themeColors'
 import UserContext from '../../context/User'
@@ -41,12 +42,15 @@ import navigationService from '../../routes/navigationService'
 import { useTranslation } from 'react-i18next'
 import Spinner from '../../components/Spinner/Spinner'
 
-const UPDATEUSER = gql`
-  ${updateUser}
-`
-const DEACTIVATE = gql`
-  ${Deactivate}
-`
+import AuthContext from '../../context/Auth'
+const API_URL = 'https://6ammart-admin.6amtech.com/api/v1/customer/info'
+
+// const UPDATEUSER = gql`
+//   ${updateUser}
+// `
+// const DEACTIVATE = gql`
+//   ${Deactivate}
+//`
 
 function Profile(props) {
   const Analytics = analytics()
@@ -63,14 +67,60 @@ function Profile(props) {
   const [showPass, setShowPass] = useState(false)
   const [deleteModalVisible, setDeleteModalVisible] = useState(false)
 
-  const { profile, logout } = useContext(UserContext)
+  //const { profile, logout } = useContext(UserContext)
   const themeContext = useContext(ThemeContext)
   const currentTheme = theme[themeContext.ThemeValue]
   const backScreen = props.route.params ? props.route.params.backScreen : null
-  const [mutate, { loading: loadingMutation }] = useMutation(UPDATEUSER, {
-    onCompleted,
-    onError
-  })
+  // const [mutate, { loading: loadingMutation }] = useMutation(UPDATEUSER, {
+  //   onCompleted,
+  //   onError
+  // })
+  const { token, setToken } = useContext(AuthContext)
+
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/customer/info', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          "X-localization": "en"
+        }
+      })
+      if (!response.ok) {
+        console.log('Error Status:', response.status);  // Log status code for debugging
+        console.log('Error Message:', data);  // Log the response body in case of error
+        setError(data.message || 'Failed to fetch profile')
+
+      }
+      const data = await response.json();
+      setProfile(data);
+      setLoading(false);
+    } catch (err) {
+      setError(err.message || 'Error fetching profile');
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      fetchProfile();
+    }
+  }, [token, fetchProfile]);  
+
+  //  if (loading) {
+  //    return <Text>Loading...</Text>;
+  //  }
+
+  // if (error) {
+  //   return <Text>Error: {error}</Text>;
+  // }
+
 
   const onCompletedDeactivate = () => {
     setDeleteModalVisible(false)
@@ -80,29 +130,29 @@ function Profile(props) {
     })
     FlashMessage({ message: t('accountDeactivated'), duration: 5000 })
   }
-  const onErrorDeactivate = (error) => {
-    if (error.graphQLErrors) {
-      FlashMessage({
-        message: error.graphQLErrors[0].message
-      })
-    } else if (error.networkError) {
-      FlashMessage({
-        message: error.networkError.result.errors[0].message
-      })
-    } else {
-      FlashMessage({
-        message: "Couldn't delete account. Please try again later"
-      })
-    }
-  }
+  // const onErrorDeactivate = (error) => {
+  //   if (error.graphQLErrors) {
+  //     FlashMessage({
+  //       message: error.graphQLErrors[0].message
+  //     })
+  //   } else if (error.networkError) {
+  //     FlashMessage({
+  //       message: error.networkError.result.errors[0].message
+  //     })
+  //   } else {
+  //     FlashMessage({
+  //       message: "Couldn't delete account. Please try again later"
+  //     })
+  //   }
+  // }
 
-  const [deactivated, { loading: deactivateLoading }] = useMutation(
-    DEACTIVATE,
-    {
-      onCompleted: onCompletedDeactivate,
-      onError: onErrorDeactivate
-    }
-  )
+  // const [deactivated, { loading: deactivateLoading }] = useMutation(
+  //   DEACTIVATE,
+  //   {
+  //     onCompleted: onCompletedDeactivate,
+  //     onError: onErrorDeactivate
+  //   }
+  // )
 
   useFocusEffect(() => {
     if (Platform.OS === 'android') {
@@ -441,7 +491,7 @@ function Profile(props) {
                       </View>
 
                       <TouchableOpacity
-                        disabled={loadingMutation}
+                        //disabled={loadingMutation}
                         activeOpacity={0.7}
                         style={styles(currentTheme).saveContainer}
                         onPress={handleNamePressUpdate}
@@ -678,26 +728,26 @@ function Profile(props) {
                   {t('permanentDeleteMessage')}
                 </TextDefault>
                 <TouchableOpacity
-                  style={[
-                    styles(currentTheme).btn,
-                    styles().btnDelete,
-                    { opacity: deactivateLoading ? 0.5 : 1 }
-                  ]}
+                  // style={[
+                  //   styles(currentTheme).btn,
+                  //   styles().btnDelete,
+                  //   { opacity: deactivateLoading ? 0.5 : 1 }
+                  // ]}
                   onPress={deactivatewithemail}
-                  disabled={deactivateLoading}
+                  //disabled={deactivateLoading}
                 >
-                  {deactivateLoading ? (
+                  {/* {deactivateLoading ? (
                     <Spinner backColor='transparent' size='small' />
                   ) : (
                     <TextDefault bolder H4 textColor={currentTheme.white}>
                       {t('yesSure')}
                     </TextDefault>
-                  )}
+                  )} */}
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles(currentTheme).btn, styles().btnCancel]}
                   onPress={() => setDeleteModalVisible(false)}
-                  disabled={deactivateLoading}
+                  //disabled={deactivateLoading}
                 >
                   <TextDefault bolder H4 textColor={currentTheme.black}>
                     {t('noDelete')}
