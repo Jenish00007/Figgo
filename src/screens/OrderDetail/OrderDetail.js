@@ -16,7 +16,9 @@ import Detail from '../../components/OrderDetail/Detail/Detail'
 import RestaurantMarker from '../../assets/SVG/restaurant-marker'
 import CustomerMarker from '../../assets/SVG/customer-marker'
 import TrackingRider from '../../components/OrderDetail/TrackingRider/TrackingRider'
+
 import OrdersContext from '../../context/Orders'
+
 import { mapStyle } from '../../utils/mapStyle'
 import { useTranslation } from 'react-i18next'
 import { HelpButton } from '../../components/Header/HeaderIcons/HeaderIcons'
@@ -50,7 +52,9 @@ function OrderDetail(props) {
   const Analytics = analytics()
   const id = props.route.params ? props.route.params._id : null
   const user = props.route.params ? props.route.params.user : null
-  const { loadingOrders, errorOrders, orders } = useContext(OrdersContext)
+
+  //const { loadingOrders, errorOrders, orders } = useContext(OrdersContext)
+
   const configuration = useContext(ConfigurationContext)
   const themeContext = useContext(ThemeContext)
   const currentTheme = theme[themeContext.ThemeValue]
@@ -63,6 +67,52 @@ function OrderDetail(props) {
   //   onError,
   //   variables: { abortOrderId: id }
   // })
+
+
+
+  const [orders, setorders] = useState(true);
+  const [loadingOrders, setloadingOrders] = useState(true);
+  const [errorOrders, seterrorOrders] = useState(null);
+  const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxOSIsImp0aSI6Ijg1NjRlYWE2YjU1MzNlZDRhOWNjZjM5OTQwZGExYTA5NTBhYWJjZjdhYzVkMTA3MGQ2NDQwNzE2N2IxN2RkZTE5OTkyNWQzZDNkODJjYmQ5IiwiaWF0IjoxNzQxMjUzMTE2Ljg4MjQ0OCwibmJmIjoxNzQxMjUzMTE2Ljg4MjQ1MSwiZXhwIjoxNzcyNzg5MTE2Ljg3ODUwMiwic3ViIjoiMzIiLCJzY29wZXMiOltdfQ.DlOX8MynZbowWs0mQX9wTIKIJkRDY_f9JhaHQrNTw6L8hLLtavfCZSisXwFu3yajjGZfvwXBDXHZmQq7c24G5CmrM3lTs_tJA06Dh_sBviwSXvk8cZ0ID9B0s9MqNqIEV7WO9W9SsnUtOex-T7XPKcan4PChuGQG2IcwI-OSh7SAKXUmr4mc6TEZGpCvupI3M2G3HLGoSO8s1OeK-srGc5l7Ida0lUsgYaxubNUl8MP_p3W7TNkYbM0ZUVe2ckIpfWM5sCwsp7V46Fb63VzrkY-HWJjk3fkWPp6hNcBxJTStHdbKOhTDkOm_9kVKt9W_G3heyoBKk7G7f7Bwwb0jTS1WGj4TspYec2j5RAwl5oORzXWtqNDF9mC0vxL3C1-28_9VsB1E82V1gaKkWEt4Q1RQ059WCbDgAuZdS2jFsqL7fxCm3seTAfi7VWFYqeIK_GSM84wdAPq-sztaQl_zGvCAAASeXAy4_9T7SBcoJ5RVX_CZWgoGpT1dU-9Sa8pMLBx2qDbojiypjyHMGGdMtCOZfS4Cc0Bvd4TkxYwobx595ubMiJ6d2plp-2oFdYUQ1vDlvTGXoiv_x9Wg8oa7ZDgkX4wW8DnwEndA2KwKY8zbg-As6ug4T2E9Eu8qBj8zb_ndNwvXVvVxVYLK0pn_tHqhFjrKknLVLyqTMNWNnK4"
+
+  const fetchorders = useCallback(async () => {
+    try {
+      const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/customer/order/list?limit=10&offset=1&type=all&guest_id=12342', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          //'moduleId': 1,
+          'zoneId': [1],   
+          //'latitude': 23.793544663762145,
+          //'longitude': 90.41166342794895
+        }
+      });
+      console.log("Token for orderdetails", token)
+
+      if (!response.ok) {
+        console.log('Error Status:', response.status);  
+        console.log('Error Message:', response.message || data);  
+        //setError(data.message || 'Failed to fetch profile')
+      }
+      const data = await response.json();
+
+      console.log("Filtered Data:", data);
+
+      setorders(data);
+      setloadingOrders(false);
+    } catch (err) {
+      seterrorOrders(err.message || 'Error fetching orders');
+      setloadingOrders(false);
+    }
+}, [token]);
+
+  useEffect(() => {
+    if (token) {
+      fetchorders();
+    }
+  }, [token, fetchorders]);  
+  
 
   useEffect(() => {
     async function Track() {

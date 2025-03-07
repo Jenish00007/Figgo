@@ -1,26 +1,19 @@
-import { useQuery } from '@apollo/client'
-import { useFocusEffect, useNavigation } from '@react-navigation/native'
-import gql from 'graphql-tag'
-import React, { useContext, useEffect, useState, useCallback, useLayoutEffect } from 'react'
+import { useFocusEffect, useNavigation} from '@react-navigation/native'
+import { Text } from 'react-native'
+import React, { useContext, useEffect, useState, useCallback } from 'react'
 import {
   FlatList,
   Platform,
   StatusBar,
-  TouchableOpacity,
   View
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { FavouriteRestaurant } from '../../apollo/queries'
-import EmptyCart from '../../assets/SVG/imageComponents/EmptyCart'
 import Item from '../../components/Main/Stores/Item'
 import Spinner from '../../components/Spinner/Spinner'
-import TextDefault from '../../components/Text/TextDefault/TextDefault'
-import TextError from '../../components/Text/TextError/TextError'
 import { LocationContext } from '../../context/Location'
 import ThemeContext from '../../ui/ThemeContext/ThemeContext'
 import { scale } from '../../utils/scaling'
 import { theme } from '../../utils/themeColors'
-import screenOptions from './screenOptions'
 import styles from './styles'
 import Analytics from '../../utils/analytics'
 import { HeaderBackButton } from '@react-navigation/elements'
@@ -29,134 +22,134 @@ import { useTranslation } from 'react-i18next'
 import navigationService from '../../routes/navigationService'
 import ErrorView from '../../components/ErrorView/ErrorView'
 import EmptyView from '../../components/EmptyView/EmptyView'
-
+import AsyncStorage from '@react-native-async-storage/async-storage' // Import AsyncStorage for React Native
 import AuthContext from '../../context/Auth'
-
-
-// const RESTAURANTS = gql`
-//   ${FavouriteRestaurant}
-// `
 
 function Favourite() {
   const analytics = Analytics()
-
   const { t } = useTranslation()
   const navigation = useNavigation()
   const themeContext = useContext(ThemeContext)
   const currentTheme = theme[themeContext.ThemeValue]
   const { location } = useContext(LocationContext)
-  // const { data, refetch, networkStatus, loading, error } = useQuery(
-  //   RESTAURANTS,
-  //   {
-  //     variables: {
-  //       longitude: location.longitude || null,
-  //       latitude: location.latitude || null
-  //     },
-  //     fetchPolicy: 'network-only'
-  //   }
-  // )
-  const { token, setToken } = useContext(AuthContext)
   
-  //const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxOSIsImp0aSI6IjMyNjhkYzA5YTQ0YTgwN2M0ZTVmYWFiNDk3MjI5NDRjZDkyOWFkZDg4NmJjMzMzOTFkZjM1ZjI4MjNmZjhiODMwMzRlYWUxZTU0MDRiZmQxIiwiaWF0IjoxNzQxMjQ0NTM5LjkwMjExNywibmJmIjoxNzQxMjQ0NTM5LjkwMjExOSwiZXhwIjoxNzcyNzgwNTM5Ljg5Njg2MSwic3ViIjoiMjkiLCJzY29wZXMiOltdfQ.SFvEduoad2hfAdgUPFTBnxVxm1kLCzuZa8A0Rl7fUJeQaG_nmXtoSrs-wLnnBP4GsiKeVflUVySduoxUIbinwPUIg2PLc4ZnuqbgdVq8ocXWu8J4x4MFoFpHHr00Zd_P4ksIpODi0dM7lxRIEvmJi67wS3wsG6kJSfwstzUNscTO3sDIJtkfma6Qp2JcZQJMjwpMWSWISBYDloNoAcQa0wiSbW2Y2ejXiRCsL1Ab6PqZ5QNnZ1UYI26xI_347h6RaSnifPGo1MEmra2m2od0lM4JY1V4n7h-hkUy7xIJbRTSS_aZKv0zEmnKaD3kalY2KswXHEd8cnaCfWMtcKI2_bcxtQV2lMZAQE9UkeCTXNh2BSvIoZLkX8l4aVcsgr3snq3RwMOXofMp36LEmJwZNc38R7saIe1EDot-3kXUy_jtRjYuFZ1RBnFLdyzKJNWs4P9ptMU0y2i2yZaHFJAkbXLKJmQTwfvC70Y_FrxpMC4ff0rgkWv92AbmV7pvwOUyIDVzHA00yOZlDm-mhM6siFOpQmOeuDJLOYESzs0xDRrbernaAbmmFhg3C6Mj2q5gAmlJIRzAvWml3NMdLq3NpRbLQRYhSN5OVUaz83NNF77KHzKsA_i3L_ETrJSD69LfbIXd3sGenCV-CaX9Cg5a9xMvDXVQ4KbdhmbdjQV43bw"
-  const [data, setData] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [refreshing, setRefreshing] = useState(false)
+  const { token, setToken } = useContext(AuthContext)
 
-useEffect(() => {
-  const fetchfavorite = async () => {
+
+  // Network-only fetch function
+  const fetchFavouriteRestaurants = useCallback(async () => {
     try {
+      setLoading(true)
+      
+      //const token = await AsyncStorage.getItem('token')
+      const headers = {
+        'moduleId': '1',
+        'zoneId': '[1]',
+        'latitude': location.latitude?.toString() || '23.79354466376145',
+        'longitude': location.longitude?.toString() || '90.41166342794895',
+        'Authorization': token ? `Bearer ${token}` : '',
+        // These headers ensure a fresh request every time
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+      
       const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/customer/wish-list', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          //'moduleId': 1,
-          'zoneId': [1],   
-          //'latitude': 23.793544663762145,
-          //'longitude': 90.41166342794895
-        }
-      });
-      console.log("Token", token)
+        headers: headers,
+        // This ensures the browser doesn't use cached data
+        cache: 'no-store'
+      })
 
       if (!response.ok) {
-        console.log('Error Status:', response.status);  
-        console.log('Error Message:', response.message || data);  
-        //setError(data.message || 'Failed to fetch profile')
+        throw new Error('Failed to fetch favourite restaurants')
       }
-      const data = await response.json();
 
-      console.log("Filtered Data:", data);
-      // const filteredData = data.item.map(item => ({
-      //   id: item.id,
-      //   name: item.name
-      // }));
-
-      setData(data);
-      setLoading(false);
+      const result = await response.json()
+      console.log('API Response:',result)
+      setData(result)
+      setError(null)
     } catch (err) {
-      setError(err.message || 'Error fetching profile');
-      setLoading(false);
+      console.log('Fetch error:',err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
     }
-  };
+  }, [location])
 
-  if (token) {
-    fetchfavorite();
-  }                                                         
-}, [token]);
-  
+  const handleRefresh = () => {
+    setRefreshing(true)
+    fetchFavouriteRestaurants()
+  }
 
-  // useEffect(() => {
-  //   async function Track() {
-  //     await analytics.track(analytics.events.NAVIGATE_TO_FAVOURITES)
-  //   }
-  //   Track()
-  // }, [])
-  useFocusEffect(() => {
-    if (Platform.OS === 'android') {
-      StatusBar.setBackgroundColor(currentTheme.menuBar)
+  // Fetch data when component mounts
+  useEffect(() => {
+    fetchFavouriteRestaurants()
+  }, [fetchFavouriteRestaurants])
+
+  // Also fetch data when the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchFavouriteRestaurants()
+      
+      if (Platform.OS === 'android') {
+        StatusBar.setBackgroundColor(currentTheme.menuBar)
+      }
+      StatusBar.setBarStyle(
+        themeContext.ThemeValue === 'Dark' ? 'light-content' : 'dark-content'
+      )
+    }, [fetchFavouriteRestaurants, currentTheme, themeContext.ThemeValue])
+  )
+
+  useEffect(() => {
+    async function Track() {
+      await analytics.track(analytics.events.NAVIGATE_TO_FAVOURITES)
     }
-    StatusBar.setBarStyle(
-      themeContext.ThemeValue === 'Dark' ? 'light-content' : 'dark-content'
-    )
-  })
+    Track()
+  }, [])
 
-  // useEffect(() => {
-  //   navigation.setOptions({
-  //     title: t('titleFavourite'),
-  //     headerTitleAlign: 'center',
-  //     headerRight: null,
-  //     headerTitleStyle: {
-  //       color:currentTheme.newFontcolor,
-  //       fontWeight: 'bold'
-  //     },
-  //     headerTitleContainerStyle: {
-  //       marginTop: '2%',
-  //       paddingLeft: scale(25),
-  //       paddingRight: scale(25),
-  //       height: '75%',
-  //       marginLeft: 0
-  //     },
-  //     headerStyle: {
-  //       backgroundColor: currentTheme.newheaderBG,
-  //       elevation: 0
-  //     },
-  //     headerTitleAlign: 'center',
-  //     headerRight: null,
-  //     headerLeft: () => (
-  //       <HeaderBackButton
-  //         truncatedLabel=""
-  //         backImage={() => (
-  //           <View>
-  //             <MaterialIcons name="arrow-back" size={25} color={currentTheme.newFontcolor} />
-  //           </View>
-  //         )}
-  //         onPress={() => {
-  //           navigationService.goBack()
-  //         }}
-  //       />
-  //     )
-  //   })
-  // }, [navigation])
+  useEffect(() => {
+    navigation.setOptions({
+      title: t('titleFavourite'),
+      headerTitleAlign: 'center',
+      headerRight: null,
+      headerTitleStyle: {
+        color: currentTheme.newFontcolor,
+        fontWeight: 'bold'
+      },
+      headerTitleContainerStyle: {
+        marginTop: '2%',
+        paddingLeft: scale(25),
+        paddingRight: scale(25),
+        height: '75%',
+        marginLeft: 0
+      },
+      headerStyle: {
+        backgroundColor: currentTheme.newheaderBG,
+        elevation: 0
+      },
+      headerTitleAlign: 'center',
+      headerRight: null,
+      headerLeft: () => (
+        <HeaderBackButton
+          truncatedLabel=""
+          backImage={() => (
+            <View>
+              <MaterialIcons name="arrow-back" size={25} color={currentTheme.newFontcolor} />
+            </View>
+          )}
+          onPress={() => {
+            navigationService.goBack()
+          }}
+        />
+      )
+    })
+  }, [navigation])
 
   const emptyView = () => {
     return (
@@ -168,33 +161,63 @@ useEffect(() => {
     )
   }
 
-  if (loading)
+  const renderFavouriteItems = () => {
+    // If both item and store arrays are empty, show empty view
+    if (data.item.length === 0 && data.store.length === 0) {
+      return emptyView();
+    }
+
+    return (
+      <>
+        {data.store.length > 0 && (
+          <View style={styles(currentTheme).sectionContainer}>
+            <Text style={styles(currentTheme).sectionTitle}>{t('favouriteStores')}</Text>
+            <FlatList
+              data={data.store}
+              keyExtractor={(item) => `store-${item.id}`}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => <Item item={item} isStore={true} />}
+              ListEmptyComponent={null}
+            />
+          </View>
+        )}
+        
+        {data.item.length > 0 && (
+          <View style={styles(currentTheme).sectionContainer}>
+            <Text style={styles(currentTheme).sectionTitle}>{t('favouriteItems')}</Text>
+            <FlatList
+              data={data.item}
+              keyExtractor={(item) => `item-${item.id}`}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => <Item item={item} isStore={false} />}
+              ListEmptyComponent={null}
+            />
+          </View>
+        )}
+      </>
+    );
+  };
+
+  if (loading && !refreshing) {
     return (
       <Spinner
         backColor={currentTheme.themeBackground}
         spinnerColor={currentTheme.main}
       />
     )
+  }
+  
   if (error) return <ErrorView />
+  
   return (
     <SafeAreaView edges={['bottom']} style={styles(currentTheme).flex}>
-      <FlatList
-        //data={data ? data?.userFavourite : []}
-        data={Array.isArray(data?.userFavourite) ? data.userFavourite : []}
-        keyExtractor={(item, index) => item._id}
-        showsVerticalScrollIndicator={false}
-        refreshing={loading}
-        //refreshing={networkStatus === 4}
-        //onRefresh={() => networkStatus === 7 && refetch()}
-        onRefresh={fetchfavorite}
+      <View 
         style={[styles().flex, styles(currentTheme).container]}
         contentContainerStyle={styles(currentTheme).contentContainer}
-        ListEmptyComponent={emptyView()}
-        ListHeaderComponent={null}
-        renderItem={({ item }) => <Item item={item} />}
-      />
+      >
+        {renderFavouriteItems()}
+      </View>
     </SafeAreaView>
   )
 }
-
 export default Favourite
