@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import { View, Image, TouchableOpacity } from 'react-native'
 import styles from './styles'
 import ConfigurationContext from '../../../context/Configuration'
@@ -18,16 +18,18 @@ import { useMutation } from '@apollo/client'
 import Spinner from '../../Spinner/Spinner'
 import { FlashMessage } from '../../../ui/FlashMessage/FlashMessage'
 import { useTranslation } from 'react-i18next'
+import { LocationContext } from '../../../context/Location'
+import AuthContext from '../../../context/Auth'
 
-const ADD_FAVOURITE = gql`
-  ${addFavouriteRestaurant}
-`
-const PROFILE = gql`
-  ${profile}
-`
-const FAVOURITERESTAURANTS = gql`
-  ${FavouriteRestaurant}
-`
+// const ADD_FAVOURITE = gql`
+//   ${addFavouriteRestaurant}
+// `
+// const PROFILE = gql`
+//   ${profile}
+// `
+// const FAVOURITERESTAURANTS = gql`
+//   ${FavouriteRestaurant}
+// `
 
 function Item(props) {
   const { t } = useTranslation()
@@ -38,10 +40,97 @@ function Item(props) {
   const configuration = useContext(ConfigurationContext)
   const themeContext = useContext(ThemeContext)
   const currentTheme = theme[themeContext.ThemeValue]
-  const [mutate, { loading: loadingMutation }] = useMutation(ADD_FAVOURITE, {
-    onCompleted,
-    refetchQueries: [PROFILE, FAVOURITERESTAURANTS]
-  })
+  const { location } = useContext(LocationContext)
+  const { token, setToken } = useContext(AuthContext)
+
+  // const [mutate, { loading: loadingMutation }] = useMutation(ADD_FAVOURITE, {
+  //   onCompleted,
+  //   refetchQueries: [PROFILE, FAVOURITERESTAURANTS]
+  // })
+
+  const [isFavourite, setIsFavourite] = useState(true);
+  const [loading, setLoading] = useState(false);
+  // API URLs
+  const ADD_TO_WISHLIST_URL = `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/add?item_id=${item.id}`;
+  const REMOVE_FROM_WISHLIST_URL = `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/remove?item_id=${item.id}`;
+
+  // Fetch wishlist status on component mount
+useEffect(() => {
+  // Check if the product is in the wishlist when the component loads
+  if (item) {
+    setIsFavourite(!!item.isInWishlist);
+  }
+}, [item]); // Runs when profile or item.id changes
+
+// useEffect(() => {
+//   console.log("Item in wishlist?", item.id, isFavourite, item.isInWishlist);
+// }, [isFavourite, item]);
+
+
+  // Function to handle adding/removing from wishlist
+  const toggleWishlist = async () => {
+    if (loading) return; // Prevent multiple clicks
+    setLoading(true);
+
+    const url = isFavourite ? REMOVE_FROM_WISHLIST_URL : ADD_TO_WISHLIST_URL;
+    const method = 'POST'; // Change as needed
+    const body = JSON.stringify({ item_id: item.id });
+    const headers = {
+      'moduleId': '1',
+      'zoneId': '[1]',
+      'latitude': location?.latitude?.toString() || '23.79354466376145',
+      'longitude': location?.longitude?.toString() || '90.41166342794895',
+      'Authorization': token ? `Bearer ${token}` : '',
+      'Content-Type': 'application/json',
+      // These headers ensure a fresh request every time
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: headers,
+        body: body,
+      });
+
+      const responseData = await response.json(); // Parse JSON response
+      console.log("API Response:", responseData);
+      // Check if product is already in wishlist
+      if (responseData.message === "Already in wishlist") {
+        FlashMessage({ message: "Already in wishlist" });
+        return;
+      }
+
+      if (!response.ok){
+         throw new Error(responseData.message || 'Failed to update wishlist');
+      }
+      
+      setIsFavourite(!isFavourite);
+      FlashMessage({ message:  responseData.message});
+
+
+      // Navigate back if item was removed from wishlist on the wishlist page
+      if (isFavourite) {
+        // Get the current route name
+        const currentRouteName = navigation.getState().routes[navigation.getState().index].name;
+        if (currentRouteName.toLowerCase().includes('favourite')) {
+          // Refresh the wishlist page instead of navigating away
+          // The parent component should handle this with a refresh function
+          if (props.onRemoveFromWishlist) {
+            props.onRemoveFromWishlist(item.id);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Wishlist update error:', error);
+      FlashMessage({ message: 'Something went wrong', type: 'danger' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const { isAvailable, openingTimes } = item
   const isOpen = () => {
     const date = new Date()
@@ -79,18 +168,20 @@ function Item(props) {
             <View style={styles().overlayRestaurantContainer}>
               <TouchableOpacity
                 activeOpacity={0}
-                disabled={loadingMutation}
+                disabled={loading}
                 style={styles(currentTheme).favOverlay}
-                onPress={() =>
-                  profile ? mutate({ variables: { id: item.id } }) : null
+                onPress={ toggleWishlist
+                  //() => profile ? mutate({ variables: { id: item.id } }) : null
                 }>
-                {loadingMutation ? (
+                {loading ? (
                   <Spinner size={'small'} backColor={'transparent'} spinnerColor={currentTheme.iconColorDark} />
                 ) : (
                   <AntDesign
-                    name={heart ? 'heart' : 'hearto'}
+                    name={isFavourite  ? 'heart' : 'hearto'}
                     size={scale(15)}
-                    color="black"
+                    color={isFavourite ? '#FF0000' : 'black'} 
+                    //color= {isFavourite ? 'red' : 'black'} //"black"
+                    style={{ opacity: 1 }} 
                   />
                 )}
               </TouchableOpacity>

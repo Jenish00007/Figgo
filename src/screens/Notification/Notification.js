@@ -11,9 +11,7 @@ function Notification () {
   const themeContext = useContext(ThemeContext)
   const currentTheme = theme[themeContext.ThemeValue]
   const { location } = useContext(LocationContext)
-  
-  //const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxOSIsImp0aSI6Ijg1NjRlYWE2YjU1MzNlZDRhOWNjZjM5OTQwZGExYTA5NTBhYWJjZjdhYzVkMTA3MGQ2NDQwNzE2N2IxN2RkZTE5OTkyNWQzZDNkODJjYmQ5IiwiaWF0IjoxNzQxMjUzMTE2Ljg4MjQ0OCwibmJmIjoxNzQxMjUzMTE2Ljg4MjQ1MSwiZXhwIjoxNzcyNzg5MTE2Ljg3ODUwMiwic3ViIjoiMzIiLCJzY29wZXMiOltdfQ.DlOX8MynZbowWs0mQX9wTIKIJkRDY_f9JhaHQrNTw6L8hLLtavfCZSisXwFu3yajjGZfvwXBDXHZmQq7c24G5CmrM3lTs_tJA06Dh_sBviwSXvk8cZ0ID9B0s9MqNqIEV7WO9W9SsnUtOex-T7XPKcan4PChuGQG2IcwI-OSh7SAKXUmr4mc6TEZGpCvupI3M2G3HLGoSO8s1OeK-srGc5l7Ida0lUsgYaxubNUl8MP_p3W7TNkYbM0ZUVe2ckIpfWM5sCwsp7V46Fb63VzrkY-HWJjk3fkWPp6hNcBxJTStHdbKOhTDkOm_9kVKt9W_G3heyoBKk7G7f7Bwwb0jTS1WGj4TspYec2j5RAwl5oORzXWtqNDF9mC0vxL3C1-28_9VsB1E82V1gaKkWEt4Q1RQ059WCbDgAuZdS2jFsqL7fxCm3seTAfi7VWFYqeIK_GSM84wdAPq-sztaQl_zGvCAAASeXAy4_9T7SBcoJ5RVX_CZWgoGpT1dU-9Sa8pMLBx2qDbojiypjyHMGGdMtCOZfS4Cc0Bvd4TkxYwobx595ubMiJ6d2plp-2oFdYUQ1vDlvTGXoiv_x9Wg8oa7ZDgkX4wW8DnwEndA2KwKY8zbg-As6ug4T2E9Eu8qBj8zb_ndNwvXVvVxVYLK0pn_tHqhFjrKknLVLyqTMNWNnK4"; 
-  
+    
   const { token, setToken } = useContext(AuthContext)
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true)

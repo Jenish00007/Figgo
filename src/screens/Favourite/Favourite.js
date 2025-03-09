@@ -91,7 +91,7 @@ function Favourite() {
   useEffect(() => {
     fetchFavouriteRestaurants()
   }, [fetchFavouriteRestaurants])
-
+  
   // Also fetch data when the screen comes into focus
   useFocusEffect(
     useCallback(() => {
@@ -161,6 +161,11 @@ function Favourite() {
     )
   }
 
+  const handleRemoveFromWishlist = (itemId) => {
+    // Refresh the wishlist data
+    fetchFavouriteRestaurants();
+  };
+
   const renderFavouriteItems = () => {
     // If both item and store arrays are empty, show empty view
     if (data.item.length === 0 && data.store.length === 0) {
@@ -176,7 +181,7 @@ function Favourite() {
               data={data.store}
               keyExtractor={(item) => `store-${item.id}`}
               showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => <Item item={item} isStore={true} />}
+              renderItem={({ item }) => <Item item={item} isStore={true} onRemoveFromWishlist={handleRemoveFromWishlist}/>}
               ListEmptyComponent={null}
             />
           </View>
@@ -189,7 +194,7 @@ function Favourite() {
               data={data.item}
               keyExtractor={(item) => `item-${item.id}`}
               showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => <Item item={item} isStore={false} />}
+              renderItem={({ item }) => <Item item={item} isStore={false}  onRemoveFromWishlist={handleRemoveFromWishlist} />}
               ListEmptyComponent={null}
             />
           </View>

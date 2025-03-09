@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "description": "Food ordering app built in React Native using Expo for IOS and Android. It's made keeping good aesthetics in mind as well keeping the best coding practices in mind. Its fully customisable to easily help you in your next food delivery project.",
     "slug": "multivendor",
-    "owner": "prathish_03",
+    "owner": "zeenathshameena",
     "privacy": "public",
     "androidStatusBar": {
       "backgroundColor": "#000"
@@ -96,7 +96,7 @@
       [
         "expo-updates",
         {
-          "username": "prathish_03"
+          "username": "zeenathshameena"
         }
       ],
       [
@@ -120,7 +120,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "0edee2e6-4b79-4056-8464-0a6e298421ee"
+        "projectId": "2ef299ef-d93e-4921-a06a-6ed49aff6680"
       }
     }
   }

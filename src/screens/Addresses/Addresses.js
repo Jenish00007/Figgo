@@ -33,6 +33,7 @@ import CustomOtherIcon from '../../assets/SVG/imageComponents/CustomOtherIcon'
 import CustomApartmentIcon from '../../assets/SVG/imageComponents/CustomApartmentIcon'
 import { useTranslation } from 'react-i18next'
 import AuthContext from '../../context/Auth'
+
 // const DELETE_ADDRESS = gql`
 //   ${deleteAddress}
 // `
@@ -41,7 +42,7 @@ function Addresses() {
   const Analytics = analytics()
 
   const navigation = useNavigation()
-    // const [mutate, { loading: loadingMutation }] = useMutation(DELETE_ADDRESS, {
+  // const [mutate, { loading: loadingMutation }] = useMutation(DELETE_ADDRESS, {
   //   onCompleted
   // })
   //const { profile, refetchProfile, networkStatus } = useContext(UserContext)
@@ -166,12 +167,10 @@ function Addresses() {
         />
       )
     })
-  //}, [])
   }, [navigation, currentTheme, t])
 
   const addressIcons = {
     'home': CustomHomeIcon,
-    //House: CustomHomeIcon,
     'office': CustomWorkIcon,
     'apartment': CustomApartmentIcon,
     'other': CustomOtherIcon
@@ -204,6 +203,8 @@ function Addresses() {
   return (
     <View style={styles(currentTheme).flex}>
       <FlatList
+        //onRefresh={refetchProfile}
+        //refreshing={networkStatus === NetworkStatus.refetch}
         onRefresh={handleRefresh}
         refreshing={refreshing}
         data={addresses}
@@ -234,7 +235,7 @@ function Addresses() {
                   style={styles(currentTheme).labelStyle}
                 >
                   {/* {t(address.label)} */}
-                  {address.address_type || "Address"} 
+                  {address.address_type || "Address"}
                 </TextDefault>
               </View>
               <View style={styles().buttonsAddress}>
@@ -261,12 +262,10 @@ function Addresses() {
 
                 <TouchableOpacity
                   activeOpacity={0.7}
+                  //disabled={loadingMutation}
                   onPress={() => {
                     //mutate({ variables: { id: address._id } })
-
-                    // Placeholder for delete functionality
                     console.log("Delete address with ID:", address.id);
-                    // For demonstration only - you'll need to implement actual delete
                     FlashMessage({ message: t('addressDeletedMessage') })
                   }}
                 >

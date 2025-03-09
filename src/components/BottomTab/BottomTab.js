@@ -56,6 +56,25 @@ function BottomTab({ screen }) {
         </View>
         <Text style={getTextStyle('WhereToGo')}>Favourite</Text>
       </TouchableOpacity>
+      {/* Cart Icon */}
+        <TouchableOpacity
+        onPress={() => {
+          
+            navigation.navigate('Cart');
+         
+        }}
+        style={styles.footerBtnContainer}
+      >
+        <View style={styles.profileContainer}>
+          <MaterialCommunityIcons
+            name="cart"
+            size={scale(20)}
+            color={getIconColor('CART')}
+          />
+         
+        </View>
+        <Text style={getTextStyle('CART')}>Cart</Text>
+      </TouchableOpacity>
 
       {/* Favourites Icon */}
       <TouchableOpacity
