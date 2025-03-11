@@ -15,7 +15,7 @@
       "android"
     ],
     "orientation": "portrait",
-   
+    "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "cover",
@@ -56,7 +56,7 @@
       "androidCollapsedTitle": "Figgo"
     },
     "android": {
-      "versionCode":9,
+      "versionCode": 9,
       "package": "com.jebilinjebilin.ShopMart",
       "googleServicesFile": "./google-services.json",
       "userInterfaceStyle": "automatic",
