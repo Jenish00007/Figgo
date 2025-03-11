@@ -15,6 +15,7 @@ import {
   Image,
   ScrollView,
   Animated,
+  FlatList,
   RefreshControl
 } from 'react-native'
 import {
@@ -384,23 +385,25 @@ function Main(props) {
     </View>
   )
 
+ 
+
   const restaurants = storeSearch
- const searchAllShops = (searchText) => {
+  const searchAllShops = (searchText) => {
     const data = [];
     const escapedSearchText = escapeRegExp(searchText);
     const regex = new RegExp(escapedSearchText, 'i');
 
     // Assuming 'stores' is the array of store objects you fetched
     restaurants?.forEach((store) => {
-        // Check if store.name exists and matches the regex
-        if (store.name && regex.test(store.name)) {
-            data.push(store); // Add the store to the data array if it matches
-        }
+      // Check if store.name exists and matches the regex
+      if (store.name && regex.test(store.name)) {
+        data.push(store); // Add the store to the data array if it matches
+      }
     });
 
     return data; // Return the filtered stores
-};
-  
+  };
+
 
   if (error) return <ErrorView />
 
@@ -452,7 +455,7 @@ function Main(props) {
                         />
                       }
                       data={searchAllShops(search)}
-                      
+
                       renderItem={({ item }) => <Item item={item} />}
                     />
                   </View>
@@ -527,44 +530,17 @@ function Main(props) {
                     </View>
 
                     <View>
-                      {/* <View>
-                        {isLoggedIn &&
-                          recentOrderRestaurantsVar &&
-                          recentOrderRestaurantsVar.length > 0 && (
-                            <>
-                              {orderLoading ? (
-                                <MainLoadingUI />
-                              ) : (
-                                <MainRestaurantCard
-                                  orders={stores}
-                                  loading={orderLoading}
-                                  error={orderError}
-                                  title={'Order it again'}
-                                />
-                              )}
-                            </>
-                          )}
-                      </View> */}
+
                       <View>
-                        {/* {orderLoading ? (
-                          <MainLoadingUI />
-                        ) : ( */}
-                          <MainRestaurantCard
-                            orders={stores}
-                            loading={orderLoading}
-                            error={orderError}
-                            title={'Featured Stores'}
-                          />
-                        {/* )} */}
+                        <MainRestaurantCard
+                          orders={stores}
+                          loading={orderLoading}
+                          error={orderError}
+                          title={'Featured Stores'}
+                        />
                       </View>
                     </View>
-                    {/* <View
-                      style={
-                        styles(currentTheme, hasActiveOrders).topBrandsMargin
-                      }
-                    >
-                      {orderLoading ? <TopBrandsLoadingUI /> : <TopBrands />}
-                    </View> */}
+                   
                   </ScrollView>
                 )}
               </View>

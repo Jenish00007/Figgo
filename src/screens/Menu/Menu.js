@@ -70,6 +70,7 @@ import { SupermarketCard } from '../../components/SupermarketCard/SupermarketCar
 import OfferCard from '../../components/OfferCard/OfferCard'
 import NearByStore from '../../components/NearByStore/NearByStore'
 import Products from '../../components/Products/Products'
+import CategoryListView from '../../components/NearByShop/CategoryListView'
 
 const RESTAURANTS = gql`
   ${restaurantListPreview}
@@ -108,7 +109,13 @@ function Menu({ route, props }) {
   const { loadingOrders, isLoggedIn, profile } = useContext(UserContext)
   const { location, setLocation } = useContext(LocationContext)
   const [search, setSearch] = useState('')
-  const [filters, setFilters] = useState(FILTER_VALUES)
+  const [filters, setFilters] = useState({
+    // Example of your filters structure
+    popular: { type: 'checkbox', values: ['Option 1', 'Option 2'], selected: [] },
+    latest: { type: 'radio', values: ['Option A', 'Option B'], selected: [] },
+    topOffer: { type: 'checkbox', values: ['Offer 1', 'Offer 2'], selected: [] },
+  });
+  const [selectedFilter, setSelectedFilter] = useState('all');
   const [restaurantData, setRestaurantData] = useState([])
   const [sectionData, setSectionData] = useState([])
   const modalRef = useRef(null)
@@ -126,8 +133,7 @@ function Menu({ route, props }) {
   const [popularItem, setPopularItem] = useState([]);
   const [specialItem, setSpecialItem] = useState([]);
   const [allStores, setAllStore] = useState([]);
-
-
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const { data, refetch, networkStatus, loading, error } = useQuery(
     RESTAURANTS,
     {
@@ -159,6 +165,7 @@ function Menu({ route, props }) {
     translateY
   } = useCollapsibleSubHeader()
 
+  //Search Placeholder Text Changes
   const searchPlaceholderText =
     selectedType === 'restaurant' ? t('searchRestaurant') : t('searchGrocery')
   const menuPageHeading =
@@ -166,18 +173,32 @@ function Menu({ route, props }) {
   const emptyViewDesc =
     selectedType === 'restaurant' ? t('noRestaurant') : t('noGrocery')
 
+    //Theme setup android and ios
   useFocusEffect(() => {
     if (Platform.OS === 'android') {
       StatusBar.setBackgroundColor(currentTheme.newheaderColor)
     }
     StatusBar.setBarStyle('dark-content')
   })
+
+  //Track Analytics
   useEffect(() => {
     async function Track() {
       await Analytics.track(Analytics.events.NAVIGATE_TO_MAIN)
     }
     Track()
   }, [])
+
+  //Model open
+  const onOpen = () => {
+    const modal = modalRef.current
+    if (modal) {
+      modal.open()
+    }
+  }
+
+
+  //App Layout Theme 
   useLayoutEffect(() => {
     navigation.setOptions(
       navigationOptions({
@@ -190,24 +211,6 @@ function Menu({ route, props }) {
       })
     )
   }, [navigation, currentTheme])
-
-  useEffect(() => {
-    setFilters(prev => ({
-      ...prev,
-      Cuisines: {
-        selected: [],
-        type: FILTER_TYPE.CHECKBOX,
-        values: allCuisines?.cuisines?.map(item => item.name)
-      }
-    }))
-  }, [allCuisines])
-
-  const onOpen = () => {
-    const modal = modalRef.current
-    if (modal) {
-      modal.open()
-    }
-  }
 
   function onError(error) {
     console.log(error)
@@ -233,6 +236,7 @@ function Menu({ route, props }) {
     modalRef.current.close()
   }
 
+  //Location Fetch
   const setCurrentLocation = async () => {
     setBusy(true)
     const { error, coords } = await getCurrentLocation()
@@ -352,6 +356,7 @@ function Menu({ route, props }) {
 
     fetchSupermarkets()
   }, [moduleId]);
+
   // Fetch data from the API
   useEffect(() => {
     const fetchNearbymarkets = async () => {
@@ -468,35 +473,67 @@ function Menu({ route, props }) {
     fetchSpecialItem()
   }, [moduleId]);
 
-  // Fetch data from the API
-  useEffect(() => {
-    const fetchAllStores = async () => {
-      try {
-        const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/stores/get-stores/all?store_type=all&offset=1&limit=12', {
-          method: 'GET', // GET request method
-          headers: {
-            'Content-Type': 'application/json',
-            'zoneId': '[1]',
-            'moduleId': moduleId
-          }
-        });
-        const json = await response.json();
-        // console.log(json)
-        // Check if data is valid before updating state
-        if (json?.stores && json.stores.length > 0) {
-          setAllStore(json.stores);
+  
 
-        } else {
-          console.log('No Stores data found');
+//Filter Store Listing
+  const fetchData = async (category) => {
+    let url = '';
+    switch (category) {
+      case 'popular':
+        url = 'https://6ammart-admin.6amtech.com/api/v1/stores/popular?type=all';
+        break;
+      case 'latest':
+        url = 'https://6ammart-admin.6amtech.com/api/v1/stores/latest?type=all';
+        break;
+      case 'top-offer':
+        url = 'https://6ammart-admin.6amtech.com/api/v1/stores/top-offer-near-me';
+        break;
+      default:
+        url = 'https://6ammart-admin.6amtech.com/api/v1/stores/get-stores/all?store_type=all';
+        break;
+    }
+  
+    try {
+      const response = await fetch(url, {
+        method: 'GET', // GET request method
+        headers: {
+          'Content-Type': 'application/json',
+          'zoneId': '[1]',
+          'moduleId': moduleId
         }
-      } catch (error) {
-        console.error('Error fetching supermarkets:', error);
-      }
-    };
+      });
+      const data = await response.json();
+      setAllStore(data?.stores);
+    } catch (error) {
+      console.error("Error fetching stores data:", error);
+    }
+  };
+  
+  const applyFilters = (filter) => {
+    setSelectedFilter(filter);
+   
+    // Trigger the corresponding API call based on filter
+    switch (filter) {
+      case 'popular':
+        fetchData('popular');
+        break;
+      case 'latest':
+        fetchData('latest');
+        break;
+      case 'top-offer':
+        fetchData('top-offer');
+        break;
+      default:
+        fetchData('all');
+        break;
+    }
+  };
+  
+  useEffect(() => {
+    fetchData('all');
+  }, []);
 
-    fetchAllStores()
-  }, [moduleId]);
-
+  // Header
   const modalHeader = () => (
     <View style={[styles().addNewAddressbtn]}>
       <View style={styles(currentTheme).addressContainer}>
@@ -522,6 +559,7 @@ function Menu({ route, props }) {
     </View>
   )
 
+//App not Available in YourArea
   const emptyView = () => {
     if (loading || mutationLoading || loadingOrders) return loadingScreen()
     else {
@@ -540,6 +578,7 @@ function Menu({ route, props }) {
     }
   }
 
+  //Footer Modal
   const modalFooter = () => (
     <View style={styles().addNewAddressbtn}>
       <View style={styles(currentTheme).addressContainer}>
@@ -569,7 +608,8 @@ function Menu({ route, props }) {
       <View style={styles().addressTick}></View>
     </View>
   )
-
+// console.log(filters);
+  // Loading Animation 
   function loadingScreen() {
     return (
       <View style={styles(currentTheme).screenBackground}>
@@ -587,7 +627,7 @@ function Menu({ route, props }) {
             <Fade
               {...props}
               style={styles(currentTheme).placeHolderFadeColor}
-              duration={600}
+              duration={300}
             />
           )}
           style={styles(currentTheme).placeHolderContainer}>
@@ -599,7 +639,7 @@ function Menu({ route, props }) {
             <Fade
               {...props}
               style={styles(currentTheme).placeHolderFadeColor}
-              duration={600}
+              duration={300}
             />
           )}
           style={styles(currentTheme).placeHolderContainer}>
@@ -611,7 +651,7 @@ function Menu({ route, props }) {
             <Fade
               {...props}
               style={styles(currentTheme).placeHolderFadeColor}
-              duration={600}
+              duration={300}
             />
           )}
           style={styles(currentTheme).placeHolderContainer}>
@@ -623,84 +663,22 @@ function Menu({ route, props }) {
   }
 
   if (error) return <ErrorView />
+  if (loading) return loadingScreen()
 
-  if (loading || mutationLoading || loadingOrders) return loadingScreen()
-
+    //Search Function
   const searchAllShops = searchText => {
     const data = [];
     const escapedSearchText = escapeRegExp(searchText);
     const regex = new RegExp(escapedSearchText, 'i');
 
-    // Assuming 'stores' is the array of store objects you fetched
     allStores?.forEach((store) => {
-      // Check if store.name exists and matches the regex
       if (store.name && regex.test(store.name)) {
-        data.push(store); // Add the store to the data array if it matches
+        data.push(store);
       }
     });
-
     return data;
   }
-//console.log(allStores);
 
-  const restaurantSections = sectionData?.map(sec => ({
-    ...sec,
-    restaurants: sec?.restaurants
-      ?.map(id => restaurantData?.filter(res => res.id === id))
-      .flat()
-  }))
-
-  const extractRating = ratingString => parseInt(ratingString)
-
-  const applyFilters = () => {
-    let filteredData = [...data.nearByRestaurantsPreview.restaurants]
-
-    const ratings = filters.Rating
-    const sort = filters.Sort
-    const offers = filters.Offers
-    const cuisines = filters.Cuisines
-
-    // Apply filters incrementally
-    // Ratings filter
-    if (ratings?.selected?.length > 0) {
-      const numericRatings = ratings.selected?.map(extractRating)
-      filteredData = filteredData.filter(
-        item => item?.reviewData?.ratings >= Math.min(...numericRatings)
-      )
-    }
-
-    // Sort filter
-    if (sort?.selected?.length > 0) {
-      if (sort.selected[0] === 'Fast Delivery') {
-        filteredData.sort((a, b) => a.deliveryTime - b.deliveryTime)
-      } else if (sort.selected[0] === 'Distance') {
-        filteredData.sort(
-          (a, b) =>
-            a.distanceWithCurrentLocation - b.distanceWithCurrentLocation
-        )
-      }
-    }
-
-    // Offers filter
-    if (offers?.selected?.length > 0) {
-      if (offers.selected.includes('Free Delivery')) {
-        filteredData = filteredData.filter(item => item?.freeDelivery)
-      }
-      if (offers.selected.includes('Accept Vouchers')) {
-        filteredData = filteredData.filter(item => item?.acceptVouchers)
-      }
-    }
-
-    // Cuisine filter
-    if (cuisines?.selected?.length > 0) {
-      filteredData = filteredData.filter(item =>
-        item.cuisines.some(cuisine => cuisines?.selected?.includes(cuisine))
-      )
-    }
-
-    // Set filtered data
-    setRestaurantData(filteredData)
-  }
 
 
   return (
@@ -757,7 +735,7 @@ function Menu({ route, props }) {
                         />
                       }
                       data={searchAllShops(search)}
-                      
+
                       renderItem={({ item }) => <Item item={item} />}
                     />
                   </View>
@@ -780,22 +758,19 @@ function Menu({ route, props }) {
 
                     {/* Nearby Stores Section */}
                     <TextDefault style={styles().sectionTitle}>Nearby Stores</TextDefault>
+                    
+
                     <FlatList
                       data={supermarkets}
                       horizontal={true}
                       showsHorizontalScrollIndicator={false}
-                      renderItem={({ item }) => (
-                        <SupermarketCard
-                          name={item?.name}
-                          isNew={item?.is_new}
-                          active={item?.active}
-                          address={item?.address}
-                          distance={item?.distance}
-                          logo_full_url={item?.logo_full_url}
-                        />
+                      renderItem={({ item,index }) => (
+                        <CategoryListView data={{ item,index }} />
                       )}
                       keyExtractor={(item) => item.id.toString()}
                     />
+
+                
 
                     {/* Top Offers Section */}
                     <TextDefault style={styles().sectionTitle}>Top Offers near me 🔥</TextDefault>
@@ -863,7 +838,7 @@ function Menu({ route, props }) {
                       ListHeaderComponent={
                         search || restaurantData.length === 0 ? null : (
                           <ActiveOrdersAndSections
-                            sections={restaurantSections}
+                           
                             menuPageHeading={menuPageHeading}
                           />
                         )
@@ -886,9 +861,7 @@ function Menu({ route, props }) {
                       renderItem={({ item }) => <Item item={item} />}
                     />
                   </ScrollView>
-
                 )}
-
               </View>
             </View>
           </View>

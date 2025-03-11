@@ -9,7 +9,7 @@ const useGeocoding = () => {
       const response = await axios.get(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_KEY}&language=en`
       )
-console.log(latitude, longitude)
+//console.log(latitude, longitude)
       // Check if the response is successful and contains results
       if (
         response.data &&

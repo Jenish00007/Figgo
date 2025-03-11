@@ -1,124 +1,110 @@
 import React from 'react';
 import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const Products = ({ products }) => {
+  const navigation = useNavigation();
 
-    const navigation = useNavigation();
+  // Function to limit the product name to 10 characters
+  const getShortenedName = (name) => {
+    if (name.length > 10) {
+      return name.slice(0, 17) + '...'; // Truncate after 10 characters and add '...'
+    }
+    return name;
+  };
 
-    return (
-        <View style={styles.container}>
-            {products?.map((item, index) => (
-                <View key={item._id} >
-                    <TouchableOpacity
-                        onPress={() => navigation.push('ProductDetail', { product: item })}
-                    >
-                        <View style={styles.itemContainer}>
-                            <ImageBackground
-                                  source={{ uri: item?.image_full_url}}
-                                style={styles.cardImageBG}
-                                resizeMode="cover"
-                            >
-                                {/* <View style={styles.cardRatingContainer}>
-                                    <FontAwesome name='heart-o' color={Color.colorTomato} size={18} />
-                                </View> */}
-                            </ImageBackground>
-                            <Text style={styles.cardTitle}>{item?.name}</Text>
-                            {/* <Text style={styles.cardSubtitle}><Ionicons name="location-sharp" size={14} color={Color.colorTomato} />Address</Text> */}
-                            <View style={styles.cardFooterRow}>
-                                <Text style={styles.cardPriceCurrency}>₹</Text>
-                                <Text style={styles.cardPrice}>{item?.price}</Text>
-                                {/* <TouchableOpacity>
-                                    <FontAwesome6 style={{ marginLeft: 60 }} name="heart" size={24} color="black" />
-                                </TouchableOpacity> */}
-                            </View>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-            ))}
+  return (
+    <View style={styles.container}>
+      {products?.map((item, index) => (
+        <View key={item._id} style={styles.itemWrapper}>
+          <TouchableOpacity
+            onPress={() => navigation.push('ProductDetail', { product: item })}
+          >
+            <View style={styles.itemContainer}>
+              <ImageBackground
+                source={{ uri: item?.image_full_url }}
+                style={styles.cardImageBG}
+                resizeMode="cover"
+              >
+                {/* Optional: Add Rating Icon or other components here */}
+              </ImageBackground>
+              <Text style={styles.cardTitle}>{getShortenedName(item?.name)}</Text>
+              <View style={styles.cardFooterRow}>
+                <Text style={styles.cardPriceCurrency}>₹</Text>
+                <Text style={styles.cardPrice}>{item?.price}</Text>
+                <TouchableOpacity>
+                  <Icon style={styles.addIcon} name="add" size={24} color="red" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
         </View>
-    );
+      ))}
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
- 
-    container: {
-        flexDirection: 'row',
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0)',
-        gap: 20,
-        marginTop: 10
+  container: {
+    flexDirection: 'row',
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 10,
+    gap: 20,
+    paddingHorizontal: 20, 
+  },
+  itemWrapper: {
+    flex: 1,
+    maxWidth: '45%',
+    marginBottom: 20,
+  },
+  itemContainer: {
+    padding: 12, 
+    borderRadius: 12,
+    backgroundColor: 'white',
+    shadowColor: "rgba(0, 0, 0, 0.5)",
+    shadowOffset: {
+      width: 0,
+      height: 11,
     },
-    itemContainer: {
-        padding: 10,
-        borderRadius: 12,
-        backgroundColor: 'white',
-        shadowColor: "rgba(0, 0, 0, 0.5)",
-        shadowOffset: {
-            width: 0,
-            height: 11,
-        },
-        elevation: 24,
-     
-        marginTop: 10
-    },
-    cardLinearGradientContainer: {
-        //padding: 0,
-        // backgroundColor: Colors.WHITE,
-        // width: 150,
-    },
-    cardImageBG: {
-        width: 130,
-        height: 130,
-        marginBottom: 5,
-        overflow: 'hidden',
-    },
-    // cardRatingContainer: {
-    //     flexDirection: 'row',
-    //     backgroundColor: Colors.WHITE,
-    //     alignItems: 'center',
-    //     justifyContent: 'center',
-    //     gap: 10,
-    //     paddingHorizontal: 10,
-    //     position: 'absolute',
-    //     borderBottomLeftRadius: 50,
-    //     borderTopRightRadius: 0,
-    //     top: 0,
-    //     right: 0,
-    // },
-    cardRatingText: {
-        color: 'red',
-        lineHeight: 22,
-        fontSize: 14,
-    },
-    cardTitle: {
-        color: 'black',
-        fontSize: 16,
-        width: 130,
-        height: 20
-    },
-    cardSubtitle: {
-        color: 'black',
-        fontSize: 10,
-    },
-    cardFooterRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 5,
-    },
-    cardPriceCurrency: {
-        color: 'black',
-        fontSize: 18,
-        fontWeight: '700'
-    },
-    cardPrice: {
-        fontSize: 18,
-        fontWeight: '700'
-    },
+    elevation: 24,
+    marginBottom: 10, 
+  },
+  cardImageBG: {
+    width: '100%', // Ensure the image fills the card width
+    height: 130, // Fixed height for the image
+    marginBottom: 10, // Adjust margin to create space between image and text
+    borderRadius: 8, // Optionally, add rounded corners to the image
+    overflow: 'hidden',
+  },
+  cardTitle: {
+    color: 'black',
+    fontSize: 16,
+    fontWeight: 'bold', // Make title bold for better emphasis
+    width: '100%',
+    textAlign: 'center',
+    marginBottom: 5, // Space between title and footer
+    overflow: 'hidden', // Ensure text truncates properly
+  },
+  cardFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'start', // Ensure price and icon are spaced out
+  },
+  cardPriceCurrency: {
+    color: 'black',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  cardPrice: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  addIcon: {
+    marginLeft: 80, 
+  },
 });
 
 export default Products;

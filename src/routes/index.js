@@ -21,7 +21,6 @@ import SaveAddress from '../screens/SaveAddress/SaveAddress'
 import RateAndReview from '../screens/RateAndReview/RateAndReview'
 import Payment from '../screens/Payment/Payment'
 import Help from '../screens/Help/Help'
-import Paypal from '../screens/Paypal/Paypal'
 import StripeCheckout from '../screens/Stripe/StripeCheckout'
 import Profile from '../screens/Profile/Profile'
 import Addresses from '../screens/Addresses/Addresses'
@@ -47,6 +46,7 @@ import Favourite from '../screens/Favourite/Favourite'
 import ChatScreen from '../screens/ChatWithRider/ChatScreen'
 import { DarkBackButton } from '../components/Header/HeaderIcons/HeaderIcons'
 import EmailOtp from '../screens/Otp/Email/EmailOtp'
+import SubCategory from '../screens/SubCategory/SubCategory'
 import PhoneOtp from '../screens/Otp/Phone/PhoneOtp'
 import ForgotPasswordOtp from '../screens/Otp/ForgotPassword/ForgetPasswordOtp'
 import PhoneNumber from '../screens/PhoneNumber/PhoneNumber'
@@ -54,9 +54,13 @@ import { useApolloClient, gql } from '@apollo/client'
 import { myOrders } from '../apollo/queries'
 import Checkout from '../screens/Checkout/Checkout'
 import Menu from '../screens/Menu/Menu'
-import Reviews from '../screens/Reviews'
 import useEnvVars from '../../environment'
 import * as Sentry from '@sentry/react-native'
+import SearchModal from '../components/Address/SearchModal'
+import { Searchbar } from 'react-native-paper'
+import SearchPage from '../screens/Searchbar/Searchbar'
+import Notification from '../screens/Notification/Notification'
+import ProductDetails from '../screens/ProductDetail/ProductDetails'
 
 const NavigationStack = createStackNavigator()
 const MainStack = createStackNavigator()
@@ -101,11 +105,13 @@ function NoDrawer() {
       <NavigationStack.Screen name='Cart' component={Cart} />
       <NavigationStack.Screen name='Checkout' component={Checkout} />
       <NavigationStack.Screen name='Profile' component={Profile} />
+      <NavigationStack.Screen name='SearchPage' component={SearchPage} />
       <NavigationStack.Screen name='Addresses' component={Addresses} />
       <NavigationStack.Screen name='NewAddress' component={NewAddress} />
       <NavigationStack.Screen name='EditAddress' component={EditAddress} />
       <NavigationStack.Screen name='FullMap' component={FullMap} />
       <NavigationStack.Screen name='CartAddress' component={CartAddress} />
+      <NavigationStack.Screen name='SubCategory' component={SubCategory} />
       <NavigationStack.Screen name='Payment' component={Payment} />
       <NavigationStack.Screen
         name='OrderDetail'
@@ -131,8 +137,7 @@ function NoDrawer() {
         component={About}
         options={{ header: () => null }}
       />
-      <NavigationStack.Screen name='Reviews' component={Reviews} />
-      <NavigationStack.Screen name='Paypal' component={Paypal} />
+     
       <NavigationStack.Screen name='RateAndReview' component={RateAndReview} />
 
       <NavigationStack.Screen
@@ -167,6 +172,8 @@ function NoDrawer() {
       <NavigationStack.Screen name='SaveAddress' component={SaveAddress} />
       <NavigationStack.Screen name='Favourite' component={Favourite} />
       <NavigationStack.Screen name='ChatWithRider' component={ChatScreen} />
+      <NavigationStack.Screen name='Notification' component={Notification} />
+      <NavigationStack.Screen name='ProductDetail' component={ProductDetails} />
     </NavigationStack.Navigator>
   )
 }

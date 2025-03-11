@@ -6,6 +6,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  Image,
   TextInput
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -60,7 +61,10 @@ function Login(props) {
           <View style={styles(currentTheme).mainContainer}>
             <View style={styles().subContainer}>
               <View style={styles().logoContainer}>
-                <SimpleLineIcons name="envelope" size={30} color={currentTheme.newIconColor} />
+                <Image
+                  source={require('../../assets/images/logo.png')} // Ensure this path is correct
+                  style={styles().logo}
+                />
               </View>
               <View>
                 <TextDefault
@@ -71,7 +75,8 @@ function Login(props) {
                     ...alignment.MTlarge,
                     ...alignment.MBmedium
                   }}>
-                  {t('Email or Phone')}
+                  {/* {t('Login or Phone')} */}
+                  Login
                 </TextDefault>
               </View>
               <View style={styles().form}>
@@ -97,7 +102,7 @@ function Login(props) {
                       </TextDefault>
                     )}
                   </View>
-                
+
                   <View style={styles().passwordField}>
                     <TextInput
                       secureTextEntry={showPassword}
@@ -147,6 +152,17 @@ function Login(props) {
                     </TextDefault>
                   </TouchableOpacity>
                 </View>
+                <View style={[styles.termsContainer, { alignItems: 'center', justifyContent: 'center' }]}>
+                  <TextDefault textColor="black" style={{ textAlign: 'center' }}>
+                    * I Agree with all the{' '}
+                    <TextDefault
+                      textColor="#E5E500"
+                      onPress={() => {/* Navigate to Terms */ }}>
+                      Terms & Conditions
+                    </TextDefault>
+                  </TextDefault>
+                </View>
+
                 <View>
                   <TouchableOpacity
                     onPress={loginAction}
@@ -168,6 +184,51 @@ function Login(props) {
                     </TextDefault>
                   </TouchableOpacity>
                 </View>
+                
+                {/* Sign Up Option */}
+                <View style={[styles.signupContainer, { alignItems: 'center', justifyContent: 'center' }]}>
+                  <TextDefault textColor="black" style={{ textAlign: 'center' }}>
+                    Don't have an account?{' '}
+                    <TextDefault
+                      textColor="#E5E500"
+                      onPress={() => props.navigation.navigate('SignUp')}>
+                      Sign Up
+                    </TextDefault>
+                  </TextDefault>
+                </View>
+
+                {/* Or Divider */}
+                <View style={[styles.orContainer, { alignItems: 'center', justifyContent: 'center' }]}>
+                  <TextDefault textColor="black" style={{ textAlign: 'center' }}>
+                    Or
+                  </TextDefault>
+                </View>
+
+                {/* Social Login Divider */}
+                <View style={[styles.dividerContainer, { alignItems: 'center', justifyContent: 'center' }]}>
+                  <View style={styles.divider} />
+                  <TextDefault textColor="black" style={[styles.dividerText, { textAlign: 'center' }]}>
+                    or Continue with
+                  </TextDefault>
+                  <View style={styles.divider} />
+                </View>
+
+                {/* Social Button */}
+                <View style={[styles.socialContainer, { alignItems: 'center', justifyContent: 'center' }]}>
+                  <TouchableOpacity style={styles.socialButton}>
+                    {/* Replace with actual Google icon */}
+                    <View style={styles.googleIconPlaceholder}>
+                      <View style={styles().logoContainer}>
+                        <Image
+                          source={require('../../assets/images/google.png')} // Ensure this path is correct
+                          style={styles().googlelogo}
+                        />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+
+                
               </View>
             </View>
           </View>

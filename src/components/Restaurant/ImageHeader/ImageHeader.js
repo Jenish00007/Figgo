@@ -240,13 +240,7 @@ function ImageTextCenterHeader(props, ref) {
                   ]}
                   onPress={() => navigation.goBack()}
                 >
-                  {/* <Ionicons
-                    name='ios-arrow-back'
-                    style={{
-                      color: props.black,
-                      fontSize: props.iconSize
-                    }}
-                  /> */}
+              
                   <Ionicons
                     name='arrow-back'
                     color={currentTheme.newIconColor}
@@ -280,7 +274,6 @@ function ImageTextCenterHeader(props, ref) {
                 <>
                   <TouchableOpacity
                     activeOpacity={0.7}
-                    disabled={loadingMutation}
                     style={[
                       styles().touchArea,
                       {
@@ -307,29 +300,7 @@ function ImageTextCenterHeader(props, ref) {
                       )}
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    style={[
-                      styles().touchArea,
-                      {
-                        backgroundColor: props.themeBackground,
-                        borderRadius: props.iconRadius,
-                        height: props.iconTouchHeight
-                      }
-                    ]}
-                    onPress={() => {
-                      navigation.navigate('About', {
-                        restaurantObject: { ...aboutObject, isOpen: null },
-                        tab: false
-                      })
-                    }}
-                  >
-                    <SimpleLineIcons
-                      name='info'
-                      size={scale(17)}
-                      color={currentTheme.newIconColor}
-                    />
-                  </TouchableOpacity>
+                  
                   <TouchableOpacity
                     activeOpacity={0.7}
                     style={[

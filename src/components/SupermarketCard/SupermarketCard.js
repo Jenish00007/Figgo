@@ -51,12 +51,12 @@ export const SupermarketCard = ({ name,
       </View>
       {!active && (
         <View style={supermarketStyles.closedBadge}>
-          <Text style={supermarketStyles.closedText}>Closed Now</Text>
+          <Text style={supermarketStyles.closedText}>Closed</Text>
         </View>
       )}
       {active && (
         <View style={supermarketStyles.closedBadge}>
-          <Text style={supermarketStyles.closedText}>Open Now</Text>
+          <Text style={supermarketStyles.closedText}>Open</Text>
         </View>
       )}
     </View>
