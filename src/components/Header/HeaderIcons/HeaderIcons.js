@@ -244,8 +244,8 @@ function RightButton(props) {
           )}
           bolder
           onPress={() =>
-            isLoggedIn && profile
-              ? navigation.navigate('Favourite')
+            isLoggedIn 
+              ? navigation.navigate('Notification')
               : navigation.navigate('CreateAccount')
           }
         />

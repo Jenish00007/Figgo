@@ -47,7 +47,7 @@ function BottomTab({ screen }) {
             color={getIconColor('WhereToGo')}
           />
 
-          
+
           {cartCount > 0 && (
             <View style={styles.badgeContainer}>
               <Text style={styles.badgeText}>{cartCount}</Text>
@@ -55,6 +55,20 @@ function BottomTab({ screen }) {
           )}
         </View>
         <Text style={getTextStyle('WhereToGo')}>Favourite</Text>
+      </TouchableOpacity>
+
+
+      {/* Cart Icon */}
+      <TouchableOpacity
+        onPress={() => navigation.navigate('Cart')}
+        style={styles.footerBtnContainer}
+      >
+        <MaterialCommunityIcons
+          name="cart"
+          size={scale(20)}
+          color={getIconColor('FAVOURITES')}
+        />
+        <Text style={getTextStyle('FAVOURITES')}>Cart</Text>
       </TouchableOpacity>
 
       {/* Favourites Icon */}
@@ -69,9 +83,6 @@ function BottomTab({ screen }) {
         />
         <Text style={getTextStyle('FAVOURITES')}>Orders</Text>
       </TouchableOpacity>
-      
-      
-     
 
       {/* Profile Icon */}
       <TouchableOpacity
@@ -90,7 +101,7 @@ function BottomTab({ screen }) {
             size={scale(20)}
             color={getIconColor('PROFILE')}
           />
-         
+
         </View>
         <Text style={getTextStyle('PROFILE')}>Menu</Text>
       </TouchableOpacity>

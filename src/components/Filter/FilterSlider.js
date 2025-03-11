@@ -1,63 +1,62 @@
-import React, { useState, useContext } from 'react'
+import React, { useState, useContext } from 'react';
 import {
   ScrollView,
   View,
   TouchableOpacity,
   Text,
   Modal,
-  SafeAreaView
-} from 'react-native'
-import { Ionicons, AntDesign } from '@expo/vector-icons'
-import CheckboxBtn from '../../ui/FdCheckbox/CheckboxBtn'
-import RadioButton from '../../ui/FdRadioBtn/RadioBtn'
-import TextDefault from '../Text/TextDefault/TextDefault'
-import styles from './styles'
+  SafeAreaView,
+} from 'react-native';
+import { Ionicons, AntDesign } from '@expo/vector-icons';
+import CheckboxBtn from '../../ui/FdCheckbox/CheckboxBtn';
+import RadioButton from '../../ui/FdRadioBtn/RadioBtn';
+import TextDefault from '../Text/TextDefault/TextDefault';
+import styles from './styles';
 
-import ThemeContext from '../../ui/ThemeContext/ThemeContext'
-import { theme } from '../../utils/themeColors'
-import { FILTER_TYPE } from '../../utils/enums'
-import { useTranslation } from 'react-i18next'
+import ThemeContext from '../../ui/ThemeContext/ThemeContext';
+import { theme } from '../../utils/themeColors';
+import { FILTER_TYPE } from '../../utils/enums';
+import { useTranslation } from 'react-i18next';
 
 const Filters = ({ filters, setFilters, applyFilters }) => {
-  const themeContext = useContext(ThemeContext)
-  const currentTheme = theme[themeContext.ThemeValue]
-  const [modalVisible, setModalVisible] = useState(false)
-  const [selectedFilter, setSelectedFilter] = useState('all')
-  const { t } = useTranslation()
-  const result =
-    filters &&
-    Object.keys(filters).filter((k) =>
-      selectedFilter === 'all'
-        ? filters[k]
-        : selectedFilter === k
-          ? filters[k]
-          : null
-    )
+  const themeContext = useContext(ThemeContext);
+  const currentTheme = theme[themeContext.ThemeValue];
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const { t } = useTranslation();
+  
+  const result = filters && Object.keys(filters).filter((k) =>
+    selectedFilter === 'all'
+      ? filters[k]
+      : selectedFilter === k
+      ? filters[k]
+      : null
+  );
 
   const handleOptionsClick = () => {
-    setSelectedFilter('all')
-    setModalVisible(true)
-  }
+    setSelectedFilter('all');
+  };
 
   const handleFilterClick = (filter) => {
-    setSelectedFilter(filter)
-    setModalVisible(true)
-  }
+    setSelectedFilter(filter);
+    // Apply the filter when a filter is clicked
+    applyFilters(filter);
+  };
 
   const handleValueSelection = (filterTitle, filterValue) => {
-    const selectedFilter = filters[filterTitle]
+    const selectedFilter = filters[filterTitle];
     if (selectedFilter.type === FILTER_TYPE.RADIO) {
-      selectedFilter.selected = [filterValue]
+      selectedFilter.selected = [filterValue];
     } else {
-      const index = selectedFilter.selected.indexOf(filterValue)
+      const index = selectedFilter.selected.indexOf(filterValue);
       if (index > -1) {
-        selectedFilter.selected = selectedFilter.selected.filter(
-          (a) => a !== filterValue
-        )
-      } else selectedFilter.selected.push(filterValue)
+        selectedFilter.selected = selectedFilter.selected.filter((a) => a !== filterValue);
+      } else {
+        selectedFilter.selected.push(filterValue);
+      }
     }
-    setFilters({ ...filters, [filterTitle]: selectedFilter })
-  }
+    setFilters({ ...filters, [filterTitle]: selectedFilter });
+  };
 
   return (
     <ScrollView
@@ -69,17 +68,16 @@ const Filters = ({ filters, setFilters, applyFilters }) => {
         style={styles(currentTheme).filterButton}
         onPress={handleOptionsClick}
       >
-        <Ionicons name='options' size={24} color={currentTheme.black} />
+        <Ionicons name="options" size={24} color={currentTheme.black} />
       </TouchableOpacity>
 
       {filters &&
-        Object.keys(filters)?.map((filter, index) => (
+        Object.keys(filters).map((filter, index) => (
           <TouchableOpacity
             key={index}
             style={[
               styles(currentTheme).filterButton,
-              selectedFilter === filter &&
-                styles(currentTheme).selectedFilterButton
+              selectedFilter === filter && styles(currentTheme).selectedFilterButton,
             ]}
             onPress={() => handleFilterClick(filter)}
           >
@@ -87,19 +85,18 @@ const Filters = ({ filters, setFilters, applyFilters }) => {
               <TextDefault textColor={currentTheme.black} style={styles(currentTheme).filterButtonText}>
                 {t(filter)}
               </TextDefault>
-              {/* <AntDesign name='down' size={14} color={currentTheme.black}/> */}
             </SafeAreaView>
           </TouchableOpacity>
         ))}
 
-      <Modal visible={modalVisible} adjustToContentHeight animationType='slide'>
+      <Modal visible={modalVisible} adjustToContentHeight animationType="slide">
         <View style={styles(currentTheme).modalHeader}>
           <TouchableOpacity onPress={() => setModalVisible(false)}>
-            <AntDesign name='arrowleft' size={24} color={currentTheme.newIconColor} />
+            <AntDesign name="arrowleft" size={24} color={currentTheme.newIconColor} />
           </TouchableOpacity>
           <Text style={styles(currentTheme).filterText}> {t('filters')}</Text>
           <TouchableOpacity onPress={() => setModalVisible(false)}>
-            <AntDesign name='closecircleo' size={24} color={currentTheme.newIconColor}  />
+            <AntDesign name="closecircleo" size={24} color={currentTheme.newIconColor} />
           </TouchableOpacity>
         </View>
         <ScrollView style={styles(currentTheme).modalContainer}>
@@ -116,11 +113,10 @@ const Filters = ({ filters, setFilters, applyFilters }) => {
                       style={[
                         {
                           flexDirection: 'row',
-                          justifyContent: 'space-between'
+                          justifyContent: 'space-between',
                         },
                         styles(currentTheme).modalItem,
-                        filters[filterValue].selected === value &&
-                          styles(currentTheme).selectedModalItem
+                        filters[filterValue].selected === value && styles(currentTheme).selectedModalItem,
                       ]}
                       onPress={() => handleValueSelection(filterValue, value)}
                     >
@@ -130,24 +126,16 @@ const Filters = ({ filters, setFilters, applyFilters }) => {
                       {filters &&
                       filters[filterValue].type === FILTER_TYPE.CHECKBOX ? (
                         <CheckboxBtn
-                          checked={filters[filterValue].selected.includes(
-                            value
-                          )}
-                          onPress={() =>
-                            handleValueSelection(filterValue, value)
-                          }
+                          checked={filters[filterValue].selected.includes(value)}
+                          onPress={() => handleValueSelection(filterValue, value)}
                         />
                       ) : (
                         <RadioButton
                           size={12}
                           innerColor={currentTheme.main}
                           outerColor={currentTheme.iconColorDark}
-                          isSelected={filters[filterValue].selected.includes(
-                            value
-                          )}
-                          onPress={() =>
-                            handleValueSelection(filterValue, value)
-                          }
+                          isSelected={filters[filterValue].selected.includes(value)}
+                          onPress={() => handleValueSelection(filterValue, value)}
                         />
                       )}
                     </TouchableOpacity>
@@ -157,8 +145,8 @@ const Filters = ({ filters, setFilters, applyFilters }) => {
           ))}
           <TouchableOpacity
             onPress={() => {
-              setModalVisible(false)
-              applyFilters && applyFilters()
+              setModalVisible(false);
+              applyFilters && applyFilters(selectedFilter);  // Ensure applying selected filter
             }}
             activeOpacity={0.5}
             style={styles(currentTheme).saveBtnContainer}
@@ -170,7 +158,7 @@ const Filters = ({ filters, setFilters, applyFilters }) => {
         </ScrollView>
       </Modal>
     </ScrollView>
-  )
-}
+  );
+};
 
-export default Filters
+export default Filters;

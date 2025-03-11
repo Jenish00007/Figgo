@@ -9,7 +9,6 @@ import React, {
 import { View, Text, TouchableOpacity } from 'react-native'
 import { LocationContext } from '../../context/Location'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-
 import { theme } from '../../utils/themeColors'
 import TextDefault from '../../components/Text/TextDefault/TextDefault'
 import styles from './styles'
@@ -38,7 +37,6 @@ export default function AddNewAddress(props) {
   const { getAddress } = useGeocoding()
   const [searchModalVisible, setSearchModalVisible] = useState()
   const [cityModalVisible, setCityModalVisible] = useState(false)
-
   const { longitude, latitude, id } = props.route.params || {}
 
   const [selectedValue, setSelectedValue] = useState({

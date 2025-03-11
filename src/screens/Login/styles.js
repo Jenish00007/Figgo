@@ -59,7 +59,7 @@ const styles = (props = null) =>
       borderRadius: scale(6),
       backgroundColor: props !== null ? props.themeBackground : 'white',
       padding: scale(12),
-      color: props !==null ? props.newFontcolor : 'red'
+      color: props !== null ? props.newFontcolor : 'red'
     },
     errorInput: {
       backgroundColor: props !== null ? props.errorInputBack : '#F7E7E5',
@@ -97,6 +97,27 @@ const styles = (props = null) =>
     },
     headerRightIcon: {
       ...alignment.PRsmall
+    },
+    logoContainer: {
+      width: 150,
+      height: 150,
+      display: 'flex',
+       justifyContent:'center'
+    },
+    logo: {
+      width: '100%',
+      height: 80,
+      objectFit: 'contain',
+      alignItems: 'center',
+     marginHorizontal:100
+     
+    },
+    googlelogo:{
+      width: '50%',
+      height: 50,
+      objectFit: 'contain',
+      alignItems: 'center',
+     marginHorizontal:40
     }
   })
 export default styles

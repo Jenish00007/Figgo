@@ -15,11 +15,8 @@ import {
   Modal,
   Pressable
 } from 'react-native'
-import { useMutation } from '@apollo/client'
-import gql from 'graphql-tag'
 import { TextField, OutlinedTextField } from 'react-native-material-textfield'
 import { scale } from '../../utils/scaling'
-import { updateUser, login, Deactivate } from '../../apollo/mutations'
 import ChangePassword from './ChangePassword'
 import { theme } from '../../utils/themeColors'
 import UserContext from '../../context/User'
@@ -41,12 +38,7 @@ import navigationService from '../../routes/navigationService'
 import { useTranslation } from 'react-i18next'
 import Spinner from '../../components/Spinner/Spinner'
 
-const UPDATEUSER = gql`
-  ${updateUser}
-`
-const DEACTIVATE = gql`
-  ${Deactivate}
-`
+
 
 function Profile(props) {
   const Analytics = analytics()
@@ -63,47 +55,11 @@ function Profile(props) {
   const [showPass, setShowPass] = useState(false)
   const [deleteModalVisible, setDeleteModalVisible] = useState(false)
 
-  const { profile, logout } = useContext(UserContext)
+  const {  formetedProfileData, logout } = useContext(UserContext)
   const themeContext = useContext(ThemeContext)
   const currentTheme = theme[themeContext.ThemeValue]
   const backScreen = props.route.params ? props.route.params.backScreen : null
-  const [mutate, { loading: loadingMutation }] = useMutation(UPDATEUSER, {
-    onCompleted,
-    onError
-  })
-
-  const onCompletedDeactivate = () => {
-    setDeleteModalVisible(false)
-    logout()
-    navigation.reset({
-      routes: [{ name: 'Main' }]
-    })
-    FlashMessage({ message: t('accountDeactivated'), duration: 5000 })
-  }
-  const onErrorDeactivate = (error) => {
-    if (error.graphQLErrors) {
-      FlashMessage({
-        message: error.graphQLErrors[0].message
-      })
-    } else if (error.networkError) {
-      FlashMessage({
-        message: error.networkError.result.errors[0].message
-      })
-    } else {
-      FlashMessage({
-        message: "Couldn't delete account. Please try again later"
-      })
-    }
-  }
-
-  const [deactivated, { loading: deactivateLoading }] = useMutation(
-    DEACTIVATE,
-    {
-      onCompleted: onCompletedDeactivate,
-      onError: onErrorDeactivate
-    }
-  )
-
+  
   useFocusEffect(() => {
     if (Platform.OS === 'android') {
       StatusBar.setBackgroundColor(currentTheme.menuBar)
@@ -112,12 +68,7 @@ function Profile(props) {
       themeContext.ThemeValue === 'Dark' ? 'light-content' : 'dark-content'
     )
   })
-  useEffect(() => {
-    async function Track() {
-      await Analytics.track(Analytics.events.NAVIGATE_TO_PROFILE)
-    }
-    Track()
-  }, [])
+ 
   useLayoutEffect(() => {
     props.navigation.setOptions({
       title: t('titleProfile'),
@@ -177,54 +128,9 @@ function Profile(props) {
     setToggleEmailView((prev) => !prev)
   }
 
-  function onCompleted({ updateUser }) {
-    if (updateUser) {
-      FlashMessage({
-        message: t('userInfoUpdated')
-      })
-      if (backScreen) {
-        props.navigation.goBack()
-      }
-    }
-  }
 
-  const validateName = async () => {
-    setNameError('')
+  
 
-    const f_name = refName.current.value()
-
-    if (f_name !== profile?.f_name) {
-      if (!f_name.trim()) {
-        refName.current.focus()
-        setNameError(t('nameError'))
-        return false
-      }
-
-      try {
-        await mutate({
-          variables: {
-            f_name: f_name
-          }
-        })
-      } catch (error) {
-        return false
-      }
-    }
-
-    return true
-  }
-
-  const updateName = async () => {
-    const isValid = await validateName()
-    if (isValid) {
-      await mutate({
-        variables: {
-          f_name: refName.current.value(),
-          phone: profile?.phone
-        }
-      })
-    }
-  }
 
   const handleNamePress = () => {
     viewHideAndShowName()
@@ -234,31 +140,6 @@ function Profile(props) {
     viewHideAndShowName()
   }
 
-  function onError(error) {
-    try {
-      if (error.graphQLErrors) {
-        FlashMessage({
-          message: error.graphQLErrors[0].message
-        })
-      } else if (error.networkError) {
-        FlashMessage({
-          message: error.networkError.result.errors[0].message
-        })
-      }
-    } catch (err) {}
-  }
-
-  async function deactivatewithemail() {
-    try {
-      // setDeleteModalVisible(false)
-      // setDeleteConfirmationModalVisible(true)
-      await deactivated({
-        variables: { isActive: false, email: profile?.email }
-      })
-    } catch (error) {
-      console.error('Error during deactivation mutation:', error)
-    }
-  }
 
   function changeNameTab() {
     return (
@@ -269,7 +150,7 @@ function Profile(props) {
             style={{ fontSize: scale(13) }}
             bolder
           >
-            {profile?.f_name}
+            {formetedProfileData?.f_name || 'No name available'}
           </TextDefault>
         </View>
       </>
@@ -286,22 +167,29 @@ function Profile(props) {
               textColor={currentTheme.iconColor}
               bolder
             >
-              {profile?.email}
+              {formetedProfileData?.email}
             </TextDefault>
           </View>
-          {profile?.email !== '' && (
+          {formetedProfileData !== '' && (
             <View
               style={[
                 styles().verifiedButton,
                 {
-                  backgroundColor: profile?.email_verified_at
+                  backgroundColor: formetedProfileData?.is_email_verified
                     ? currentTheme.newheaderColor
                     : currentTheme.buttonText
                 }
               ]}
             >
-              <TextDefault textColor={currentTheme.color4} bold>
-                {profile?.email_verified_at ? t('verified') : t('unverified')}
+             <TextDefault
+                textColor={
+                  formetedProfileData?.is_email_verified
+                    ? currentTheme.color4
+                    : currentTheme.white
+                }
+                bold
+              >
+                {formetedProfileData?.is_email_verified ? t('verified') : t('unverified')}
               </TextDefault>
             </View>
           )}
@@ -336,15 +224,15 @@ function Profile(props) {
               textColor={currentTheme.iconColor}
               bolder
             >
-              {profile?.phone}
+              {formetedProfileData?.phone}
             </TextDefault>
           </View>
-          {profile?.phone !== '' && (
+          {formetedProfileData !== '' && (
             <View
               style={[
                 styles().verifiedButton,
                 {
-                  backgroundColor: profile?.is_phone_verified
+                  backgroundColor: formetedProfileData?.is_phone_verified
                     ? currentTheme.main
                     : currentTheme.fontFourthColor
                 }
@@ -352,13 +240,13 @@ function Profile(props) {
             >
               <TextDefault
                 textColor={
-                  profile?.is_phone_verified
+                  formetedProfileData?.is_phone_verified
                     ? currentTheme.color4
                     : currentTheme.white
                 }
                 bold
               >
-                {profile?.is_phone_verified ? t('verified') : t('unverified')}
+                {formetedProfileData?.is_phone_verified ? t('verified') : t('unverified')}
               </TextDefault>
             </View>
           )}
@@ -427,7 +315,7 @@ function Profile(props) {
                       <View style={{ marginTop: 10 }}>
                         <OutlinedTextField
                           ref={refName}
-                          defaultValue={profile?.f_name}
+                          defaultValue={formetedProfileData?.f_name}
                           autoFocus={true}
                           maxLength={20}
                           textColor={currentTheme.newFontcolor}
@@ -562,42 +450,42 @@ function Profile(props) {
 
                         <View style={styles().flexRow}>
                           <View>
-                            <TextDefault>{profile?.phone}</TextDefault>
+                            <TextDefault>{formattedPhone}</TextDefault>
                           </View>
                           <View style={styles().phoneDetailsContainer}>
-                            {(profile?.phone === '' ||
-                              !profile?.is_phone_verified) && (
+                            {(formetedProfileData?.phone === '' ||
+                              !formetedProfileData?.is_phone_verified) && (
                               <TouchableOpacity
                                 onPress={() =>
                                   props.navigation.navigate(
-                                    profile?.phone === ''
+                                    formattedPhone === ''
                                       ? 'PhoneNumber'
                                       : 'PhoneOtp',
                                     { prevScreen: 'Profile' }
                                   )
                                 }
                                 disabled={
-                                  profile?.is_phone_verified &&
-                                  profile?.phone !== ''
+                                  formetedProfileData?.is_phone_verified &&
+                                  formetedProfileData.phone !== ''
                                 }
                               >
                                 <TextDefault
                                   bold
                                   textColor={
-                                    profile?.is_phone_verified
+                                    formetedProfileData?.is_phone_verified
                                       ? currentTheme.startColor
                                       : currentTheme.textErrorColor
                                   }
                                 >
-                                  {profile?.phone === ''
+                                  {formetedProfileData.phone === ''
                                     ? t('addPhone')
-                                    : profile?.is_phone_verified
+                                    : formetedProfileData?.is_phone_verified
                                       ? t('verified')
                                       : t('verify')}
                                 </TextDefault>
                               </TouchableOpacity>
                             )}
-                            {profile?.phone !== '' && (
+                            {formetedProfileData.phone !== '' && (
                               <Feather
                                 style={{ marginLeft: 10, marginTop: -5 }}
                                 name='check'
@@ -674,7 +562,7 @@ function Profile(props) {
                     onPress={() => setDeleteModalVisible(!deleteModalVisible)}
                   />
                 </View>
-                <TextDefault H5 textColor={currentTheme.newFontcolor}>
+                {/* <TextDefault H5 textColor={currentTheme.newFontcolor}>
                   {t('permanentDeleteMessage')}
                 </TextDefault>
                 <TouchableOpacity
@@ -683,8 +571,7 @@ function Profile(props) {
                     styles().btnDelete,
                     { opacity: deactivateLoading ? 0.5 : 1 }
                   ]}
-                  onPress={deactivatewithemail}
-                  disabled={deactivateLoading}
+                 
                 >
                   {deactivateLoading ? (
                     <Spinner backColor='transparent' size='small' />
@@ -702,7 +589,7 @@ function Profile(props) {
                   <TextDefault bolder H4 textColor={currentTheme.black}>
                     {t('noDelete')}
                   </TextDefault>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
             </View>
           </Modal>

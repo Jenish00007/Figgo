@@ -13,7 +13,7 @@ const styles = StyleSheet.create({
     
   },
   footerBtnContainer: {
-    width: '25%',
+    width: '20%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
