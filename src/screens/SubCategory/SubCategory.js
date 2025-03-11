@@ -17,7 +17,7 @@ import BottomTab from '../../components/BottomTab/BottomTab';
 
 const SubCategory = ({ route }) => {
   const { category } = route.params;
-  const menucategoryId = 102; // Default category ID
+  const menucategoryId = category.id;
 
   const [activeTab, setActiveTab] = useState('All');
   const [products, setProducts] = useState([]); // Store products in state
