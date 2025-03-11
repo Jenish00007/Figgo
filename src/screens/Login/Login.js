@@ -191,7 +191,7 @@ function Login(props) {
                     Don't have an account?{' '}
                     <TextDefault
                       textColor="#E5E500"
-                      onPress={() => props.navigation.navigate('CreateAccount')}>
+                      onPress={() => props.navigation.navigate('Register')}>
                       Sign Up
                     </TextDefault>
                   </TextDefault>
