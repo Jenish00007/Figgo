@@ -20,6 +20,7 @@ import { FlashMessage } from '../../../ui/FlashMessage/FlashMessage'
 import { useTranslation } from 'react-i18next'
 import { LocationContext } from '../../../context/Location'
 import AuthContext from '../../../context/Auth'
+import { Delete } from 'lucide-react-native'
 
 // const ADD_FAVOURITE = gql`
 //   ${addFavouriteRestaurant}
@@ -50,85 +51,75 @@ function Item(props) {
 
   const [isFavourite, setIsFavourite] = useState(true);
   const [loading, setLoading] = useState(false);
-  // API URLs
-  const ADD_TO_WISHLIST_URL = `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/add?item_id=${item.id}`;
-  const REMOVE_FROM_WISHLIST_URL = `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/remove?item_id=${item.id}`;
 
-  // Fetch wishlist status on component mount
-useEffect(() => {
-  // Check if the product is in the wishlist when the component loads
-  if (item) {
-    setIsFavourite(!!item.isInWishlist);
-  }
-}, [item]); // Runs when profile or item.id changes
-
-// useEffect(() => {
-//   console.log("Item in wishlist?", item.id, isFavourite, item.isInWishlist);
-// }, [isFavourite, item]);
-
+  useEffect(() => {
+    if (item) {
+      setIsFavourite(isFavourite);
+    }
+  }, [isFavourite]); 
 
   // Function to handle adding/removing from wishlist
   const toggleWishlist = async () => {
-    if (loading) return; // Prevent multiple clicks
+    if (loading) return; 
     setLoading(true);
 
-    const url = isFavourite ? REMOVE_FROM_WISHLIST_URL : ADD_TO_WISHLIST_URL;
-    const method = 'POST'; // Change as needed
-    const body = JSON.stringify({ item_id: item.id });
-    const headers = {
-      'moduleId': '1',
-      'zoneId': '[1]',
-      'latitude': location?.latitude?.toString() || '23.79354466376145',
-      'longitude': location?.longitude?.toString() || '90.41166342794895',
-      'Authorization': token ? `Bearer ${token}` : '',
-      'Content-Type': 'application/json',
-      // These headers ensure a fresh request every time
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    }
-
     try {
+      let url 
+      const method = isFavourite ? 'DELETE' : 'POST'; // Change as needed
+       if (props.isStore) {
+        url = isFavourite
+          ? `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/remove?store_id=${props.item.id}`
+          : `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/add?store_id=${props.item.id}`;
+      } else {
+        // Use item_id for items
+        url = isFavourite
+          ? `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/remove?item_id=${props.item.id}`
+          : `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/add?item_id=${props.item.id}`;
+      }
+      const headers = {
+        'moduleId': '1',
+        'zoneId': '[1]',
+        'latitude': location?.latitude?.toString() || '23.79354466376145',
+        'longitude': location?.longitude?.toString() || '90.41166342794895',
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }  
+
       const response = await fetch(url, {
         method: method,
         headers: headers,
-        body: body,
       });
 
-      const responseData = await response.json(); // Parse JSON response
+    // Check if response is JSON before parsing
+      const responseData = await response.json();
       console.log("API Response:", responseData);
-      // Check if product is already in wishlist
-      if (responseData.message === "Already in wishlist") {
-        FlashMessage({ message: "Already in wishlist" });
-        return;
-      }
-
-      if (!response.ok){
-         throw new Error(responseData.message || 'Failed to update wishlist');
+      
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Failed to update wishlist');
       }
       
-      setIsFavourite(!isFavourite);
-      FlashMessage({ message:  responseData.message});
-
-
-      // Navigate back if item was removed from wishlist on the wishlist page
-      if (isFavourite) {
-        // Get the current route name
-        const currentRouteName = navigation.getState().routes[navigation.getState().index].name;
-        if (currentRouteName.toLowerCase().includes('favourite')) {
-          // Refresh the wishlist page instead of navigating away
-          // The parent component should handle this with a refresh function
-          if (props.onRemoveFromWishlist) {
-            props.onRemoveFromWishlist(item.id);
-          }
-        }
+      setIsFavourite((prev) => !prev);
+      FlashMessage({ message: responseData.message });
+      
+      if (isFavourite && props.onRemoveFromWishlist) {
+        props.onRemoveFromWishlist(item.id);
       }
-    } catch (error) {
+    } catch (error) {     
       console.error('Wishlist update error:', error);
       FlashMessage({ message: 'Something went wrong', type: 'danger' });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRemoveFromWishlist = (itemId) => {
+    setData((prevData) => ({
+      ...prevData,
+      item: prevData.item.filter((item) => item.id !== itemId),
+    }));
   };
 
   const { isAvailable, openingTimes } = item
@@ -179,9 +170,9 @@ useEffect(() => {
                   <AntDesign
                     name={isFavourite  ? 'heart' : 'hearto'}
                     size={scale(15)}
-                    color={isFavourite ? '#FF0000' : 'black'} 
-                    //color= {isFavourite ? 'red' : 'black'} //"black"
+                    color={isFavourite ? 'red' : 'black'} 
                     style={{ opacity: 1 }} 
+                    onPress={toggleWishlist} 
                   />
                 )}
               </TouchableOpacity>

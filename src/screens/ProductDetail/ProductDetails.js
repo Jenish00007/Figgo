@@ -46,6 +46,7 @@ const ProductDetail = () => {
                 {/* Add to Favourites Icon */}
                 <View style={styles.favIconContainer}>
                     <AddToFavourites product={product} />
+                    {/* <AddToFavourites product={store} isStore={true} /> */}
                 </View>
             </View>
 

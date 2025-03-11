@@ -24,6 +24,7 @@ import ErrorView from '../../components/ErrorView/ErrorView'
 import EmptyView from '../../components/EmptyView/EmptyView'
 import AsyncStorage from '@react-native-async-storage/async-storage' // Import AsyncStorage for React Native
 import AuthContext from '../../context/Auth'
+import { ScrollView } from 'react-native-gesture-handler'
 
 function Favourite() {
   const analytics = Analytics()
@@ -96,7 +97,6 @@ function Favourite() {
   useFocusEffect(
     useCallback(() => {
       fetchFavouriteRestaurants()
-      
       if (Platform.OS === 'android') {
         StatusBar.setBackgroundColor(currentTheme.menuBar)
       }
@@ -173,7 +173,7 @@ function Favourite() {
     }
 
     return (
-      <>
+      <ScrollView>
         {data.store.length > 0 && (
           <View style={styles(currentTheme).sectionContainer}>
             <Text style={styles(currentTheme).sectionTitle}>{t('favouriteStores')}</Text>
@@ -181,7 +181,11 @@ function Favourite() {
               data={data.store}
               keyExtractor={(item) => `store-${item.id}`}
               showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => <Item item={item} isStore={true} onRemoveFromWishlist={handleRemoveFromWishlist}/>}
+              renderItem={({ item }) => <Item 
+              item={item} 
+              isStore={true} 
+              isFavourite={data.store.some(favStore => favStore.id === item.id)} 
+              onRemoveFromWishlist={handleRemoveFromWishlist}/>}
               ListEmptyComponent={null}
             />
           </View>
@@ -194,12 +198,16 @@ function Favourite() {
               data={data.item}
               keyExtractor={(item) => `item-${item.id}`}
               showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => <Item item={item} isStore={false}  onRemoveFromWishlist={handleRemoveFromWishlist} />}
+              renderItem={({ item }) => <Item 
+              item={item} 
+              isStore={false} 
+              isFavourite={data.item.some(favItem => favItem.id === item.id)} 
+              onRemoveFromWishlist={handleRemoveFromWishlist} />}
               ListEmptyComponent={null}
             />
           </View>
         )}
-      </>
+      </ScrollView>
     );
   };
 

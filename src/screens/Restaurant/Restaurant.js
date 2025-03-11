@@ -55,6 +55,7 @@ import { IMAGE_LINK } from '../../utils/constants'
 import { LocationContext } from '../../context/Location'
 import PopularIcon from '../../assets/SVG/popular'
 import { escapeRegExp } from '../../utils/regex'
+import AddtoFavourites from './../../components/Favourites/AddtoFavourites'
 
 const { height } = Dimensions.get('screen')
 const moduleId = '1'
@@ -574,6 +575,11 @@ function Restaurant(props) {
             searchPopupHandler={searchPopupHandler}
             translationY={translationY}
           />
+
+          {/* Add the AddtoFavourites component here */}
+          <View style={{ position: 'absolute', top: scale(50), right: scale(15), zIndex: 100 }}>
+            <AddtoFavourites restaurantId={propsData.id} />
+          </View>
 
           {showSearchResults || searchOpen ? (
             <ScrollView

@@ -893,7 +893,7 @@ function Menu({ route, props }) {
             </View>
           </View>
 
-          {/* Modal */}
+          
           <MainModalize
             modalRef={modalRef}
             currentTheme={currentTheme}

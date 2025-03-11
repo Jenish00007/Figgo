@@ -1,60 +1,119 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LocationContext } from '../../context/Location'
-import AuthContext from '../../context/Auth'
+import { LocationContext } from '../../context/Location';
+import AuthContext from '../../context/Auth';
 
-
-const AddToFavourites = ({ product }) => {
+const AddToFavourites = ({ product, isStore = false }) => {
     const [isFavourite, setIsFavourite] = useState(false);
-    const { location } = useContext(LocationContext)
-    const { token, setToken } = useContext(AuthContext)
-    // API URL
-    const API_URL = `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/add`;
+    const [loading, setLoading] = useState(false);
+    const { location } = useContext(LocationContext);
+    const { token } = useContext(AuthContext);
 
-    // Function to Add to Favourites
-    const addToFavourites = async () => {
+    // Check if product is already in favorites on component mount
+    useEffect(() => {
+        if (token) {
+            checkFavouriteStatus();
+        }
+    }, [token, product?.id]);
+
+    // Function to check if the product is already in favorites
+    const checkFavouriteStatus = async () => {
+        if (!token) return;
+        
         try {
             const headers = {
                 'moduleId': '1',
                 'zoneId': '[1]',
                 'latitude': location?.latitude?.toString() || '23.79354466376145',
                 'longitude': location?.longitude?.toString() || '90.41166342794895',
-                'Authorization': token ? `Bearer ${token}`: '',
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+            
+            const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/customer/wish-list', {
+                method: 'GET',
+                headers: headers,
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log("Wishlist response:", result);
+                // Add this at the beginning of toggleFavourites
+                console.log("Toggle favorites for:", isStore ? "Store" : "Item", product.id);
+                
+                // Check the correct path in the API response
+                const itemList = isStore ? result?.store || [] : result?.item || [];
+                
+                // Check if the current product is in the wishlist
+                const isInWishlist = itemList.some(item => item.id === product?.id);
+                console.log("PRoduct Token", token)
+                setIsFavourite(isInWishlist);
+            }
+        } catch (error) {
+            console.error("Error checking favourite status:", error);
+        }
+    };
+
+    // Function to toggle favorites
+    const toggleFavourites = async () => {
+        if (loading || !token) {
+            if (!token) {
+                Alert.alert("Please Login", "You need to be logged in to add items to favorites.");
+            }
+            return;
+        }
+        
+        setLoading(true);
+        
+        try {
+            // Determine whether to add or remove from wishlist based on current state
+            const endpoint = isFavourite
+                ? `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/remove?${isStore ? 'store_id' : 'item_id'}=${product?.id}`
+                : `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/add?${isStore ? 'store_id' : 'item_id'}=${product?.id}`;
+                
+            const method = isFavourite ? 'DELETE' : 'POST';
+            
+            const headers = {
+                'moduleId': '1',
+                'zoneId': '[1]',
+                'latitude': location?.latitude?.toString() || '23.79354466376145',
+                'longitude': location?.longitude?.toString() || '90.41166342794895',
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
-                // These headers ensure a fresh request every time
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
                 'Expires': '0'
-              }
-            const body = JSON.stringify({ item_id: product.id });
-            const response = await fetch(API_URL, {
-                method: 'POST',
+            };
+            
+            const response = await fetch(endpoint, {
+                method: method,
                 headers: headers,
-                body: body,
             });
 
             const result = await response.json();
-            console.log("The Api Response for add item", result,"id", product.id)
-            
-            if (response.status === 200) {
-                setIsFavourite(!isFavourite); 
-                if (!isFavourite) {
-                    Alert.alert("Success", "Product added to Favourites.");
-                } else {
-                    Alert.alert("Removed", "Product removed from Favourites.");
-                }
+            console.log(`${isFavourite ? 'Remove from' : 'Add to'} favourites response:`, result,"id is", product.id);
+           
+            if (response.ok) {
+                // Only update state if API call was successful
+                setIsFavourite(!isFavourite);
+                Alert.alert(
+                    isFavourite ? "Removed" : "Success",
+                    isFavourite ? "Removed from Favourites." : "Added to Favourites."
+                );
             } else {
                 Alert.alert("Error", result.message || "Something went wrong.");
             }
         } catch (error) {
-            console.error("Error adding to favourites:", error);
-            Alert.alert("Error", "Failed to add to Favourites.");
+            console.error("Error toggling favourites:", error);
+            Alert.alert("Error", "Failed to update Favourites.");
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <TouchableOpacity onPress={addToFavourites}>
+        <TouchableOpacity onPress={toggleFavourites} disabled={loading}>
             <Ionicons
                 name={isFavourite ? 'heart' : 'heart-outline'}
                 size={28}

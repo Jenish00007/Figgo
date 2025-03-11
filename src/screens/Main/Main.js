@@ -527,7 +527,7 @@ function Main(props) {
                     </View>
 
                     <View>
-                      {/* <View>
+                      <View>
                         {isLoggedIn &&
                           recentOrderRestaurantsVar &&
                           recentOrderRestaurantsVar.length > 0 && (
@@ -544,7 +544,7 @@ function Main(props) {
                               )}
                             </>
                           )}
-                      </View> */}
+                      </View>
                       <View>
                         {/* {orderLoading ? (
                           <MainLoadingUI />
