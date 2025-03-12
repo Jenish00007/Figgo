@@ -88,7 +88,7 @@ function BottomTab({ screen }) {
       <TouchableOpacity
         onPress={() => {
           if (isLoggedIn) {
-            navigation.navigate('Profile');
+            navigation.navigate('Options');
           } else {
             navigation.navigate('Login');
           }

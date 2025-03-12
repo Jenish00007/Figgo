@@ -1,152 +1,180 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Image, TouchableOpacity, FlatList, StyleSheet, Alert, useColorScheme } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Ionicons, FontAwesome } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-import BottomTab from "../../components/BottomTab/BottomTab";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-const CartScreen = () => {
-  const navigation = useNavigation()
+const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
-  const theme = useColorScheme();
+  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();
 
   useEffect(() => {
-    const loadCart = async () => {
-      try {
-        const storedCart = await AsyncStorage.getItem("cart");
-        if (storedCart) {
-          setCartItems(JSON.parse(storedCart));
-        }
-      } catch (error) {
-        console.error("Error loading cart:", error);
-      }
-    };
-    loadCart();
+    fetchCartItems();
   }, []);
 
-  const saveCart = async (updatedCart) => {
+  const headers = {
+    'moduleId': '1',
+    'zoneId': '[3,1]',
+    'X-localization': 'en',
+    'latitude': '23.793544663762145',
+    'longitude': '90.41166342794895'
+  };
+
+  const fetchCartItems = async () => {
     try {
-      await AsyncStorage.setItem("cart", JSON.stringify(updatedCart));
-      setCartItems(updatedCart);
+      const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/customer/cart/list?guest_id=124', {
+        'method': 'GET',
+        headers: headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch cart');
+      }
+
+      const data = await response.json();
+      console.log('Cart data received:', data);
+
+      setCartItems(data);
+      setLoading(false);
     } catch (error) {
-      console.error("Error saving cart:", error);
+      console.error('Error fetching cart:', error);
+      Alert.alert('Error', 'Failed to fetch cart items');
+      setLoading(false);
     }
   };
 
-  const handleQuantityChange = (id, type) => {
-    const updatedCart = cartItems.map((item) =>
-      item.id === id
-        ? { ...item, quantity: type === "increase" ? item.quantity + 1 : Math.max(1, item.quantity - 1) }
-        : item
+  const renderItem = ({ item }) => (
+    <View style={styles.card}>
+      {item.item && item.item.image && (
+        <Image
+          source={{ uri: `https://6ammart-admin.6amtech.com/storage/app/public/product/${item.item.image}` }}
+          style={styles.image}
+        />
+      )}
+      <View style={styles.info}>
+        <Text style={styles.name}>{item.item ? item.item.name : 'Unknown Item'}</Text>
+        <Text style={styles.price}>₹{item.price}</Text>
+        <Text style={styles.quantity}>Qty: {item.quantity}</Text>
+      </View>
+    </View>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
     );
-    saveCart(updatedCart);
-  };
+  }
 
-  const handleDeleteItem = (id) => {
-    Alert.alert("Remove Item", "Are you sure you want to remove this item?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Remove",
-        onPress: () => {
-          const updatedCart = cartItems.filter((item) => item.id !== id);
-          saveCart(updatedCart);
-        },
-      },
-    ]);
-  };
-
-  const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
-  const styles = getStyles(theme);
+  if (!Array.isArray(cartItems) || cartItems.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.emptyMessage}>Your cart is empty</Text>
+      </View>
+    );
+  }
 
   return (
-
     <View style={styles.container}>
       <FlatList
         data={cartItems}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.cartItem}>
-            <Image source={{ uri: item.image_full_url }} style={styles.productImage} />
-            <View style={styles.detailsContainer}>
-              <Text style={styles.productName}>{item.name}</Text>
-              <Text style={styles.price}>${item.price.toFixed(2)}</Text>
-              <View style={styles.actions}>
-                <TouchableOpacity onPress={() => handleDeleteItem(item.id)} style={styles.deleteButton}>
-                  <Ionicons name="trash-outline" size={22} color="red" />
-                </TouchableOpacity>
-                <View style={styles.quantityControl}>
-                  <TouchableOpacity onPress={() => handleQuantityChange(item.id, "decrease")}>
-                    <FontAwesome name="minus-circle" size={22} color="green" />
-                  </TouchableOpacity>
-                  <Text style={styles.quantity}>{item.quantity}</Text>
-                  <TouchableOpacity onPress={() => handleQuantityChange(item.id, "increase")}>
-                    <FontAwesome name="plus-circle" size={22} color="green" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
-        ListEmptyComponent={<Text style={styles.emptyCart}>Your cart is empty</Text>}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => `${item.id || index}`}
+        ListEmptyComponent={<Text style={styles.emptyMessage}>Your cart is empty</Text>}
       />
 
-      <TouchableOpacity style={styles.addMoreBtn} onPress={() => navigation.goBack()}>
-        <Text style={styles.addMoreText}>+ Add More Items</Text>
-      </TouchableOpacity>
+      {/* Button Section */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={styles.addButton} 
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.buttonText}>Add More Items</Text>
+        </TouchableOpacity>
 
-      <View style={styles.footer}>
-        <Text style={styles.subtotalText}>Subtotal:</Text>
-        <Text style={styles.subtotalPrice}>${subtotal.toFixed(2)}</Text>
+        <TouchableOpacity 
+          style={styles.confirmButton} 
+          onPress={() => navigation.navigate('OrderSummary', { cartItems })}
+        >
+          <Text style={styles.buttonText}>Confirm Order</Text>
+        </TouchableOpacity>
       </View>
-
-      <TouchableOpacity style={styles.confirmBtn}>
-        <Text style={styles.confirmText}>Confirm Delivery Details</Text>
-      </TouchableOpacity>
-      <BottomTab />
     </View>
-
-
-
   );
 };
 
-const getStyles = (theme) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: theme === "dark" ? "#121212" : "transparent",
-      padding: 10
-    },
-    cartItem: {
-      flexDirection: "row",
-      backgroundColor: theme === "dark" ? "#1E1E1E" : "#fff",
-      padding: 10,
-      marginVertical: 5,
-      borderRadius: 10,
-      shadowColor: "#000",
-      shadowOpacity: 0.1,
-      shadowRadius: 5,
-      elevation: 3,
-      alignItems: "center",
-    },
-    productImage: { width: 80, height: 80, borderRadius: 10 },
-    detailsContainer: { flex: 1, marginLeft: 15 },
-    productName: { fontSize: 16, fontWeight: "bold", color: theme === "dark" ? "#fff" : "#000" },
-    price: { fontSize: 14, fontWeight: "bold", color: theme === "dark" ? "#ccc" : "#333" },
-    actions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10 },
-    deleteButton: { padding: 5 },
-    quantityControl: { flexDirection: "row", alignItems: "center" },
-    quantity: { fontSize: 16, fontWeight: "bold", marginHorizontal: 10, color: theme === "dark" ? "#fff" : "#000" },
-    addMoreBtn: { marginVertical: 10, padding: 10, borderRadius: 5, backgroundColor: "#f8f8f8", alignItems: "center" },
-    addMoreText: { fontSize: 16, color: "green", fontWeight: "bold" },
-    footer: { flexDirection: "row", justifyContent: "space-between", padding: 10, borderTopWidth: 1, borderColor: "#ddd" },
-    subtotalText: { fontSize: 16, fontWeight: "bold", color: theme === "dark" ? "#fff" : "#000" },
-    subtotalPrice: { fontSize: 16, fontWeight: "bold", color: theme === "dark" ? "#ccc" : "#333" },
-    confirmBtn: { backgroundColor: "green", padding: 15, borderRadius: 5, alignItems: "center", marginTop: 10 },
-    confirmText: { fontSize: 18, color: "#fff", fontWeight: "bold" },
-    emptyCart: { textAlign: "center", marginTop: 50, fontSize: 16, color: theme === "dark" ? "#888" : "#888" },
-  });
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff'
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff'
+  },
+  card: {
+    flexDirection: 'row',
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderColor: '#e0e0e0',
+    paddingBottom: 10
+  },
+  image: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0'
+  },
+  info: {
+    marginLeft: 15,
+    flex: 1
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: 'bold'
+  },
+  price: {
+    color: '#2E7D32',
+    marginVertical: 5
+  },
+  quantity: {
+    color: '#666'
+  },
+  emptyMessage: {
+    textAlign: 'center',
+    fontSize: 16,
+    marginTop: 50,
+    color: '#666'
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20
+  },
+  addButton: {
+    flex: 1,
+    backgroundColor: '#546E7A',
+    padding: 15,
+    borderRadius: 8,
+    marginRight: 10,
+    alignItems: 'center'
+  },
+  confirmButton: {
+    flex: 1,
+    backgroundColor: '#2E7D32',
+    padding: 15,
+    borderRadius: 8,
+    marginLeft: 10,
+    alignItems: 'center'
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600'
+  }
+});
 
-export default CartScreen;
+export default CartPage;

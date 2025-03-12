@@ -61,6 +61,9 @@ import { Searchbar } from 'react-native-paper'
 import SearchPage from '../screens/Searchbar/Searchbar'
 import Notification from '../screens/Notification/Notification'
 import ProductDetails from '../screens/ProductDetail/ProductDetails'
+import Options from '../screens/Options/Options'
+import OrderSummary from '../screens/OrderSummary/OrderSummary'
+
 
 const NavigationStack = createStackNavigator()
 const MainStack = createStackNavigator()
@@ -172,8 +175,12 @@ function NoDrawer() {
       <NavigationStack.Screen name='SaveAddress' component={SaveAddress} />
       <NavigationStack.Screen name='Favourite' component={Favourite} />
       <NavigationStack.Screen name='ChatWithRider' component={ChatScreen} />
-      <NavigationStack.Screen name='Notification' component={Notification} />
-      <NavigationStack.Screen name='ProductDetail' component={ProductDetails} />
+      <NavigationStack.Screen name='Notification' component={Notification}/>
+      <NavigationStack.Screen name='ProductDetail' component={ProductDetails}/>
+      <NavigationStack.Screen name='Options' component={Options}/>
+      <NavigationStack.Screen name='OrderSummary' component={OrderSummary}/>
+      <NavigationStack.Screen name='OrderDetails' component={OrderDetail}/>
+
     </NavigationStack.Navigator>
   )
 }
