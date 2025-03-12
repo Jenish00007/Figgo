@@ -1,62 +1,70 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const OfferCard = ({
-    name,
-    active,
-    address,
-    distance,
-    logo_full_url
-}) => (
-    <View style={supermarketStyles.container}>
-        <View style={supermarketStyles.header}>
-            <View style={supermarketStyles.headerLeft}>
-                
-                <Image
-                         source={{ uri: logo_full_url }}
-                         style={supermarketStyles.logoIcon}
-                       />
-                <Text style={supermarketStyles.title}>{name}</Text>
-            </View>
-            <TouchableOpacity>
-                <Image
-                    source={require('../../assets/icons/fullHeart.png')} // Ensure this path is correct
-                    style={supermarketStyles.heartIcon}
-                />
+const OfferCard = ({item}) => {
+  
+    const navigation = useNavigation();
+    const {
+        name,
+        active,
+        address,
+        distance,
+        logo_full_url
+    } = item;
+
+
+    return (
+        <View style={supermarketStyles.container}>
+            <TouchableOpacity onPress={() => navigation.navigate('Restaurant', { ...item })}>
+                <View style={supermarketStyles.header}>
+                    <View style={supermarketStyles.headerLeft}>
+                        <Image
+                            source={{ uri: logo_full_url }}
+                            style={supermarketStyles.logoIcon}
+                        />
+                        <Text style={supermarketStyles.title}>{name}</Text>
+                    </View>
+                    
+                    <Image
+                        source={require('../../assets/icons/fullHeart.png')}
+                        style={supermarketStyles.heartIcon}
+                    />
+                </View>
+
+                <View style={supermarketStyles.addressContainer}>
+                    <Image
+                        source={require('../../assets/images/home.png')}
+                        style={supermarketStyles.locationIcon}
+                    />
+                    <Text style={supermarketStyles.address}>{address}</Text>
+                </View>
+
+                <View style={supermarketStyles.footer}>
+                    <View style={supermarketStyles.footerLeft}>
+                        <Image
+                            source={require('../../assets/images/other.png')}
+                            style={supermarketStyles.distanceIcon}
+                        />
+                        <Text style={supermarketStyles.distance}>{distance}</Text>
+                    </View>
+                    {!active && (
+                        <View style={supermarketStyles.closedBadge}>
+                            <Text style={supermarketStyles.closedText}>Closed</Text>
+                        </View>
+                    )}
+                    {active && (
+                        <View style={[supermarketStyles.closedBadge, supermarketStyles.openBadge]}>
+                            <Text style={supermarketStyles.openText}>Open</Text>
+                        </View>
+                    )}
+                </View>
             </TouchableOpacity>
         </View>
+    );
+};
 
-        <View style={supermarketStyles.addressContainer}>
-            <Image
-               source={require('../../assets/images/home.png')}  // Ensure this path is correct
-                style={supermarketStyles.locationIcon}
-            />
-            <Text style={supermarketStyles.address}>{address}</Text>
-        </View>
-
-        <View style={supermarketStyles.footer}>
-            <View style={supermarketStyles.footerLeft}>
-                <Image
-                    source={require('../../assets/images/other.png')} // Ensure this path is correct
-                    style={supermarketStyles.distanceIcon}
-                />
-                <Text style={supermarketStyles.distance}>{distance}</Text>
-            </View>
-            {!active && (
-                <View style={supermarketStyles.closedBadge}>
-                    <Text style={supermarketStyles.closedText}>Closed</Text>
-                </View>
-            )}
-             {active && (
-                <View style={supermarketStyles.closedBadge}>
-                    <Text style={supermarketStyles.closedText}>Open</Text>
-                </View>
-            )}
-        </View>
-    </View>
-);
-
-export default OfferCard; 
+export default OfferCard;
 
 const supermarketStyles = StyleSheet.create({
     container: {
@@ -147,6 +155,14 @@ const supermarketStyles = StyleSheet.create({
     },
     closedText: {
         color: '#666666',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    openBadge: {
+        backgroundColor: '#E8F5E9',
+    },
+    openText: {
+        color: '#2E7D32',
         fontSize: 12,
         fontWeight: '600',
     },

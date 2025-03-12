@@ -62,25 +62,22 @@ function NewRestaurantCard(props) {
         <View style={styles().imageContainer}>
           <Image
             resizeMode="cover"
-            source={{ uri: props.cover_photo_full_url }}
+            source={{ uri: props?.cover_photo_full_url }}
             style={styles().restaurantImage}
           />
 
           <View style={styles().overlayContainer}>
             <TouchableOpacity
               activeOpacity={0.7}
-              disabled={loadingMutation}
               onPress={handleAddToFavorites}>
               <View style={styles(currentTheme).favouriteOverlay}>
-                {loadingMutation ? (
-                  <Spinner size={'small'} backColor={'transparent'} spinnerColor={currentTheme.iconColorDark} />
-                ) : (
+                
                   <AntDesign
                     name={heart ? 'heart' : 'hearto'}
                     size={scale(15)}
                     color={currentTheme.iconColor}
                   />
-                )}
+                
               </View>
             </TouchableOpacity>
           </View>
@@ -92,7 +89,7 @@ function NewRestaurantCard(props) {
               numberOfLines={1}
               textColor={currentTheme.fontThirdColor}
               bolder>
-              {props.name}
+              {props?.name}
             </TextDefault>
             <View style={styles().aboutRestaurant}>
               <FontAwesome5 name="star" size={18} color={currentTheme.stars} />
@@ -102,7 +99,7 @@ function NewRestaurantCard(props) {
                 style={styles().restaurantRatingContainer}
                 bolder
                 H4>
-                {props.avg_rating}
+                {props?.avg_rating}
               </TextDefault>
               <TextDefault
                 textColor={currentTheme.fontNewColor}
@@ -112,7 +109,7 @@ function NewRestaurantCard(props) {
                 ]}
                 H5>
                 (
-                {props.rating_count}
+                {props?.rating_count}
                 )
               </TextDefault>
             </View>

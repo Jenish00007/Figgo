@@ -73,26 +73,24 @@ function Item(props) {
           <View style={styles().imageContainer}>
             <Image
               resizeMode="cover"
-              source={{ uri: item.cover_photo_full_url }}
+              source={{ uri: item?.cover_photo_full_url }}
               style={styles().img}
             />
             <View style={styles().overlayRestaurantContainer}>
               <TouchableOpacity
                 activeOpacity={0}
-                disabled={loadingMutation}
+                //disabled={loadingMutation}
                 style={styles(currentTheme).favOverlay}
                 onPress={() =>
                   profile ? mutate({ variables: { id: item.id } }) : null
                 }>
-                {loadingMutation ? (
-                  <Spinner size={'small'} backColor={'transparent'} spinnerColor={currentTheme.iconColorDark} />
-                ) : (
+               
                   <AntDesign
                     name={heart ? 'heart' : 'hearto'}
                     size={scale(15)}
                     color="black"
                   />
-                )}
+               
               </TouchableOpacity>
               {/*    {(!isAvailable || !isOpen()) && (
                 <View style={{ ...styles().featureOverlay, top: 40 }}>
@@ -140,7 +138,7 @@ function Item(props) {
                 numberOfLines={1}
                 textColor={currentTheme.fontThirdColor}
                 bolder>
-                {item.name}
+                {item?.name}
               </TextDefault>
               <View style={[styles().aboutRestaurant, { width: '23%' }]}>
                 <Feather name="star" size={18} color={currentTheme.newIconColor} />
@@ -151,14 +149,14 @@ function Item(props) {
                   bolder
                   style={{ marginLeft: scale(2), marginRight: scale(5) }}
                 >
-                  {item.avg_rating}
+                  {item?.avg_rating}
                 </TextDefault>
                 <TextDefault
                   textColor={currentTheme.fontNewColor}
                   style={{ marginLeft: scale(2) }}
 
                   H5>
-                  ({item.rating_count})
+                  ({item?.rating_count})
                 </TextDefault>
               </View>
             </View>
@@ -187,7 +185,7 @@ function Item(props) {
                   numberOfLines={1}
                   bold
                   Normal>
-                  {item.delivery_time}
+                  {item?.delivery_time}
 
                 </TextDefault>
               </View>

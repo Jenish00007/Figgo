@@ -532,6 +532,17 @@ function Profile(props) {
                 </TextDefault>
               </TouchableOpacity>
             </View>
+            <View style={{ alignItems: 'center' }}>
+              <TouchableOpacity onPress={logout}>
+                <TextDefault
+                  bolder
+                  H4
+                  textColor={currentTheme.deleteAccountBtn}
+                >
+                  Logout
+                </TextDefault>
+              </TouchableOpacity>
+            </View>
           </View>
           <Modal
             onBackdropPress={() => setDeleteModalVisible(false)}

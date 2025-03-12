@@ -5,9 +5,11 @@ import {
   Text,
   Animated,
   Image,
+  TouchableOpacity,
   Pressable,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
 
 // CategoryListView component
 const CategoryListView = ({ data }) => {
@@ -22,6 +24,7 @@ const CategoryListView = ({ data }) => {
   if (!item) {
     return null;  // If item is undefined, return nothing or handle accordingly
   }
+ const navigation = useNavigation();
 
   const translateX = useRef(new Animated.Value(50));
   const opacity = useRef(new Animated.Value(0));
@@ -53,26 +56,27 @@ const CategoryListView = ({ data }) => {
         },
       ]}
     >
-      <Pressable style={{ height: 134, width: 280 }} touchOpacity={0.6}>
+
+      <TouchableOpacity onPress={() => navigation.navigate('Restaurant', { ...item })} style={{ height: 134, width: 280 }} touchOpacity={0.6} >
         <View style={styles.bgColorView} />
         <View style={{ ...StyleSheet.absoluteFillObject, flexDirection: 'row' }}>
           <View style={{ paddingVertical: 24, paddingLeft: 16, }}>
             <Image
               style={{ flex: 1, borderRadius: 16, aspectRatio: 1.0, }}
-              source={{ uri: item.logo_full_url }}
+              source={{ uri: item?.logo_full_url }}
             />
           </View>
           <View style={{ flex: 1, paddingLeft: 16, paddingVertical: 16 }}>
             <Text style={styles.title}>{item.title}</Text>
             <View style={styles.lessionCountRatingContainer}>
               <Text style={[styles.textStyle, { flex: 1, fontSize: 16 }]}>
-                {item.name}
+                {item?.name}
               </Text>
-              <Text style={styles.textStyle}>{item.rating}</Text>
+              <Text style={styles.textStyle}>{item?.rating}</Text>
               <Icon
-                name="favorite" // This is the "favourite" icon
+                name="favorite" 
                 size={20}
-                color="red" // You can change the color based on your preference
+                color="red"
               />
 
             </View>
@@ -88,7 +92,7 @@ const CategoryListView = ({ data }) => {
                   <Text style={styles.closedText}>Closed</Text>
                 </View>
               )}
-              {item.active && (
+              {item?.active && (
                 <View style={styles.closedBadge}>
                   <Text style={styles.closedText}>Open</Text>
                 </View>
@@ -97,7 +101,8 @@ const CategoryListView = ({ data }) => {
 
           </View>
         </View>
-      </Pressable>
+      </TouchableOpacity>
+    
     </Animated.View>
   );
 };

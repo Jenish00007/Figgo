@@ -110,19 +110,19 @@ const useRegister = () => {
           body: JSON.stringify(requestData),
         })
 
-        //const data = await response.json()
+        const data = await response.json()
 
-        // if (response.ok) {
-        //   // Handle success
-        //   navigation.navigate('EmailOtp', {
-        //     user: requestData,
-        //   })
-        // } else {
-        //   // Handle error response
-        //   FlashMessage({
-        //     message: data?.message || t('phoneCheckingError'),
-        //   })
-        // }
+        if (response.ok) {
+          // Handle success
+          navigation.navigate('Login', {
+            user: requestData,
+          })
+        } else {
+          // Handle error response
+          FlashMessage({
+            message: data?.message || t('phoneCheckingError'),
+          })
+        }
       } catch (error) {
         FlashMessage({
           message: t('networkError'),

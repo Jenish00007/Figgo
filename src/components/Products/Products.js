@@ -13,13 +13,15 @@ const Products = ({ name,image_full_url,price }) => {
     }
     return name;
   };
+  
+  const item={name,image_full_url,price}
 
   return (
     <View style={styles.container}>
      
         <View style={styles.itemWrapper}>
           <TouchableOpacity
-            onPress={() => navigation.push('ProductDetail')}
+            onPress={() => navigation.push('ProductDetail',{product:item})}
           >
             <View style={styles.itemContainer}>
               <ImageBackground

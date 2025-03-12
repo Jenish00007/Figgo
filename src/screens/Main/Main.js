@@ -183,7 +183,7 @@ function Main(props) {
   }, []);
 
 
-  const { data, refetch, networkStatus, loading, error } = useQuery(
+  const {  refetch, networkStatus, loading, error } = useQuery(
     RESTAURANTS,
     {
       variables: {
@@ -195,21 +195,12 @@ function Main(props) {
       fetchPolicy: 'network-only'
     }
   )
-  const { orderLoading, orderError, orderData } = useHomeRestaurants()
-  const [selectedType, setSelectedType] = useState('restaurant')
 
   const [mutate, { loading: mutationLoading }] = useMutation(SELECT_ADDRESS, {
     onError
   })
-  const recentOrderRestaurantsVar = orderData?.recentOrderRestaurants
-  const mostOrderedRestaurantsVar = orderData?.mostOrderedRestaurants
+  
   const newheaderColor = currentTheme.newheaderColor
-
-  const handleActiveOrdersChange = (activeOrdersExist) => {
-    setHasActiveOrders(activeOrdersExist)
-  }
-
-
 
   useFocusEffect(() => {
     if (Platform.OS === 'android') {
@@ -534,8 +525,6 @@ function Main(props) {
                       <View>
                         <MainRestaurantCard
                           orders={stores}
-                          loading={orderLoading}
-                          error={orderError}
                           title={'Featured Stores'}
                         />
                       </View>
@@ -546,8 +535,7 @@ function Main(props) {
               </View>
             </View>
           </View>
-          <ActiveOrders onActiveOrdersChange={handleActiveOrdersChange} />
-
+        
           <MainModalize
             modalRef={modalRef}
             currentTheme={currentTheme}

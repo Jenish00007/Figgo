@@ -1,14 +1,23 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const NearByStore = ({
-    name,
-    active,
-    address,
-    distance,
-    logo_full_url
-}) => (
+
+const NearByStore = ({item}) => { 
+    const navigation = useNavigation();
+    const {
+        name,
+        active,
+        address,
+        distance,
+        logo_full_url
+    } = item;
+
+
+    return (
+    
     <View style={supermarketStyles.container}>
+        <TouchableOpacity onPress={() => navigation.navigate('Restaurant', { ...item })}>
         <View style={supermarketStyles.header}>
             <View style={supermarketStyles.headerLeft}>
                 
@@ -53,8 +62,11 @@ const NearByStore = ({
                 </View>
             )}
         </View>
+        </TouchableOpacity>
     </View>
-);
+    
+    );
+};
 
 export default NearByStore; 
 

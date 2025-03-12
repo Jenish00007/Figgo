@@ -55,7 +55,6 @@ function Restaurant(props) {
   const propsData = route.params
   const translationY = useSharedValue(0)
   const themeContext = useContext(ThemeContext)
-
   const currentTheme = theme[themeContext.ThemeValue]
   const configuration = useContext(ConfigurationContext)
   const [selectedLabel, selectedLabelSetter] = useState(0)

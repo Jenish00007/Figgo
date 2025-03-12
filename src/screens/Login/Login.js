@@ -184,18 +184,19 @@ function Login(props) {
                     </TextDefault>
                   </TouchableOpacity>
                 </View>
-                
+
                 {/* Sign Up Option */}
                 <View style={[styles.signupContainer, { alignItems: 'center', justifyContent: 'center' }]}>
                   <TextDefault textColor="black" style={{ textAlign: 'center' }}>
                     Don't have an account?{' '}
-                    <TextDefault
-                      textColor="#E5E500"
-                      onPress={() => props.navigation.navigate('Register')}>
-                      Sign Up
-                    </TextDefault>
+                    <TouchableOpacity onPress={() => props.navigation.navigate('Register')}>
+                      <TextDefault textColor="#E5E500">
+                        Sign Up
+                      </TextDefault>
+                    </TouchableOpacity>
                   </TextDefault>
                 </View>
+
 
                 {/* Or Divider */}
                 <View style={[styles.orContainer, { alignItems: 'center', justifyContent: 'center' }]}>
@@ -228,7 +229,7 @@ function Login(props) {
                   </TouchableOpacity>
                 </View>
 
-                
+
               </View>
             </View>
           </View>

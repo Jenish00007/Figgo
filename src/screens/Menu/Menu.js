@@ -71,6 +71,9 @@ import OfferCard from '../../components/OfferCard/OfferCard'
 import NearByStore from '../../components/NearByStore/NearByStore'
 import Products from '../../components/Products/Products'
 import CategoryListView from '../../components/NearByShop/CategoryListView'
+import { MainRestaurantCard } from '../../components/Main/MainRestaurantCard'
+
+
 
 const RESTAURANTS = gql`
   ${restaurantListPreview}
@@ -173,7 +176,7 @@ function Menu({ route, props }) {
   const emptyViewDesc =
     selectedType === 'restaurant' ? t('noRestaurant') : t('noGrocery')
 
-    //Theme setup android and ios
+  //Theme setup android and ios
   useFocusEffect(() => {
     if (Platform.OS === 'android') {
       StatusBar.setBackgroundColor(currentTheme.newheaderColor)
@@ -264,7 +267,7 @@ function Menu({ route, props }) {
             })
             setBusy(false)
           }
-          console.log(address)
+          // console.log(address)
         }
       })
       .catch(error => {
@@ -473,9 +476,9 @@ function Menu({ route, props }) {
     fetchSpecialItem()
   }, [moduleId]);
 
-  
 
-//Filter Store Listing
+
+  //Filter Store Listing
   const fetchData = async (category) => {
     let url = '';
     switch (category) {
@@ -492,7 +495,7 @@ function Menu({ route, props }) {
         url = 'https://6ammart-admin.6amtech.com/api/v1/stores/get-stores/all?store_type=all';
         break;
     }
-  
+
     try {
       const response = await fetch(url, {
         method: 'GET', // GET request method
@@ -508,10 +511,10 @@ function Menu({ route, props }) {
       console.error("Error fetching stores data:", error);
     }
   };
-  
+
   const applyFilters = (filter) => {
     setSelectedFilter(filter);
-   
+
     // Trigger the corresponding API call based on filter
     switch (filter) {
       case 'popular':
@@ -528,7 +531,7 @@ function Menu({ route, props }) {
         break;
     }
   };
-  
+
   useEffect(() => {
     fetchData('all');
   }, []);
@@ -559,7 +562,7 @@ function Menu({ route, props }) {
     </View>
   )
 
-//App not Available in YourArea
+  //App not Available in YourArea
   const emptyView = () => {
     if (loading || mutationLoading || loadingOrders) return loadingScreen()
     else {
@@ -608,7 +611,7 @@ function Menu({ route, props }) {
       <View style={styles().addressTick}></View>
     </View>
   )
-// console.log(filters);
+  // console.log(filters);
   // Loading Animation 
   function loadingScreen() {
     return (
@@ -665,7 +668,7 @@ function Menu({ route, props }) {
   if (error) return <ErrorView />
   if (loading) return loadingScreen()
 
-    //Search Function
+  //Search Function
   const searchAllShops = searchText => {
     const data = [];
     const escapedSearchText = escapeRegExp(searchText);
@@ -699,8 +702,6 @@ function Menu({ route, props }) {
                     placeHolder={searchPlaceholderText}
                   />
                 </View>
-
-
 
                 {search ? (
                   <View style={styles().searchList}>
@@ -758,19 +759,19 @@ function Menu({ route, props }) {
 
                     {/* Nearby Stores Section */}
                     <TextDefault style={styles().sectionTitle}>Nearby Stores</TextDefault>
-                    
+
 
                     <FlatList
                       data={supermarkets}
                       horizontal={true}
                       showsHorizontalScrollIndicator={false}
-                      renderItem={({ item,index }) => (
-                        <CategoryListView data={{ item,index }} />
+                      renderItem={({ item, index }) => (
+                        <CategoryListView data={{ item, index }} />
                       )}
                       keyExtractor={(item) => item.id.toString()}
                     />
 
-                
+
 
                     {/* Top Offers Section */}
                     <TextDefault style={styles().sectionTitle}>Top Offers near me 🔥</TextDefault>
@@ -780,12 +781,8 @@ function Menu({ route, props }) {
                       showsHorizontalScrollIndicator={false}
                       renderItem={({ item }) => (
                         <OfferCard
-                          name={item?.name}
-                          isNew={item?.is_new}
-                          active={item?.active}
-                          address={item?.address}
-                          distance={item?.distance}
-                          logo_full_url={item?.logo_full_url}
+                          item={item}
+
                         />
                       )}
                       keyExtractor={(item) => item.id.toString()}
@@ -796,11 +793,11 @@ function Menu({ route, props }) {
                       data={popularItem}
                       horizontal={true}
                       showsHorizontalScrollIndicator={false}
-                      renderItem={({ item }) => <Products 
-                      name={item?.name}
-                      price={item?.price}
-                      image_full_url={item?.image_full_url}
-                       />}
+                      renderItem={({ item }) => <Products
+                        name={item?.name}
+                        price={item?.price}
+                        image_full_url={item?.image_full_url}
+                      />}
                       keyExtractor={(item) => item.id.toString()}
                     />
                     {/* New on Figgo Section */}
@@ -811,12 +808,7 @@ function Menu({ route, props }) {
                       showsHorizontalScrollIndicator={false}
                       renderItem={({ item }) => (
                         <NearByStore
-                          name={item?.name}
-                          isNew={item?.is_new}
-                          active={item?.active}
-                          address={item?.address}
-                          distance={item?.distance}
-                          logo_full_url={item?.logo_full_url}
+                          item={item}
                         />
                       )}
                       keyExtractor={(item) => item.id.toString()}
@@ -828,8 +820,6 @@ function Menu({ route, props }) {
                       setFilters={setFilters}
                       applyFilters={applyFilters}
                     />
-
-                    {/* <CollapsibleSubHeaderAnimator translateY={translateY}> */}
                     <Animated.FlatList
                       contentInset={{ top: containerPaddingTop }}
                       contentContainerStyle={{
@@ -839,14 +829,6 @@ function Menu({ route, props }) {
                       onScroll={onScroll}
                       scrollIndicatorInsets={{ top: scrollIndicatorInsetTop }}
                       showsVerticalScrollIndicator={false}
-                      ListHeaderComponent={
-                        search || restaurantData.length === 0 ? null : (
-                          <ActiveOrdersAndSections
-                           
-                            menuPageHeading={menuPageHeading}
-                          />
-                        )
-                      }
                       ListEmptyComponent={emptyView()}
                       keyExtractor={(item, index) => index.toString()}
                       refreshControl={
