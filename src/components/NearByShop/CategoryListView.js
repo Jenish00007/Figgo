@@ -107,19 +107,19 @@ const styles = StyleSheet.create({
   container: { borderRadius: 16, overflow: 'hidden' },
   bgColorView: {
     flex: 1,
-    marginLeft: 48,
-    borderRadius: 16,
+    marginLeft: 55,
+    borderRadius: 10,
     backgroundColor: '#F3FAFA',
   },
   closedBadge: {
     backgroundColor: '#E0E0E0',
-    borderRadius: 25,
+    borderRadius: 20,
     paddingVertical: 4,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
   },
   closedText: {
     color: '#666666',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
   },
   title: {

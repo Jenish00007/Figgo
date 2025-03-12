@@ -3,7 +3,7 @@ import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, Image } from
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const Products = ({ products }) => {
+const Products = ({ name,image_full_url,price }) => {
   const navigation = useNavigation();
 
   // Function to limit the product name to 10 characters
@@ -16,23 +16,23 @@ const Products = ({ products }) => {
 
   return (
     <View style={styles.container}>
-      {products?.map((item, index) => (
-        <View key={item._id} style={styles.itemWrapper}>
+     
+        <View style={styles.itemWrapper}>
           <TouchableOpacity
-            onPress={() => navigation.push('ProductDetail', { product: item })}
+            onPress={() => navigation.push('ProductDetail')}
           >
             <View style={styles.itemContainer}>
               <ImageBackground
-                source={{ uri: item?.image_full_url }}
+                source={{ uri: image_full_url }}
                 style={styles.cardImageBG}
                 resizeMode="cover"
               >
                 {/* Optional: Add Rating Icon or other components here */}
               </ImageBackground>
-              <Text style={styles.cardTitle}>{getShortenedName(item?.name)}</Text>
+              <Text style={styles.cardTitle}>{getShortenedName(name)}</Text>
               <View style={styles.cardFooterRow}>
                 <Text style={styles.cardPriceCurrency}>₹</Text>
-                <Text style={styles.cardPrice}>{item?.price}</Text>
+                <Text style={styles.cardPrice}>{price}</Text>
                 <TouchableOpacity>
                   <Icon style={styles.addIcon} name="add" size={24} color="red" />
                 </TouchableOpacity>
@@ -40,7 +40,7 @@ const Products = ({ products }) => {
             </View>
           </TouchableOpacity>
         </View>
-      ))}
+   
     </View>
   );
 };
@@ -52,13 +52,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     marginTop: 10,
-    gap: 20,
-    paddingHorizontal: 20, 
+    paddingHorizontal: 10, 
+  
   },
   itemWrapper: {
     flex: 1,
-    maxWidth: '45%',
-    marginBottom: 20,
+    
+    marginBottom: 10,
   },
   itemContainer: {
     padding: 12, 
@@ -71,6 +71,8 @@ const styles = StyleSheet.create({
     },
     elevation: 24,
     marginBottom: 10, 
+    width:150,
+  
   },
   cardImageBG: {
     width: '100%', // Ensure the image fills the card width
@@ -103,7 +105,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   addIcon: {
-    marginLeft: 80, 
+    marginLeft: 70, 
   },
 });
 

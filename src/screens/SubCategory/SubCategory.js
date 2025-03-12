@@ -1,4 +1,11 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react/display-name */
+import React, {
+  useRef,
+  useContext,
+  useLayoutEffect,
+  useState,
+  useEffect
+} from 'react'
 import {
   View,
   Text,
@@ -9,11 +16,15 @@ import {
   FlatList,
   ActivityIndicator
 } from 'react-native';
+import styles from './styles'
+import { theme } from '../../utils/themeColors'
 import { Ionicons, Feather } from '@expo/vector-icons';
 import Products from '../../components/Products/Products';
 import NewRestaurantCard from '../../components/Main/FeaturedStores/NewRestaurantCard';
 import { useNavigation } from '@react-navigation/native';
 import BottomTab from '../../components/BottomTab/BottomTab';
+import Search from '../../components/Main/Search/Search';
+import ThemeContext from '../../ui/ThemeContext/ThemeContext'
 
 const SubCategory = ({ route }) => {
   const { category } = route.params;
@@ -26,8 +37,18 @@ const SubCategory = ({ route }) => {
   const [stores, setStores] = useState([]); // Store stores data
   const [subcat, setSubcat] = useState([]); // Subcategories data
   const [subcatId, setSubcatId] = useState(null); // Track selected subcategory ID
+  const [contentType, setContentType] = useState('products'); // 'products' or 'stores'
+  const [searchResults, setSearchResults] = useState([]); // Search results
+  const [isSearching, setIsSearching] = useState(false); // Flag to show search results
+  
   const moduleId = 1;
-  const navigation = useNavigation(); 
+  const baseUrl = 'https://6ammart-admin.6amtech.com';
+  const navigation = useNavigation();
+  const themeContext = useContext(ThemeContext);
+  const currentTheme = theme[themeContext.ThemeValue];
+  const [search, setSearch] = useState('');
+  const newheaderColor = currentTheme.newheaderColor;
+  const searchPlaceholderText = 'Search Items';
 
   // Fetch subcategories
   useEffect(() => {
@@ -35,7 +56,7 @@ const SubCategory = ({ route }) => {
       setLoading(true);
       try {
         const response = await fetch(
-          `https://6ammart-admin.6amtech.com/api/v1/categories/childes/${menucategoryId}`,
+          `${baseUrl}/api/v1/categories/childes/${menucategoryId}`,
           {
             method: 'GET',
             headers: {
@@ -61,79 +82,151 @@ const SubCategory = ({ route }) => {
     };
 
     fetchSubcat();
-  }, [moduleId]);
+  }, [moduleId, menucategoryId]);
 
   // Fetch products based on subcategory or default category
   useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      try {
-        const categoryId = activeTab === 'All' ? menucategoryId : subcatId;
-        const response = await fetch(
-          `https://6ammart-admin.6amtech.com/api/v1/categories/items/${categoryId}?limit=10&offset=1&type=all`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              zoneId: '[1]',
-              moduleId: moduleId
-            }
-          }
-        );
-
-        const json = await response.json();
-        if (json?.products && json?.products.length > 0) {
-          setProducts(json?.products);
-        } else {
-          setProducts([]);
-          console.log('No products found or invalid response');
-        }
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        setError('Error fetching products');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, [subcatId, activeTab, moduleId]);
+    if (contentType === 'products' && !isSearching) {
+      fetchProducts();
+    }
+  }, [subcatId, contentType, isSearching]);
 
   // Fetch stores based on subcategory or default category
   useEffect(() => {
-    const fetchStores = async () => {
-      setLoading(true);
-      try {
-        const categoryId = activeTab === 'All' ? menucategoryId : subcatId;
-        const response = await fetch(
-          `https://6ammart-admin.6amtech.com/api/v1/categories/stores/${categoryId}?limit=10&offset=1&type=all`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              zoneId: '[1]',
-              moduleId: moduleId
-            }
-          }
-        );
+    if (contentType === 'stores' && !isSearching) {
+      fetchStores();
+    }
+  }, [subcatId, contentType, isSearching]);
 
-        const json = await response.json();
+  // Search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (search.trim() !== '') {
+        fetchSearchResults(search);
+      } else {
+        setIsSearching(false);
+        if (contentType === 'products') {
+          fetchProducts();
+        } else {
+          fetchStores();
+        }
+      }
+    }, 500); // Debounce search for 500ms
+
+    return () => clearTimeout(timer);
+  }, [search, contentType]);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const categoryId = subcatId || menucategoryId;
+      const response = await fetch(
+        `${baseUrl}/api/v1/categories/items/${categoryId}?limit=10&offset=1&type=all`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            zoneId: '[1]',
+            moduleId: moduleId
+          }
+        }
+      );
+
+      const json = await response.json();
+      if (json?.products && json?.products.length > 0) {
+        setProducts(json?.products);
+      } else {
+        setProducts([]);
+        console.log('No products found or invalid response');
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setError('Error fetching products');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStores = async () => {
+    setLoading(true);
+    try {
+      const categoryId = subcatId || menucategoryId;
+      const response = await fetch(
+        `${baseUrl}/api/v1/categories/stores/${categoryId}?limit=10&offset=1&type=all`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            zoneId: '[1]',
+            moduleId: moduleId
+          }
+        }
+      );
+
+      const json = await response.json();
+      if (json?.stores && json?.stores.length > 0) {
+        setStores(json?.stores);
+      } else {
+        setStores([]);
+        console.log('No stores found or invalid response');
+      }
+    } catch (error) {
+      console.error('Error fetching stores:', error);
+      setError('Error fetching stores');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSearchResults = async (text) => {
+    if (text.trim() === "") {
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setLoading(true);
+    const categoryId = subcatId || menucategoryId;
+
+    try {
+      let url;
+      if (contentType === 'products') {
+        url = `${baseUrl}/api/v1/items/search?name=${text}&category_id=${categoryId}&type=all&offset=1&limit=50`;
+      } else {
+        url = `${baseUrl}/api/v1/stores/search?name=${text}&category_id=${categoryId}&type=all&offset=1&limit=50`;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          zoneId: '[1]',
+          moduleId: moduleId,
+        },
+      });
+
+      const json = await response.json();
+      
+      if (contentType === 'products') {
+        if (json?.products && json?.products.length > 0) {
+          setProducts(json.products);
+        } else {
+          setProducts([]);
+        }
+      } else {
         if (json?.stores && json?.stores.length > 0) {
-          setStores(json?.stores);
+          setStores(json.stores);
         } else {
           setStores([]);
-          console.log('No stores found or invalid response');
         }
-      } catch (error) {
-        console.error('Error fetching stores:', error);
-        setError('Error fetching stores');
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchStores();
-  }, [subcatId, activeTab, moduleId]);
+    } catch (error) {
+      console.error('Error fetching search results:', error);
+      setError('Error fetching search results');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getSubcategoryNames = () => {
     const tabs = ['All'];
@@ -148,234 +241,167 @@ const SubCategory = ({ route }) => {
   };
 
   const tabs = getSubcategoryNames();
-  const contentType = activeTab === 'Stores' ? 'stores' : 'products';
 
+  const handleTabPress = (tab) => {
+    if (tab === 'All') {
+      setSubcatId(null);
+    } else {
+      const subcategory = subcat.find((item) => item.name === tab);
+      if (subcategory) {
+        setSubcatId(subcategory.id);
+      }
+    }
+    setActiveTab(tab);
+    // Reset search when changing tabs
+    if (search.trim() !== '') {
+      setSearch('');
+      setIsSearching(false);
+    }
+  };
+
+  const handleContentTypeChange = (type) => {
+    setContentType(type);
+    // Reset search when switching between items and stores
+    if (search.trim() !== '') {
+      setSearch('');
+      setIsSearching(false);
+    }
+  };
+
+  const handleSearchChange = (text) => {
+    setSearch(text);
+
+  };
+
+  console.log(search)
   return (
     <>
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <SafeAreaView
+        edges={['bottom', 'left', 'right']}
+        style={[styles().flex, { backgroundColor: 'black' }]}>
+        <View style={[styles().flex, styles(currentTheme).screenBackground]}>
+          <View style={styles().flex}>
+            <View style={styles().mainContentContainer}>
 
-      {/* Header */}
-      {/* <View style={styles.header}>
-       
-        <Text style={styles.headerTitle}>
-          {category && category.name ? category.name : 'Category'}
-        </Text>
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.searchButton}>
-            <Feather name="search" size={24} onPress={() => navigation.navigate('SearchPage')} color="black" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.cartButton}>
-            <Feather name="shopping-cart" size={24} color="black" />
-          </TouchableOpacity>
+              {/* Search Bar Section */}
+              <View style={styles(currentTheme).searchbar}>
+                <Search
+                  setSearch={handleSearchChange}
+                  search={search}
+                  newheaderColor={newheaderColor}
+                  placeHolder={contentType === 'products' ? 'Search Items' : 'Search Stores'}
+                />
+              </View>
+
+              {/* Category Tabs */}
+              <View style={styles().tabContainer}>
+                {tabs.map((tab) => (
+                  <TouchableOpacity
+                    key={tab}
+                    style={[styles().tab, activeTab === tab && styles().activeTab]}
+                    onPress={() => handleTabPress(tab)}
+                  >
+                    <Text
+                      style={[
+                        styles().tabText,
+                        activeTab === tab && styles().activeTabText
+                      ]}
+                    >
+                      {tab}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* List Header */}
+              <View style={styles().listHeader}>
+                <Text
+                  style={[
+                    styles().itemHeaderText,
+                    contentType === 'products' ? styles().activeHeaderText : styles().inactiveHeaderText
+                  ]}
+                  onPress={() => handleContentTypeChange('products')}
+                >
+                  Items
+                </Text>
+                <Text
+                  style={[
+                    styles().storesHeaderText,
+                    contentType === 'stores' ? styles().activeStoresText : styles().inactiveHeaderText
+                  ]}
+                  onPress={() => handleContentTypeChange('stores')}
+                >
+                  Stores
+                </Text>
+              </View>
+
+              {/* Green Indicator */}
+              <View
+                style={[
+                  styles().indicator,
+                  contentType === 'stores' ? { marginLeft: 'auto', marginRight: 16 } : {}
+                ]}
+              />
+
+              {/* Loading State */}
+              {loading && (
+                <View style={styles().loadingContainer}>
+                  <ActivityIndicator size="large" color="#008800" />
+                </View>
+              )}
+
+              {/* Error State */}
+              {error && (
+                <View style={styles().errorContainer}>
+                  <Text style={styles().errorText}>{error}</Text>
+                </View>
+              )}
+
+              {/* Content Rendering */}
+              {!loading && !error && (
+                contentType === 'products' ? (
+                  <FlatList
+                    data={products}
+                    horizontal={true}
+                    showsHorizontalScrollIndicator={false}
+                    renderItem={({ item }) => (
+                      <Products
+                        name={item?.name}
+                        price={item?.price}
+                        image_full_url={item?.image_full_url}
+                      />
+                    )}
+                    keyExtractor={(item) => item.id.toString()}
+                    ListEmptyComponent={
+                      <View style={styles().emptyContainer}>
+                        <Text style={styles().emptyText}>No products found</Text>
+                      </View>
+                    }
+                  />
+                ) : (
+                  <FlatList
+                    horizontal={true}
+                    style={styles().storesList}
+                    showsVerticalScrollIndicator={false}
+                    showsHorizontalScrollIndicator={false}
+                    data={stores}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => <NewRestaurantCard {...item} />}
+                    ListEmptyComponent={
+                      <View style={styles().emptyContainer}>
+                        <Text style={styles().emptyText}>No stores found</Text>
+                      </View>
+                    }
+                  />
+                )
+              )}
+            </View>
+          </View>
         </View>
-      </View> */}
-
-   
-      {/* Category Tabs */}
-      <View style={styles.tabContainer}>
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.activeTab]}
-            onPress={() => {
-              // Don't switch to "Item" tab when clicking "All" under "Stores"
-              if (tab === 'All') {
-                setActiveTab('Stores'); // Stay on "Stores" tab
-                setSubcatId(null); // Reset subcatId for "All" tab
-              } else {
-                setActiveTab(tab); // Switch to the selected subcategory tab
-                const subcategory = subcat.find((item) => item.name === tab);
-                if (subcategory) {
-                  setSubcatId(subcategory.id); // Set the subcatId for the selected subcategory
-                }
-              }
-            }}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === tab && styles.activeTabText
-              ]}
-            >
-              {tab}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* List Header */}
-      <View style={styles.listHeader}>
-        <Text
-          style={[
-            styles.itemHeaderText,
-            contentType === 'stores' ? styles.inactiveHeaderText : {}
-          ]}
-          onPress={() => setActiveTab('Item')}
-        >
-          Item
-        </Text>
-        <Text
-          style={[
-            styles.storesHeaderText,
-            contentType === 'stores' ? styles.activeStoresText : {}
-          ]}
-          onPress={() => setActiveTab('Stores')}
-        >
-          Stores
-        </Text>
-      </View>
-
-      {/* Green Indicator */}
-      <View
-        style={[
-          styles.indicator,
-          contentType === 'stores' ? { marginLeft: 'auto', marginRight: 16 } : {}
-        ]}
-      />
-
-      {/* Loading State */}
-      {loading && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#008800" />
-        </View>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      )}
-
-      {/* Content Rendering */}
-      {contentType === 'products' ? (
-        <Products products={products} />
-      ) : (
-        <FlatList
-          horizontal={true}
-          style={styles.storesList}
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-          data={stores}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => <NewRestaurantCard {...item} />}
-        />
-      )}
-
-      {/* Bottom Navigation Indicator */}
-      {/* <View style={styles.bottomIndicator} /> */}
-      
-    </SafeAreaView>
-    <BottomTab screen="HOME" />
-  </>
+      </SafeAreaView>
+      <BottomTab screen="HOME" />
+    </>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  searchButton: {
-    padding: 8,
-    marginRight: 8,
-  },
-  cartButton: {
-    padding: 8,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E0E0E0',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  tab: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginRight: 8,
-    borderRadius: 20,
-  },
-  activeTab: {
-    backgroundColor: '#E8F5E9',
-  },
-  tabText: {
-    color: '#757575',
-    fontSize: 14,
-  },
-  activeTabText: {
-    color: '#000',
-    fontWeight: '500',
-  },
-  listHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  itemHeaderText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#008800',
-  },
-  storesHeaderText: {
-    fontSize: 16,
-    color: '#BDBDBD',
-  },
-  indicator: {
-    width: 40,
-    height: 3,
-    backgroundColor: '#008800',
-    marginLeft: 16,
-  },
-  bottomIndicator: {
-    width: 100,
-    height: 5,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 2.5,
-    alignSelf: 'center',
-    marginBottom: 8,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 16,
-  },
-  storesList: {
-    marginTop: 16,
-  }
-});
 
 export default SubCategory;

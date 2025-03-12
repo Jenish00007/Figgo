@@ -151,7 +151,17 @@ if(activeTab === "Items"){
         ))}
       </View>
       {contentType === 'Items' ? (
-        <Products products={searchResults} />
+        <FlatList
+        data={searchResults}
+        horizontal={true}
+        showsHorizontalScrollIndicator={false}
+        renderItem={({ item }) => <Products 
+        name={item?.name}
+        price={item?.price}
+        image_full_url={item?.image_full_url}
+         />}
+        keyExtractor={(item) => item.id.toString()}
+      />
       ) : (
         <FlatList
           horizontal={true}

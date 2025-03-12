@@ -792,13 +792,17 @@ function Menu({ route, props }) {
                     />
                     {/* Popular Items Section */}
                     <TextDefault style={styles().sectionTitle}>Most Popular Items 🔥</TextDefault>
-                    {/* <FlatList
+                    <FlatList
                       data={popularItem}
                       horizontal={true}
                       showsHorizontalScrollIndicator={false}
-                      renderItem={({ item }) => <Products products={popularItem} />}
+                      renderItem={({ item }) => <Products 
+                      name={item?.name}
+                      price={item?.price}
+                      image_full_url={item?.image_full_url}
+                       />}
                       keyExtractor={(item) => item.id.toString()}
-                    /> */}
+                    />
                     {/* New on Figgo Section */}
                     <TextDefault style={styles().sectionTitle}>New on Figgo</TextDefault>
                     <FlatList
