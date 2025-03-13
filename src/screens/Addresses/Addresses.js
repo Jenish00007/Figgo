@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useLayoutEffect } from 'react'
+import React, { useContext, useEffect, useLayoutEffect, useState, useCallback } from 'react'
 import {
   View,
   TouchableOpacity,
@@ -6,20 +6,17 @@ import {
   StatusBar,
   Platform
 } from 'react-native'
-import { NetworkStatus, useMutation } from '@apollo/client'
 import {
   AntDesign,
   EvilIcons,
   SimpleLineIcons,
   MaterialIcons
 } from '@expo/vector-icons'
-
-import gql from 'graphql-tag'
+import { LocationContext } from '../../context/Location'
+//import gql from 'graphql-tag'
 
 import { scale } from '../../utils/scaling'
-import { deleteAddress } from '../../apollo/mutations'
 import ThemeContext from '../../ui/ThemeContext/ThemeContext'
-import UserContext from '../../context/User'
 import { theme } from '../../utils/themeColors'
 import styles from './styles'
 import TextDefault from '../../components/Text/TextDefault/TextDefault'
@@ -35,41 +32,107 @@ import CustomWorkIcon from '../../assets/SVG/imageComponents/CustomWorkIcon'
 import CustomOtherIcon from '../../assets/SVG/imageComponents/CustomOtherIcon'
 import CustomApartmentIcon from '../../assets/SVG/imageComponents/CustomApartmentIcon'
 import { useTranslation } from 'react-i18next'
+import AuthContext from '../../context/Auth'
 
-const DELETE_ADDRESS = gql`
-  ${deleteAddress}
-`
+// const DELETE_ADDRESS = gql`
+//   ${deleteAddress}
+// `
 
 function Addresses() {
   const Analytics = analytics()
 
   const navigation = useNavigation()
-  const [mutate, { loading: loadingMutation }] = useMutation(DELETE_ADDRESS, {
-    onCompleted
-  })
-  const { profile, refetchProfile, networkStatus } = useContext(UserContext)
+  // const [mutate, { loading: loadingMutation }] = useMutation(DELETE_ADDRESS, {
+  //   onCompleted
+  // })
+  //const { profile, refetchProfile, networkStatus } = useContext(UserContext)
+
   const themeContext = useContext(ThemeContext)
   const currentTheme = theme[themeContext.ThemeValue]
   const { t } = useTranslation()
+  const { location } = useContext(LocationContext)
 
-    function onCompleted() {
-      FlashMessage({ message: t('addressDeletedMessage') })
-    }
+  const [addresses, setAddresses] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [refreshing, setRefreshing] = useState(false)
+  const { token } = useContext(AuthContext)
 
-  useFocusEffect(() => {
-    if (Platform.OS === 'android') {
-      StatusBar.setBackgroundColor(currentTheme.menuBar)
+  // Network-only fetch function
+  const fetchAddress = useCallback(async () => {
+    try {
+      setLoading(true)
+            
+      const headers = {
+        'moduleId': '1',
+        'zoneId': '[1]',
+        'latitude': location?.latitude?.toString() || '23.79354466376145',
+        'longitude': location?.longitude?.toString() || '90.41166342794895',
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/json',
+        // These headers ensure a fresh request every time
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+      
+      const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/customer/address/list', {
+        method: 'GET',
+        headers: headers,
+        cache: 'no-store'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch addresses')
+      }
+
+      const result = await response.json()
+      console.log('API Response:', result)
+      
+      // Set the addresses array from the response
+      setAddresses(result.addresses || [])
+      setError(null)
+    } catch (err) {
+      console.log('Fetch error:', err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
     }
-    StatusBar.setBarStyle(
-      themeContext.ThemeValue === 'Dark' ? 'light-content' : 'dark-content'
-    )
-  })
+  }, [location, token])
+
+  const handleRefresh = () => {
+    setRefreshing(true)
+    fetchAddress()
+  }
+
+  // Fetch data when component mounts
+  useEffect(() => {
+    fetchAddress()
+  }, [fetchAddress])
+
+  function onCompleted() {
+    FlashMessage({ message: t('addressDeletedMessage') })
+  }
+
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS === 'android') {
+        StatusBar.setBackgroundColor(currentTheme.menuBar)
+      }
+      StatusBar.setBarStyle(
+        themeContext.ThemeValue === 'Dark' ? 'light-content' : 'dark-content'
+      )
+    }, [currentTheme, themeContext])
+  )
+
   useEffect(() => {
     async function Track() {
       await Analytics.track(Analytics.events.NAVIGATE_TO_ADDRESS)
     }
     Track()
   }, [])
+
   useLayoutEffect(() => {
     navigation.setOptions({
       title: t('myAddresses'),
@@ -93,11 +156,9 @@ function Addresses() {
       headerLeft: () => (
         <HeaderBackButton
           truncatedLabel=''
-         
           backImage={() => (
             <View>
               <MaterialIcons name='arrow-back' size={30} color={currentTheme.newIconColor} />
-            
             </View>
           )}
           onPress={() => {
@@ -106,13 +167,13 @@ function Addresses() {
         />
       )
     })
-  }, [])
+  }, [navigation, currentTheme, t])
 
   const addressIcons = {
-    House: CustomHomeIcon,
-    Office: CustomWorkIcon,
-    Apartment: CustomApartmentIcon,
-    Other: CustomOtherIcon
+    'home': CustomHomeIcon,
+    'office': CustomWorkIcon,
+    'apartment': CustomApartmentIcon,
+    'other': CustomOtherIcon
   }
 
   function emptyView() {
@@ -142,12 +203,13 @@ function Addresses() {
   return (
     <View style={styles(currentTheme).flex}>
       <FlatList
-        onRefresh={refetchProfile}
-        refreshing={networkStatus === NetworkStatus.refetch}
-        data={profile?.addresses}
+        //onRefresh={refetchProfile}
+        //refreshing={networkStatus === NetworkStatus.refetch}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        data={addresses}
         ListEmptyComponent={emptyView}
-        keyExtractor={(item) => item._id}
-        
+        keyExtractor={(item) => item.id.toString()}
         ItemSeparatorComponent={() => (
           <View style={styles(currentTheme).line} />
         )}
@@ -157,44 +219,42 @@ function Addresses() {
             activeOpacity={0.7}
             style={[styles(currentTheme).containerSpace]}
           >
-            
             <View style={[styles().width100, styles().rowContainer]}>
               <View style={[styles(currentTheme).homeIcon]}>
-                {addressIcons[address.label]
-                  ? React.createElement(addressIcons[address.label], {
+                {addressIcons[address.address_type]
+                  ? React.createElement(addressIcons[address.address_type], {
                       fill: currentTheme.darkBgFont
                     })
-                  : React.createElement(addressIcons['Other'], {
+                  : React.createElement(addressIcons['other'], {
                       fill: currentTheme.darkBgFont
                     })}
-               
               </View>
               <View style={[styles().titleAddress]}>
                 <TextDefault
                   textColor={currentTheme.darkBgFont}
                   style={styles(currentTheme).labelStyle}
                 >
-                 
-                  {t(address.label)}
+                  {/* {t(address.label)} */}
+                  {address.address_type || "Address"}
                 </TextDefault>
               </View>
               <View style={styles().buttonsAddress}>
                 <TouchableOpacity
-                  disabled={loadingMutation}
                   activeOpacity={0.7}
                   onPress={() => {
-                    const [longitude, latitude] = address.location.coordinates
+                    // const [longitude, latitude] = address.location.coordinates
                     navigation.navigate('AddNewAddress', {
-                      id:address._id,
-                      longitude: +longitude,
-                      latitude: +latitude,
+                      id: address.id,
+                      // longitude: +longitude,
+                      // latitude: +latitude,
+                      longitude: +address.longitude,
+                      latitude: +address.latitude,
                       prevScreen: 'Addresses'
                     })
                   }}
                 >
                   <SimpleLineIcons
                     name='pencil'
-                   
                     size={scale(20)}
                     color={currentTheme.darkBgFont}
                   />
@@ -202,15 +262,15 @@ function Addresses() {
 
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  disabled={loadingMutation}
+                  //disabled={loadingMutation}
                   onPress={() => {
-                    mutate({ variables: { id: address._id } })
+                    //mutate({ variables: { id: address._id } })
+                    console.log("Delete address with ID:", address.id);
+                    FlashMessage({ message: t('addressDeletedMessage') })
                   }}
                 >
-                  
                   <EvilIcons
                     name='trash'
-                   
                     size={scale(33)}
                     color={currentTheme.darkBgFont}
                   />
@@ -225,8 +285,15 @@ function Addresses() {
                   textColor={currentTheme.darkBgFont}
                   style={{ ...alignment.PBxSmall }}
                 >
-                  
-                  {address.deliveryAddress}
+                  {/* {address.deliveryAddress} */}
+                  {address.address}
+                </TextDefault>
+                <TextDefault
+                  numberOfLines={1}
+                  textColor={currentTheme.fontSecondColor}
+                  style={{ ...alignment.PBxSmall }}
+                >
+                  {address.contact_person_name} • {address.contact_person_number}
                 </TextDefault>
               </View>
             </View>
@@ -243,7 +310,6 @@ function Addresses() {
               prevScreen: 'Addresses'
             })}
           >
-            
             <TextDefault H5 bold>
               {t('addAddress')}
             </TextDefault>

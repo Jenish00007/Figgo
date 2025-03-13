@@ -9,7 +9,6 @@ const AddToFavourites = ({ product, restaurantId }) => {
     const [loading, setLoading] = useState(false);
     const { location } = useContext(LocationContext);
     const { token } = useContext(AuthContext);
-
     useEffect(() => {
         if (token) {
             checkFavouriteStatus();
@@ -21,6 +20,8 @@ const AddToFavourites = ({ product, restaurantId }) => {
     const checkFavouriteStatus = async () => {
         if (!token) return;
         try {
+            //const moduleIds = [1, 4]
+            //const queryString = moduleIds.map(id => `moduleId=${id}`).join('&');      
             const headers = {
                 'moduleId': '1',
                 'zoneId': '[1]',
@@ -29,7 +30,7 @@ const AddToFavourites = ({ product, restaurantId }) => {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             };
-            const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/customer/wish-list', {
+            const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/wish-list`, {
                 method: 'GET',
                 headers: headers,
             });
@@ -75,6 +76,7 @@ const AddToFavourites = ({ product, restaurantId }) => {
             const text = await response.text();
             console.log("Api response:", text, "With", idKey, ":", idValue );
             const result = JSON.parse(text);
+            console.log("Endpoint  ",endpoint)
 
             if (response.ok) {
                 setIsFavourite(!isFavourite);

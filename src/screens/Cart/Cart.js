@@ -1,27 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, Image, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AuthContext from '../../context/Auth';
 
-const CartPage = () => {
+const CartPage = (profile) => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
+  const { token } = useContext(AuthContext);
 
   useEffect(() => {
     fetchCartItems();
   }, []);
 
-  const headers = {
-    'moduleId': '1',
-    'zoneId': '[3,1]',
-    'X-localization': 'en',
-    'latitude': '23.793544663762145',
-    'longitude': '90.41166342794895'
-  };
-
   const fetchCartItems = async () => {
     try {
-      const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/customer/cart/list?guest_id=124', {
+      const headers = {
+        'moduleId': '1',
+        'Authorization': `Bearer ${token}`,
+        'zoneId': '[3,1]',
+        'X-localization': 'en',
+        'latitude': '23.793544663762145',
+        'longitude': '90.41166342794895'
+      };    
+      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/list?guest_id=${profile.guest_id}`, {
         'method': 'GET',
         headers: headers,
       });

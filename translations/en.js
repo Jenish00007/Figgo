@@ -146,7 +146,7 @@ export const en = {
   validateItems: 'Add items to cart before checkout',
   validateDelivery: 'Set delivery address before checkout',
   Favourite: 'Favourites',
-  titleFavourite: 'Favourite Restaurants',
+  titleFavourite: 'Favourites',
   titleEmptyFav: 'No Favourites Saved',
   emptyFavDesc:
     "You'll see all your favourites here, to make ordering even faster.",

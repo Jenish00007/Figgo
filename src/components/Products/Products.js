@@ -2,8 +2,9 @@ import React from 'react';
 import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { modelId } from 'expo-device';
 
-const Products = ({ item }) => {
+const Products = ({ name,image_full_url,price }) => {
   const navigation = useNavigation();
 
   // Function to limit the product name to 10 characters
@@ -13,13 +14,15 @@ const Products = ({ item }) => {
     }
     return name;
   };
- 
+  
+  const item={name,image_full_url,price}
+
   return (
     <View style={styles.container}>
      
         <View style={styles.itemWrapper}>
           <TouchableOpacity
-            onPress={() => navigation.push('ProductDetail',{product:item})}
+            onPress={() => navigation.push('ProductDetail',{product:item })}
           >
             <View style={styles.itemContainer}>
               <ImageBackground

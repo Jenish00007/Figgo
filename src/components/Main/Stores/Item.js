@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import { View, Image, TouchableOpacity } from 'react-native'
 import styles from './styles'
 import ConfigurationContext from '../../../context/Configuration'
@@ -18,16 +18,19 @@ import { useMutation } from '@apollo/client'
 import Spinner from '../../Spinner/Spinner'
 import { FlashMessage } from '../../../ui/FlashMessage/FlashMessage'
 import { useTranslation } from 'react-i18next'
+import { LocationContext } from '../../../context/Location'
+import AuthContext from '../../../context/Auth'
+import { Delete } from 'lucide-react-native'
 
-const ADD_FAVOURITE = gql`
-  ${addFavouriteRestaurant}
-`
-const PROFILE = gql`
-  ${profile}
-`
-const FAVOURITERESTAURANTS = gql`
-  ${FavouriteRestaurant}
-`
+// const ADD_FAVOURITE = gql`
+//   ${addFavouriteRestaurant}
+// `
+// const PROFILE = gql`
+//   ${profile}
+// `
+// const FAVOURITERESTAURANTS = gql`
+//   ${FavouriteRestaurant}
+// `
 
 function Item(props) {
   const { t } = useTranslation()
@@ -38,10 +41,87 @@ function Item(props) {
   const configuration = useContext(ConfigurationContext)
   const themeContext = useContext(ThemeContext)
   const currentTheme = theme[themeContext.ThemeValue]
-  const [mutate, { loading: loadingMutation }] = useMutation(ADD_FAVOURITE, {
-    onCompleted,
-    refetchQueries: [PROFILE, FAVOURITERESTAURANTS]
-  })
+  const { location } = useContext(LocationContext)
+  const { token, setToken } = useContext(AuthContext)
+
+  // const [mutate, { loading: loadingMutation }] = useMutation(ADD_FAVOURITE, {
+  //   onCompleted,
+  //   refetchQueries: [PROFILE, FAVOURITERESTAURANTS]
+  // })
+
+  const [isFavourite, setIsFavourite] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (item) {
+      setIsFavourite(isFavourite);
+    }
+  }, [isFavourite]); 
+
+  // Function to handle adding/removing from wishlist
+  const toggleWishlist = async () => {
+    if (loading) return; 
+    setLoading(true);
+
+    try {
+      let url 
+      const method = isFavourite ? 'DELETE' : 'POST'; // Change as needed
+       if (props.isStore) {
+        url = isFavourite
+          ? `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/remove?store_id=${props.item.id}`
+          : `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/add?store_id=${props.item.id}`;
+      } else {
+        // Use item_id for items
+        url = isFavourite
+          ? `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/remove?item_id=${props.item.id}`
+          : `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/add?item_id=${props.item.id}`;
+      }
+      const headers = {
+        'moduleId': '1',
+        'zoneId': '[1]',
+        'latitude': location?.latitude?.toString() || '23.79354466376145',
+        'longitude': location?.longitude?.toString() || '90.41166342794895',
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }  
+
+      const response = await fetch(url, {
+        method: method,
+        headers: headers,
+      });
+
+    // Check if response is JSON before parsing
+      const responseData = await response.json();
+      console.log("API Response:", responseData);
+      
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Failed to update wishlist');
+      }
+      
+      setIsFavourite((prev) => !prev);
+      FlashMessage({ message: responseData.message });
+      
+      if (isFavourite && props.onRemoveFromWishlist) {
+        props.onRemoveFromWishlist(item.id);
+      }
+    } catch (error) {     
+      console.error('Wishlist update error:', error);
+      FlashMessage({ message: 'Something went wrong', type: 'danger' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveFromWishlist = (itemId) => {
+    setData((prevData) => ({
+      ...prevData,
+      item: prevData.item.filter((item) => item.id !== itemId),
+    }));
+  };
+
   const { isAvailable, openingTimes } = item
   const isOpen = () => {
     const date = new Date()
@@ -73,24 +153,28 @@ function Item(props) {
           <View style={styles().imageContainer}>
             <Image
               resizeMode="cover"
-              source={{ uri: item?.cover_photo_full_url }}
+              source={{ uri: item.image_full_url || item.cover_photo_full_url }}
               style={styles().img}
             />
             <View style={styles().overlayRestaurantContainer}>
               <TouchableOpacity
                 activeOpacity={0}
-                //disabled={loadingMutation}
+                disabled={loading}
                 style={styles(currentTheme).favOverlay}
-                onPress={() =>
-                  profile ? mutate({ variables: { id: item.id } }) : null
+                onPress={ toggleWishlist
+                  //() => profile ? mutate({ variables: { id: item.id } }) : null
                 }>
-               
+                {loading ? (
+                  <Spinner size={'small'} backColor={'transparent'} spinnerColor={currentTheme.iconColorDark} />
+                ) : (
                   <AntDesign
-                    name={heart ? 'heart' : 'hearto'}
+                    name={isFavourite  ? 'heart' : 'hearto'}
                     size={scale(15)}
-                    color="black"
+                    color={isFavourite ? 'red' : 'black'} 
+                    style={{ opacity: 1 }} 
+                    onPress={toggleWishlist} 
                   />
-               
+                )}
               </TouchableOpacity>
               {/*    {(!isAvailable || !isOpen()) && (
                 <View style={{ ...styles().featureOverlay, top: 40 }}>
@@ -138,7 +222,7 @@ function Item(props) {
                 numberOfLines={1}
                 textColor={currentTheme.fontThirdColor}
                 bolder>
-                {item?.name}
+                {item.name}
               </TextDefault>
               <View style={[styles().aboutRestaurant, { width: '23%' }]}>
                 <Feather name="star" size={18} color={currentTheme.newIconColor} />
@@ -149,14 +233,14 @@ function Item(props) {
                   bolder
                   style={{ marginLeft: scale(2), marginRight: scale(5) }}
                 >
-                  {item?.avg_rating}
+                  {item.avg_rating}
                 </TextDefault>
                 <TextDefault
                   textColor={currentTheme.fontNewColor}
                   style={{ marginLeft: scale(2) }}
 
                   H5>
-                  ({item?.rating_count})
+                  ({item.rating_count})
                 </TextDefault>
               </View>
             </View>
@@ -185,7 +269,7 @@ function Item(props) {
                   numberOfLines={1}
                   bold
                   Normal>
-                  {item?.delivery_time}
+                  {item.delivery_time}
 
                 </TextDefault>
               </View>

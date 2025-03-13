@@ -1,36 +1,91 @@
-import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, Dimensions } from 'react-native';
+import React, { useContext, useState, useRef } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, ScrollView, SafeAreaView, StatusBar, FlatList, Dimensions } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useUserContext } from './../../context/User';
 import AddToFavourites from './../../components/Favourites/AddtoFavourites';
 import { MaterialIcons } from '@expo/vector-icons';
+import AuthContext from '../../context/Auth';
+import { LocationContext } from '../../context/Location'
 
 const { width } = Dimensions.get('window');
 
-const ProductDetail = () => {
+const ProductDetail = (profile) => {
     const route = useRoute();
     const navigation = useNavigation();
     const { product } = route.params;
-    const { addCartItem } = useUserContext();
+    const { location } = useContext(LocationContext);
     
-    // State to track current image index for multiple images
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const { token } = useContext(AuthContext);
+    const [loading, setLoading] = useState(false);
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
     
-    // Determine if we have multiple images or a single image
-    const hasMultipleImages = product?.images_full_url && Array.isArray(product.images_full_url) && product.images_full_url.length > 0;
+    const flatListRef = useRef(null);
     
-    // Images to display - either the array or a single-item array with the one image
-    const imagesToDisplay = hasMultipleImages 
-        ? product.images_full_url 
-        : [product?.image_full_url];
-    
-    // Handle image change when scrolling horizontally
+    // Check if the product has multiple images
+    const hasMultipleImages = product?.images_full_url && product.images_full_url.length > 0;
+    const images = hasMultipleImages ? product.images_full_url : [product?.image_full_url];
+
+    // Handle image change when dots are clicked
+    const handleImageChange = (index) => {
+        setActiveImageIndex(index);
+        flatListRef.current?.scrollToIndex({ animated: true, index });
+    };
+
+    // Function to handle scroll end to update the active dot indicator
     const handleScroll = (event) => {
         const scrollPosition = event.nativeEvent.contentOffset.x;
         const index = Math.round(scrollPosition / width);
-        setCurrentImageIndex(index);
+        if (index !== activeImageIndex) {
+            setActiveImageIndex(index);
+        }
     };
 
+    //const { addCartItem } = useUserContext();
+    const addToCart = async () => {
+        if (!token) {
+            Alert.alert("Login Required", "Please log in to add items to your cart.");
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const headers = {
+                'moduleId': '1',
+                'zoneId': '[1]',
+                'latitude': location?.latitude?.toString() || '23.79354466376145',
+                'longitude': location?.longitude?.toString() || '90.41166342794895',
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+            const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/add?guest_id=${profile.guest_id}`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    item_id: product.id,
+                    quantity: 1, // Adjust quantity as needed
+                    price: product.price,
+                    name: product.name,
+                    image: product.image_full_url,
+                    model: "Item"
+                }),
+            });
+   
+            const result = await response.text();
+            console.log("Add to Cart Response:", result);
+
+            if (response.ok) {
+                Alert.alert("Success", "Product added to cart successfully!");
+            } else {
+                Alert.alert("Error", result.message || "Failed to add product to cart.");
+            }
+        } catch (error) {
+            console.error("Error adding to cart:", error);
+            Alert.alert("Error", "An error occurred while adding to cart.");
+        } finally {
+            setLoading(false);
+        }
+    };
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
@@ -39,41 +94,48 @@ const ProductDetail = () => {
                 
                 {/* Product Image Section with Favorite Icon */}
                 <View style={styles.imageContainer}>
-                    {/* Horizontal ScrollView for images */}
-                    <ScrollView
-                        horizontal
-                        pagingEnabled
-                        showsHorizontalScrollIndicator={false}
-                        onScroll={handleScroll}
-                        scrollEventThrottle={16}
-                    >
-                        {imagesToDisplay.map((imageUrl, index) => (
-                            <Image 
-                                key={`image-${index}`}
-                                source={{ uri: imageUrl }} 
-                                style={[styles.productImage, { width }]} 
-                                resizeMode="cover"
+                    {hasMultipleImages ? (
+                        <>
+                            <FlatList
+                                ref={flatListRef}
+                                data={images}
+                                horizontal
+                                pagingEnabled
+                                showsHorizontalScrollIndicator={false}
+                                onMomentumScrollEnd={handleScroll}
+                                keyExtractor={(item, index) => `image_${index}`}
+                                renderItem={({ item }) => (
+                                    <Image 
+                                        source={{ uri: item }} 
+                                        style={[styles.productImage, { width }]}
+                                        resizeMode="cover"
+                                    />
+                                )}
                             />
-                        ))}
-                    </ScrollView>
-                    
-                    {/* Indicator dots for multiple images */}
-                    {hasMultipleImages && imagesToDisplay.length > 1 && (
-                        <View style={styles.indicatorContainer}>
-                            {imagesToDisplay.map((_, index) => (
-                                <View 
-                                    key={`indicator-${index}`} 
-                                    style={[
-                                        styles.indicator, 
-                                        index === currentImageIndex && styles.activeIndicator
-                                    ]} 
-                                />
-                            ))}
-                        </View>
+                            
+                            {/* Dot indicators for image carousel */}
+                            <View style={styles.dotContainer}>
+                                {images.map((_, index) => (
+                                    <TouchableOpacity 
+                                        key={index} 
+                                        style={[
+                                            styles.dot, 
+                                            activeImageIndex === index && styles.activeDot
+                                        ]}
+                                        onPress={() => handleImageChange(index)}
+                                    />
+                                ))}
+                            </View>
+                        </>
+                    ) : (
+                        <Image 
+                            source={{ uri: product?.image_full_url }} 
+                            style={styles.productImage} 
+                            resizeMode="cover"
+                        />
                     )}
-                    
                     <View style={styles.favIconContainer}>
-                        <AddToFavourites product={product} />
+                        <AddToFavourites product={product} moduleId={moduleId} />
                     </View>
                 </View>
                 
@@ -106,11 +168,12 @@ const ProductDetail = () => {
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
-                    style={styles.addButton} 
-                    onPress={() => addCartItem(product)}
+                    style={[styles.addButton, loading && { opacity: 0.7 }]}  
+                    onPress={addToCart}
+                    disabled={loading}
                 >
                     <MaterialIcons name="add-shopping-cart" size={20} color="#fff" />
-                    <Text style={styles.buttonText}>Add to Cart</Text>
+                    <Text style={styles.buttonText}>{loading ? "Adding..." : "Add to Cart"}</Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
@@ -132,24 +195,26 @@ const styles = StyleSheet.create({
         position: 'relative',
     },
     productImage: {
-        height: 300,
+        width: '100%',
+        height: '100%',
     },
-    indicatorContainer: {
+    dotContainer: {
         position: 'absolute',
         bottom: 15,
-        width: '100%',
+        left: 0,
+        right: 0,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    indicator: {
+    dot: {
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: 'rgba(255, 255, 255, 0.6)',
-        marginHorizontal: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.5)',
+        margin: 4,
     },
-    activeIndicator: {
+    activeDot: {
         backgroundColor: '#ffffff',
         width: 10,
         height: 10,
@@ -247,5 +312,6 @@ const styles = StyleSheet.create({
         marginLeft: 8,
     },
 });
+
 
 export default ProductDetail;

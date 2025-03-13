@@ -45,10 +45,13 @@ function Favourite() {
   const fetchFavouriteRestaurants = useCallback(async () => {
     try {
       setLoading(true)
+
+      const moduleIds = [1, 4]
+      const queryString = moduleIds.map(id => `moduleId=${id}`).join('&');
       
       //const token = await AsyncStorage.getItem('token')
       const headers = {
-        'moduleId': '1',
+        // 'moduleId': '1',
         'zoneId': '[1]',
         'latitude': location.latitude?.toString() || '23.79354466376145',
         'longitude': location.longitude?.toString() || '90.41166342794895',
@@ -59,7 +62,7 @@ function Favourite() {
         'Expires': '0'
       }
       
-      const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/customer/wish-list', {
+      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/wish-list?${queryString}`, {
         method: 'GET',
         headers: headers,
         // This ensures the browser doesn't use cached data

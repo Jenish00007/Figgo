@@ -411,7 +411,7 @@ function Menu({ route, props }) {
           console.log('No Nearby data found');
         }
       } catch (error) {
-        console.error('Error fetching supermarkets:', error);
+        console.error('Error fetching nearbymarket', error);
       }
     };
 
@@ -440,7 +440,7 @@ function Menu({ route, props }) {
           console.log('No Popular data found');
         }
       } catch (error) {
-        console.error('Error fetching supermarkets:', error);
+        console.error('Error fetching popularitem:', error);
       }
     };
 
@@ -794,8 +794,7 @@ function Menu({ route, props }) {
                       horizontal={true}
                       showsHorizontalScrollIndicator={false}
                       renderItem={({ item }) => <Products
-                        item={item}
-                      />}
+                        item={item}/>}
                       keyExtractor={(item) => item.id.toString()}
                     />
                     {/* New on Figgo Section */}

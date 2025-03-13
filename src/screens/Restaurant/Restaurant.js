@@ -15,13 +15,22 @@ import {
   SectionList, FlatList
 } from 'react-native'
 import Animated, {
+  Extrapolation,
+  interpolate,
   useSharedValue,
   Easing as EasingNode,
   withTiming,
   withRepeat,
-  useAnimatedStyle
+  useAnimatedStyle,
+  useAnimatedScrollHandler
 } from 'react-native-reanimated'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import {
+  Placeholder,
+  PlaceholderMedia,
+  PlaceholderLine,
+  Fade
+} from 'rn-placeholder'
 import ImageHeader from '../../components/Restaurant/ImageHeader'
 import TextDefault from '../../components/Text/TextDefault/TextDefault'
 import ConfigurationContext from '../../context/Configuration'
@@ -32,20 +41,42 @@ import { scale } from '../../utils/scaling'
 import { theme } from '../../utils/themeColors'
 import styles from './styles'
 import { DAYS } from '../../utils/enums'
+import { alignment } from '../../utils/alignment'
+import TextError from '../../components/Text/TextError/TextError'
 import { MaterialIcons } from '@expo/vector-icons'
 import analytics from '../../utils/analytics'
+import { gql, useApolloClient, useQuery } from '@apollo/client'
+import { popularItems, food } from '../../apollo/queries'
+
 import { useTranslation } from 'react-i18next'
+import ItemCard from '../../components/ItemCards/ItemCards'
 import { ScrollView } from 'react-native-gesture-handler'
+import { IMAGE_LINK } from '../../utils/constants'
+import { LocationContext } from '../../context/Location'
+import PopularIcon from '../../assets/SVG/popular'
+import { escapeRegExp } from '../../utils/regex'
+import AddtoFavourites from './../../components/Favourites/AddtoFavourites'
 
 const { height } = Dimensions.get('screen')
 const moduleId = '1'
+// Animated Section List component
+const AnimatedSectionList = Animated.createAnimatedComponent(SectionList)
 const TOP_BAR_HEIGHT = height * 0.05
 const HEADER_MAX_HEIGHT = height * 0.4
 const HEADER_MIN_HEIGHT = height * 0.07 + TOP_BAR_HEIGHT
+const SCROLL_RANGE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT
+const HALF_HEADER_SCROLL = HEADER_MAX_HEIGHT - TOP_BAR_HEIGHT
 
+const POPULAR_ITEMS = gql`
+  ${popularItems}
+`
+const FOOD = gql`
+  ${food}
+`
 
+// const concat = (...args) => args.join('')
 function Restaurant(props) {
-
+  const { _id: restaurantId } = props.route.params
   const Analytics = analytics()
   const { t } = useTranslation()
   const scrollRef = useRef(null)
@@ -53,8 +84,11 @@ function Restaurant(props) {
   const navigation = useNavigation()
   const route = useRoute()
   const propsData = route.params
+  const animation = useSharedValue(0)
   const translationY = useSharedValue(0)
+  const circle = useSharedValue(0)
   const themeContext = useContext(ThemeContext)
+
   const currentTheme = theme[themeContext.ThemeValue]
   const configuration = useContext(ConfigurationContext)
   const [selectedLabel, selectedLabelSetter] = useState(0)
@@ -63,9 +97,8 @@ function Restaurant(props) {
   const [search, setSearch] = useState('')
   const [storeDetailsByAll, setStoreDetailsByAll] = useState([])
   const [storeDetailsById, setStoreDetailsById] = useState([])
-  const [storeItemSearch, setStoreItemSearch] = useState([])
+  // const [shopcategoriId, setShopcategoriId] = useState([])
   const [showSearchResults, setShowSearchResults] = useState(false)
-  const [loading, setSearchLoading] = useState(false);
   const {
     restaurant: restaurantCart,
     setCartRestaurant,
@@ -76,15 +109,25 @@ function Restaurant(props) {
     checkItemCart
   } = useContext(UserContext)
 
-  const { data } = useRestaurant(
+  const { data, refetch, networkStatus, loading, error } = useRestaurant(
     propsData._id
   )
 
+  const client = useApolloClient()
+  const { data: popularItems } = useQuery(POPULAR_ITEMS, {
+    variables: { restaurantId }
+  })
 
+  const fetchFoodDetails = (itemId) => {
+    return client.readFragment({ id: `Food:${itemId}`, fragment: FOOD })
+  }
 
- 
-
-  
+  const dataList =
+    popularItems &&
+    popularItems?.popularItems?.map((item) => {
+      const foodDetails = fetchFoodDetails(item.id)
+      return foodDetails
+    })
 
   const searchHandler = () => {
     setSearchOpen(!searchOpen)
@@ -97,6 +140,38 @@ function Restaurant(props) {
     translationY.value = 0
   }
 
+  // useEffect(() => {
+  //   if (search === '') {
+  //     // setFilterData([])
+  //     const filteredData = []
+  //     deals?.forEach((category) => {
+  //       category.data.forEach((deals) => {
+  //         filteredData.push(deals)
+  //       })
+  //     })
+  //     setFilterData(filteredData)
+  //     setShowSearchResults(false)
+  //   } else if (deals) {
+  //     const escapedSearchText = escapeRegExp(search);
+  //     const regex = new RegExp(escapedSearchText, 'i')
+  //     const filteredData = []
+  //     deals.forEach((category) => {
+  //       category.data.forEach((deals) => {
+  //         const title = deals.title.search(regex)
+  //         if (title < 0) {
+  //           const description = deals.description.search(regex)
+  //           if (description > 0) {
+  //             filteredData.push(deals)
+  //           }
+  //         } else {
+  //           filteredData.push(deals)
+  //         }
+  //       })
+  //     })
+  //     setFilterData(filteredData)
+  //     setShowSearchResults(true)
+  //   }
+  // }, [search, searchOpen])
 
   useFocusEffect(() => {
     if (Platform.OS === 'android') {
@@ -113,6 +188,43 @@ function Restaurant(props) {
     Track()
   }, [])
 
+  // useEffect(() => {
+  //   if (
+  //     data &&
+  //     data?.restaurant &&
+  //     (!data?.restaurant.isAvailable || !isOpen())
+  //   ) {
+  //     Alert.alert(
+  //       '',
+  //       'Restaurant Closed at the moment',
+  //       [
+  //         {
+  //           text: 'Go back to restaurants',
+  //           onPress: () => {
+  //             navigation.goBack()
+  //           },
+  //           style: 'cancel'
+  //         },
+  //         {
+  //           text: 'See Menu',
+  //           onPress: () => console.log('see menu')
+  //         }
+  //       ],
+  //       { cancelable: false }
+  //     )
+  //   }
+  // }, [data])
+
+  const zIndexAnimation = useAnimatedStyle(() => {
+    return {
+      zIndex: interpolate(
+        translationY.value,
+        [0, TOP_BAR_HEIGHT, SCROLL_RANGE / 2],
+        [-1, 1, 99],
+        Extrapolation.CLAMP
+      )
+    }
+  })
 
   const isOpen = () => {
     if (storeDetailsByAll) {
@@ -184,15 +296,58 @@ function Restaurant(props) {
     }
   }
 
- 
+  function wrapContentAfterWords(content, numWords) {
+    const words = content.split(' ')
+    const wrappedContent = []
+
+    for (let i = 0; i < words.length; i += numWords) {
+      wrappedContent.push(words.slice(i, i + numWords).join(' '))
+    }
+
+    return wrappedContent.join('\n')
+  }
 
   const addToCart = async (food, clearFlag) => {
-  
+    if (
+      food?.variations?.length === 1 &&
+      food?.variations[0].addons?.length === 0
+    ) {
+      await setCartRestaurant(food.restaurant)
+      const result = checkItemCart(food._id)
+      if (result.exist) await addQuantity(result.key)
+      else await addCartItem(food._id, food.variations[0]._id, 1, [], clearFlag)
+      animate()
+    } else {
+      if (clearFlag) await clearCart()
+      navigation.navigate('ItemDetail', {
+        food,
+        addons: restaurant.addons,
+        options: restaurant.options,
+        restaurant: restaurant._id
+      })
+    }
   }
 
   function tagCart(itemId) {
     if (checkItemCart) {
-     
+      const cartValue = checkItemCart(itemId)
+      if (cartValue.exist) {
+        return (
+          <>
+            <View style={styles(currentTheme).triangleCorner} />
+            <TextDefault
+              style={styles(currentTheme).tagText}
+              numberOfLines={1}
+              textColor={currentTheme.fontWhite}
+              bold
+              small
+              center
+            >
+              {cartValue.quantity}
+            </TextDefault>
+          </>
+        )
+      }
     }
     return null
   }
@@ -203,7 +358,15 @@ function Restaurant(props) {
     transform: [{ scale: scaleValue.value }]
   }))
 
-
+  // button animation
+  function animate() {
+    scaleValue.value = withRepeat(withTiming(1.5, { duration: 250 }), 2, true)
+  }
+  const config = (to) => ({
+    duration: 250,
+    toValue: to,
+    easing: EasingNode.inOut(EasingNode.ease)
+  })
 
   const scrollToSection = (index) => {
     if (scrollRef.current != null) {
@@ -217,7 +380,44 @@ function Restaurant(props) {
     }
   }
 
-  
+  const onScrollEndSnapToEdge = (event) => {
+    event.persist()
+    const y = event.nativeEvent.contentOffset.y
+
+    if (y > 0 && y < HALF_HEADER_SCROLL / 2) {
+      if (scrollRef.current) {
+        withTiming(translationY.value, config(0), (finished) => {
+          if (finished) {
+            scrollRef.current.scrollToLocation({
+              animated: false,
+              sectionIndex: 0,
+              itemIndex: 0,
+              viewOffset: HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT,
+              viewPosition: 0
+            })
+          }
+        })
+      }
+    } else if (HALF_HEADER_SCROLL / 2 <= y && y < HALF_HEADER_SCROLL) {
+      if (scrollRef.current) {
+        withTiming(translationY.value, config(SCROLL_RANGE), (finished) => {
+          if (finished) {
+            scrollRef.current.scrollToLocation({
+              animated: false,
+              sectionIndex: 0,
+              itemIndex: 0,
+              viewOffset: -(HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT),
+              viewPosition: 0
+            })
+          }
+        })
+      }
+    }
+    buttonClickedSetter(false)
+  }
+  const scrollHandler = useAnimatedScrollHandler((event) => {
+    translationY.value = event.contentOffset.y
+  })
 
   function changeIndex(index) {
     if (selectedLabel !== index) {
@@ -227,7 +427,6 @@ function Restaurant(props) {
       scrollToNavbar(index)
     }
   }
-
   function scrollToNavbar(value = 0) {
     if (flatListRef.current != null) {
       flatListRef.current.scrollToIndex({
@@ -238,6 +437,17 @@ function Restaurant(props) {
     }
   }
 
+  function onViewableItemsChanged({ viewableItems }) {
+    buttonClickedSetter(false)
+    if (viewableItems.length === 0) return
+    if (
+      selectedLabel !== viewableItems[0].section.index &&
+      buttonClicked === false
+    ) {
+      selectedLabelSetter(viewableItems[0].section.index)
+      scrollToNavbar(viewableItems[0].section.index)
+    }
+  }
 
   const iconColor = currentTheme.white
   const iconBackColor = currentTheme.white
@@ -246,8 +456,18 @@ function Restaurant(props) {
   const iconTouchHeight = scale(30)
   const iconTouchWidth = scale(30)
 
+
+
+
+  // const handleItemPress = (ShopcategoriId) => {
+  //   setShopcategoriId(ShopcategoriId)
+  //   fetchStoreDetailsById()
+  // };
+
+
   useEffect(() => {
     handleItemPress();
+    // fetchStoreDetailsById();
   }, [moduleId]);
 
     const handleItemPress = async (ShopcategoriId) => {
@@ -290,6 +510,9 @@ function Restaurant(props) {
         // console.log(json)
 
         setStoreDetailsByAll(json.category_details);
+
+
+
       } catch (error) {
         console.error('Error fetching fetchStoreDetailsByAll:', error);
       }
@@ -297,38 +520,31 @@ function Restaurant(props) {
 
     fetchStoreDetailsByAll();
   }, [moduleId]);
+  // Code that processes the dummy data
+  // const restaurant = data1.restaurant;
+  // const allDeals = restaurant.categories.filter((cat) => cat?.foods?.length);
+  // const deals = allDeals.map((c, index) => ({
+  //   ...c,
+  //   data: c.foods,
+  //   index: dataList?.length > 0 ? index + 1 : index
+  // }));
+
+  // const updatedDeals =
+  //   data1?.length > 0
+  //     ? [
+  //       {
+  //         title: 'Popular',
+  //         id: new Date().getTime(),
+  //         data: dataList?.slice(0, 4),
+  //         index: 0
+  //       },
+  //       ...deals
+  //     ]
+  //     : [...deals];
+
+  // console.log(updatedDeals);
+
  
-  useEffect(() => {
-    // Fetch function
-    const fetchStoreItemSearch = async () => {
-      if (search.length > 0) { // Optional: Only search if there's something in the search input
-        setSearchLoading(true); // Show loading spinner if necessary
-        try {
-          const response = await fetch(
-            `https://6ammart-admin.6amtech.com/api/v1/items/search?store_id=${propsData.id}&name=${search}&offset=1&limit=10&type=all&category_id=0`, 
-            {
-              method: 'GET', // GET request method
-              headers: {
-                'Content-Type': 'application/json', 
-                'zoneId': '[1]',
-                'moduleId': moduleId
-              }
-            }
-          );
-          const json = await response.json();
-          setStoreItemSearch(json.products);
-        } catch (error) {
-          console.error('Error fetching store items:', error);
-        } finally {
-          setSearchLoading(false); // Hide loading spinner
-        }
-      }
-    };
-
-    // Call fetchStoreItemSearch whenever `search` or `moduleId` changes
-    fetchStoreItemSearch();
-  }, [search, moduleId]);
-
   return (
     <>
       <SafeAreaView style={styles(currentTheme).flex}>
@@ -360,6 +576,11 @@ function Restaurant(props) {
             translationY={translationY}
           />
 
+          {/* Add the AddtoFavourites component here */}
+          <View style={{ position: 'absolute', top: scale(50), right: scale(15), zIndex: 100 }}>
+            <AddtoFavourites restaurantId={propsData.id} />
+          </View>
+
           {showSearchResults || searchOpen ? (
             <ScrollView
               style={{
@@ -368,43 +589,34 @@ function Restaurant(props) {
                 backgroundColor: currentTheme.themeBackground,
               }}
             >
-              <FlatList
-              data={storeItemSearch}
-              keyExtractor={(item, index) => String(index)}
-              contentContainerStyle={{
-                flexGrow: 1,
-                
-              }}
-              renderItem={({ item, index }) => (
+              {storeDetailsById.map((item, index) => (
                 <View key={index}>
                   <TouchableOpacity
                     style={styles(currentTheme).searchDealSection}
                     activeOpacity={0.7}
-                    onPress={() => {
-                      console.log(item.id); // Log the id
+                    onPress={() =>
                       onPressItem({
                         ...item,
-                        categoryid: item.id,
-                      });
-                    }}
 
+                      })
+                    }
                   >
                     <View
                       style={{
                         flexDirection: 'row',
                         justifyContent: 'space-between',
-                        alignItems: 'center',
+                        alignItems: 'center'
                       }}
                     >
                       <View style={styles(currentTheme).deal}>
-                        {item?.image_full_url ? (
+                        {item?.image ? (
                           <Image
                             style={{
                               height: scale(60),
                               width: scale(60),
-                              borderRadius: 30,
+                              borderRadius: 30
                             }}
-                            source={{ uri: item.image_full_url }}
+                            source={{ uri: item.image }}
                           />
                         ) : null}
                         <View style={styles(currentTheme).flex}>
@@ -415,9 +627,14 @@ function Restaurant(props) {
                               numberOfLines={1}
                               bolder
                             >
-                              {item.name}
+                              {item.title}
                             </TextDefault>
-                    
+                            <TextDefault
+                              style={styles(currentTheme).priceText}
+                              small
+                            >
+                              {wrapContentAfterWords(item.description, 5)}
+                            </TextDefault>
                             <View style={styles(currentTheme).dealPrice}>
                               <TextDefault
                                 numberOfLines={1}
@@ -427,9 +644,11 @@ function Restaurant(props) {
                                 small
                               >
                                 {configuration.currencySymbol}{' '}
-                                {parseFloat(item.price).toFixed(2)}
+                                {parseFloat(item.variations[0].price).toFixed(
+                                  2
+                                )}
                               </TextDefault>
-                              {item?.discount > 0 && (
+                              {item?.variations[0]?.discounted > 0 && (
                                 <TextDefault
                                   numberOfLines={1}
                                   textColor={currentTheme.fontSecondColor}
@@ -439,7 +658,8 @@ function Restaurant(props) {
                                 >
                                   {configuration.currencySymbol}{' '}
                                   {(
-                                    item.price + item.discount
+                                    item.variations[0].price +
+                                    item.variations[0].discounted
                                   ).toFixed(2)}
                                 </TextDefault>
                               )}
@@ -449,19 +669,21 @@ function Restaurant(props) {
                       </View>
                       <View style={styles().addToCart}>
                         <MaterialIcons
-                          name="add"
+                          name='add'
                           size={scale(20)}
                           color={currentTheme.black}
                         />
                       </View>
                     </View>
+                    {/* )} */}
                     {tagCart(item.id)}
                   </TouchableOpacity>
                 </View>
-              )}
-            />
+              ))}
             </ScrollView>
           ) : (
+
+
             <FlatList
               data={storeDetailsById}
               keyExtractor={(item, index) => String(index)}
@@ -512,6 +734,9 @@ function Restaurant(props) {
                             >
                               {item.name}
                             </TextDefault>
+                            {/* <TextDefault style={styles(currentTheme).priceText} small>
+                              {wrapContentAfterWords(item.description, 5)}
+                            </TextDefault> */}
                             <View style={styles(currentTheme).dealPrice}>
                               <TextDefault
                                 numberOfLines={1}
