@@ -3,7 +3,7 @@ import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, Image } from
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const Products = ({ name,image_full_url,price }) => {
+const Products = ({ item }) => {
   const navigation = useNavigation();
 
   // Function to limit the product name to 10 characters
@@ -13,9 +13,7 @@ const Products = ({ name,image_full_url,price }) => {
     }
     return name;
   };
-  
-  const item={name,image_full_url,price}
-
+ 
   return (
     <View style={styles.container}>
      
@@ -25,16 +23,16 @@ const Products = ({ name,image_full_url,price }) => {
           >
             <View style={styles.itemContainer}>
               <ImageBackground
-                source={{ uri: image_full_url }}
+                source={{ uri: item.image_full_url }}
                 style={styles.cardImageBG}
                 resizeMode="cover"
               >
                 {/* Optional: Add Rating Icon or other components here */}
               </ImageBackground>
-              <Text style={styles.cardTitle}>{getShortenedName(name)}</Text>
+              <Text style={styles.cardTitle}>{getShortenedName(item.name)}</Text>
               <View style={styles.cardFooterRow}>
                 <Text style={styles.cardPriceCurrency}>₹</Text>
-                <Text style={styles.cardPrice}>{price}</Text>
+                <Text style={styles.cardPrice}>{item.price}</Text>
                 <TouchableOpacity>
                   <Icon style={styles.addIcon} name="add" size={24} color="red" />
                 </TouchableOpacity>

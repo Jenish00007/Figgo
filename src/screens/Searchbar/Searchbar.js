@@ -156,9 +156,7 @@ if(activeTab === "Items"){
         horizontal={true}
         showsHorizontalScrollIndicator={false}
         renderItem={({ item }) => <Products 
-        name={item?.name}
-        price={item?.price}
-        image_full_url={item?.image_full_url}
+        item={item}
          />}
         keyExtractor={(item) => item.id.toString()}
       />
