@@ -135,7 +135,7 @@ const ProductDetail = (profile) => {
                         />
                     )}
                     <View style={styles.favIconContainer}>
-                        <AddToFavourites product={product} moduleId={moduleId} />
+                        <AddToFavourites product={product} />
                     </View>
                 </View>
                 
