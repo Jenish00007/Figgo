@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { modelId } from 'expo-device';
 
-const Products = ({ name,image_full_url,price }) => {
+const Products = ({ item}) => {
   const navigation = useNavigation();
 
   // Function to limit the product name to 10 characters
@@ -15,7 +15,7 @@ const Products = ({ name,image_full_url,price }) => {
     return name;
   };
   
-  const item={name,image_full_url,price}
+  
 
   return (
     <View style={styles.container}>
