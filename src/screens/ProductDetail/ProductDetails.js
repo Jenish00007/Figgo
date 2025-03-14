@@ -5,7 +5,8 @@ import { useUserContext } from './../../context/User';
 import AddToFavourites from './../../components/Favourites/AddtoFavourites';
 import { MaterialIcons } from '@expo/vector-icons';
 import AuthContext from '../../context/Auth';
-import { LocationContext } from '../../context/Location'
+import { LocationContext } from '../../context/Location';
+import UserContext from '../../context/User';
 
 const { width } = Dimensions.get('window');
 
@@ -14,8 +15,8 @@ const ProductDetail = (profile) => {
     const navigation = useNavigation();
     const { product } = route.params;
     const { location } = useContext(LocationContext);
-    
     const { token } = useContext(AuthContext);
+    const { isLoggedIn } = useContext(UserContext);
     const [loading, setLoading] = useState(false);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     
@@ -42,8 +43,8 @@ const ProductDetail = (profile) => {
 
     //const { addCartItem } = useUserContext();
     const addToCart = async () => {
-        if (!token) {
-            Alert.alert("Login Required", "Please log in to add items to your cart.");
+        if (!isLoggedIn) {
+            navigation.navigate('Login');
             return;
         }
 
@@ -86,6 +87,7 @@ const ProductDetail = (profile) => {
             setLoading(false);
         }
     };
+    
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
@@ -180,6 +182,7 @@ const ProductDetail = (profile) => {
     );
 };
 
+// Styles remain unchanged
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -312,6 +315,5 @@ const styles = StyleSheet.create({
         marginLeft: 8,
     },
 });
-
 
 export default ProductDetail;
