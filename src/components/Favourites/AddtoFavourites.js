@@ -3,18 +3,22 @@ import { TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LocationContext } from '../../context/Location';
 import AuthContext from '../../context/Auth';
+import UserContext from '../../context/User';
+import { useNavigation } from '@react-navigation/native';
 
 const AddToFavourites = ({ product, restaurantId }) => {
     const [isFavourite, setIsFavourite] = useState(false);
     const [loading, setLoading] = useState(false);
     const { location } = useContext(LocationContext);
     const { token } = useContext(AuthContext);
+    const { isLoggedIn } = useContext(UserContext);
+    const navigation = useNavigation();
+
     useEffect(() => {
         if (token) {
             checkFavouriteStatus();
         }
     }, [token, product?.id, restaurantId]);
-
 
     //To check whether the product is in wishlist or not
     const checkFavouriteStatus = async () => {
@@ -46,12 +50,13 @@ const AddToFavourites = ({ product, restaurantId }) => {
     };
 
     const toggleFavourites = async () => {
-        if (loading || !token) {
-            if (!token) {
-                Alert.alert("Please Login", "You need to be logged in to add items to favorites.");
-            }
+        if (loading) return;
+        
+        if (!isLoggedIn) {
+            navigation.navigate('Login');
             return;
         }
+        
         setLoading(true);
         try {
             const idKey = restaurantId ? 'store_id' : 'item_id';
