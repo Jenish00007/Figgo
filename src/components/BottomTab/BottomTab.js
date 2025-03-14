@@ -1,112 +1,114 @@
-import React, { useContext } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import styles from './styles';
+import React, { useState, useEffect, useContext } from 'react';
+import { TouchableOpacity, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LocationContext } from '../../context/Location';
+import AuthContext from '../../context/Auth';
 import UserContext from '../../context/User';
-import { theme } from '../../utils/themeColors'
-import { scale } from '../../utils/scaling'
-import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
+import { useNavigation } from '@react-navigation/native';
 
-function BottomTab({ screen }) {
-  const navigation = useNavigation();
-  const { isLoggedIn, cartCount, orders } = useContext(UserContext);
+const AddToFavourites = ({ product, restaurantId }) => {
+    const [isFavourite, setIsFavourite] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const { location } = useContext(LocationContext);
+    const { token } = useContext(AuthContext);
+    const { isLoggedIn } = useContext(UserContext);
+    const navigation = useNavigation();
 
-  const getIconColor = (currentScreen) => {
-    return screen === currentScreen ? theme.Figgo.yellow : theme.Dark.darkGrayText;
-  };
+    useEffect(() => {
+        if (token) {
+            checkFavouriteStatus();
+        }
+    }, [token, product?.id, restaurantId]);
 
-  const getTextStyle = (currentScreen) => {
-    return screen === currentScreen ? styles.activeText : styles.inactiveText;
-  };
+    //To check whether the product is in wishlist or not
+    const checkFavouriteStatus = async () => {
+        if (!token) return;
+        try {
+            //const moduleIds = [1, 4]
+            //const queryString = moduleIds.map(id => `moduleId=${id}`).join('&');      
+            const headers = {
+                'moduleId': '1',
+                'zoneId': '[1]',
+                'latitude': location?.latitude?.toString() || '23.79354466376145',
+                'longitude': location?.longitude?.toString() || '90.41166342794895',
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+            const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/wish-list`, {
+                method: 'GET',
+                headers: headers,
+            });
+            if (response.ok) {
+                const result = await response.json();                
+                const itemList = restaurantId ? result?.store || [] : result?.item || [];
+                const isInWishlist = itemList.some(item => item.id === (restaurantId || product?.id));
+                setIsFavourite(isInWishlist);
+            }
+        } catch (error) {
+            console.error("Error checking favourite status:", error);
+        }
+    };
 
-  return (
-    <View style={styles.footerContainer}>
-      {/* Home Icon */}
-      <TouchableOpacity
-        onPress={() => navigation.navigate('MainLanding')}
-        style={styles.footerBtnContainer}
-      >
-        <MaterialCommunityIcons
-          name="home" // Solid green icon
-          size={scale(20)}
-          color={getIconColor('HOME')}
-        />
-        <Text style={getTextStyle('HOME')}>Home</Text>
-      </TouchableOpacity>
-
-      {/* Cart Icon */}
-      <TouchableOpacity
-        onPress={() => navigation.navigate('Favourite')}
-        style={styles.footerBtnContainer}
-      >
-        <View style={styles.imgContainer}>
-          <SimpleLineIcons
-            name="heart" // Solid green icon
-            size={scale(20)}
-            color={getIconColor('WhereToGo')}
-          />
-
-
-          {cartCount > 0 && (
-            <View style={styles.badgeContainer}>
-              <Text style={styles.badgeText}>{cartCount}</Text>
-            </View>
-          )}
-        </View>
-        <Text style={getTextStyle('WhereToGo')}>Favourite</Text>
-      </TouchableOpacity>
-
-
-      {/* Cart Icon */}
-      <TouchableOpacity
-        onPress={() => navigation.navigate('Cart')}
-        style={styles.footerBtnContainer}
-      >
-        <MaterialCommunityIcons
-          name="cart"
-          size={scale(20)}
-          color={getIconColor('FAVOURITES')}
-        />
-        <Text style={getTextStyle('FAVOURITES')}>Cart</Text>
-      </TouchableOpacity>
-
-      {/* Favourites Icon */}
-      <TouchableOpacity
-        onPress={() => navigation.navigate('MyOrders')}
-        style={styles.footerBtnContainer}
-      >
-        <MaterialCommunityIcons
-          name="note"
-          size={scale(20)}
-          color={getIconColor('FAVOURITES')}
-        />
-        <Text style={getTextStyle('FAVOURITES')}>Orders</Text>
-      </TouchableOpacity>
-
-      {/* Profile Icon */}
-      <TouchableOpacity
-        onPress={() => {
-          if (isLoggedIn) {
-            navigation.navigate('Options');
-          } else {
+    const toggleFavourites = async () => {
+        if (loading) return;
+        
+        if (!isLoggedIn) {
             navigation.navigate('Login');
-          }
-        }}
-        style={styles.footerBtnContainer}
-      >
-        <View style={styles.profileContainer}>
-          <MaterialCommunityIcons
-            name="menu"
-            size={scale(20)}
-            color={getIconColor('PROFILE')}
-          />
+            return;
+        }
+        
+        setLoading(true);
+        try {
+            const idKey = restaurantId ? 'store_id' : 'item_id';
+            const idValue = restaurantId || product?.id;
+            const endpoint = isFavourite
+                ? `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/remove?${idKey}=${idValue}`
+                : `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/add?${idKey}=${idValue}`;
+            const method = isFavourite ? 'DELETE' : 'POST';
+            const headers = {
+                'moduleId': '1',
+                'zoneId': '[1]',
+                'latitude': location?.latitude?.toString() || '23.79354466376145',
+                'longitude': location?.longitude?.toString() || '90.41166342794895',
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            };
 
-        </View>
-        <Text style={getTextStyle('PROFILE')}>Menu</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
+            const response = await fetch(endpoint, {
+                method: method,
+                headers: headers,
+            });
+            const text = await response.text();
+            console.log("Api response:", text, "With", idKey, ":", idValue );
+            const result = JSON.parse(text);
+            console.log("Endpoint  ",endpoint)
 
-export default BottomTab;
+            if (response.ok) {
+                setIsFavourite(!isFavourite);
+                Alert.alert(
+                    isFavourite ? "Removed" : "Success",
+                    isFavourite ? "Removed from Favourites." : "Added to Favourites."
+                );
+            } else {
+                Alert.alert("Error", result.message || "Something went wrong.");
+            }
+        } catch (error) {
+            console.error("Error toggling favourites:", error);
+            Alert.alert("Error", "Failed to update Favourites.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <TouchableOpacity onPress={toggleFavourites} disabled={loading}>
+            <Ionicons
+                name={isFavourite ? 'heart' : 'heart-outline'}
+                size={28}
+                color={isFavourite ? 'red' : 'gray'}
+            />
+        </TouchableOpacity>
+    );
+};
+
+export default AddToFavourites;

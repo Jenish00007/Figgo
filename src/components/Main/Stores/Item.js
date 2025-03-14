@@ -10,74 +10,82 @@ import { alignment } from '../../../utils/alignment'
 import { AntDesign, Ionicons, MaterialIcons, Feather } from '@expo/vector-icons'
 import { scale } from '../../../utils/scaling'
 import { DAYS } from '../../../utils/enums'
-import { profile, FavouriteRestaurant } from '../../../apollo/queries'
-import { addFavouriteRestaurant } from '../../../apollo/mutations'
 import UserContext from '../../../context/User'
-import gql from 'graphql-tag'
-import { useMutation } from '@apollo/client'
 import Spinner from '../../Spinner/Spinner'
 import { FlashMessage } from '../../../ui/FlashMessage/FlashMessage'
 import { useTranslation } from 'react-i18next'
 import { LocationContext } from '../../../context/Location'
 import AuthContext from '../../../context/Auth'
-import { Delete } from 'lucide-react-native'
-
-// const ADD_FAVOURITE = gql`
-//   ${addFavouriteRestaurant}
-// `
-// const PROFILE = gql`
-//   ${profile}
-// `
-// const FAVOURITERESTAURANTS = gql`
-//   ${FavouriteRestaurant}
-// `
 
 function Item(props) {
   const { t } = useTranslation()
   const navigation = useNavigation()
-  const { profile } = useContext(UserContext)
-  const heart = profile ? profile.favourite.includes(props.item._id) : false
-  const item = props.item
+  const { item, isStore, isFavourite: initialFavourite, onRemoveFromWishlist } = props
   const configuration = useContext(ConfigurationContext)
   const themeContext = useContext(ThemeContext)
   const currentTheme = theme[themeContext.ThemeValue]
   const { location } = useContext(LocationContext)
-  const { token, setToken } = useContext(AuthContext)
+  const { token } = useContext(AuthContext)
 
-  // const [mutate, { loading: loadingMutation }] = useMutation(ADD_FAVOURITE, {
-  //   onCompleted,
-  //   refetchQueries: [PROFILE, FAVOURITERESTAURANTS]
-  // })
-
-  const [isFavourite, setIsFavourite] = useState(true);
+  const [isFavourite, setIsFavourite] = useState(true); // Always true in favorite screen
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Initialize favourite state based on props
     if (item) {
-      setIsFavourite(isFavourite);
+      setIsFavourite(initialFavourite);
     }
-  }, [isFavourite]); 
+  }, [initialFavourite]);
+
+// Function to handle navigation based on item type
+const handleNavigation = () => {
+  if (isStore) {
+    // Pass the entire store object as a parameter
+    if (item.is_featured) {
+      navigation.navigate('FeaturedStoreDetails', { 
+        store: item,
+        isFeatured: true
+      });
+    } else {
+      navigation.navigate('Restaurant', { 
+        store: item
+      });
+    }
+  } else {
+    // Pass the entire product object as a parameter
+    navigation.navigate('ProductDetail', { 
+      product: item 
+    });
+  }
+};
+
+// Add a second navigation method for stores - could be used from a different button
+const handleSecondaryStoreNavigation = () => {
+  if (isStore) {
+    // Navigate to store products or offerings with full store details
+    navigation.navigate('StoreProducts', { 
+      store: item,
+      category: 'all'
+    });
+  }
+};
 
   // Function to handle adding/removing from wishlist
   const toggleWishlist = async () => {
-    if (loading) return; 
+    if (loading || !token) return;
     setLoading(true);
 
     try {
-      let url 
-      const method = isFavourite ? 'DELETE' : 'POST'; // Change as needed
-       if (props.isStore) {
-        url = isFavourite
-          ? `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/remove?store_id=${props.item.id}`
-          : `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/add?store_id=${props.item.id}`;
+      let url;
+      // Since we're in the favorites screen, we're removing items
+      if (isStore) {
+        url = `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/remove?store_id=${item.id}`;
       } else {
-        // Use item_id for items
-        url = isFavourite
-          ? `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/remove?item_id=${props.item.id}`
-          : `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/add?item_id=${props.item.id}`;
+        url = `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/remove?item_id=${item.id}`;
       }
+
       const headers = {
-        'moduleId': '1',
+        'moduleId': isStore ? '1' : '4', // Adjust based on your module IDs
         'zoneId': '[1]',
         'latitude': location?.latitude?.toString() || '23.79354466376145',
         'longitude': location?.longitude?.toString() || '90.41166342794895',
@@ -86,14 +94,13 @@ function Item(props) {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0'
-      }  
+      }
 
       const response = await fetch(url, {
-        method: method,
+        method: 'DELETE',
         headers: headers,
       });
 
-    // Check if response is JSON before parsing
       const responseData = await response.json();
       console.log("API Response:", responseData);
       
@@ -101,117 +108,59 @@ function Item(props) {
         throw new Error(responseData.message || 'Failed to update wishlist');
       }
       
-      setIsFavourite((prev) => !prev);
-      FlashMessage({ message: responseData.message });
+      FlashMessage({ message: responseData.message || t('removedFromFavorites') });
       
-      if (isFavourite && props.onRemoveFromWishlist) {
-        props.onRemoveFromWishlist(item.id);
+      // Call the callback to remove the item from parent component's state
+      if (onRemoveFromWishlist) {
+        onRemoveFromWishlist(item.id);
       }
     } catch (error) {     
       console.error('Wishlist update error:', error);
-      FlashMessage({ message: 'Something went wrong', type: 'danger' });
+      FlashMessage({ message: t('somethingWentWrong'), type: 'danger' });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRemoveFromWishlist = (itemId) => {
-    setData((prevData) => ({
-      ...prevData,
-      item: prevData.item.filter((item) => item.id !== itemId),
-    }));
+  // Get the appropriate image URL based on item type
+  const getImageUrl = () => {
+    if (isStore) {
+      return item.cover_photo_full_url || item.logo_full_url;
+    } else {
+      return item.image_full_url || item.thumbnail_full_url;
+    }
   };
 
-  const { isAvailable, openingTimes } = item
-  const isOpen = () => {
-    const date = new Date()
-    const day = date.getDay()
-    const hours = date.getHours()
-    const minutes = date.getMinutes()
-    const todaysTimings = openingTimes.find(o => o.day === DAYS[day])
-    if (todaysTimings === undefined) return false
-    const times = todaysTimings.times.filter(
-      t =>
-        hours >= Number(t.startTime[0]) &&
-        minutes >= Number(t.startTime[1]) &&
-        hours <= Number(t.endTime[0]) &&
-        minutes <= Number(t.endTime[1])
-    )
-    return times.length > 0
-  }
-
-  function onCompleted() {
-    FlashMessage({ message: t('favouritelistUpdated') })
-  }
   return (
     <TouchableOpacity
       style={{ padding: scale(10) }}
-      activeOpacity={1}
-      onPress={() => navigation.navigate('Restaurant', { ...item })}>
+      activeOpacity={0.8}
+      onPress={handleNavigation}>
       <View key={item.id} style={styles().mainContainer}>
         <View style={[styles(currentTheme).restaurantContainer]}>
           <View style={styles().imageContainer}>
             <Image
               resizeMode="cover"
-              source={{ uri: item.image_full_url || item.cover_photo_full_url }}
+              source={{ uri: getImageUrl() }}
               style={styles().img}
             />
             <View style={styles().overlayRestaurantContainer}>
               <TouchableOpacity
-                activeOpacity={0}
+                activeOpacity={0.7}
                 disabled={loading}
                 style={styles(currentTheme).favOverlay}
-                onPress={ toggleWishlist
-                  //() => profile ? mutate({ variables: { id: item.id } }) : null
-                }>
+                onPress={toggleWishlist}>
                 {loading ? (
                   <Spinner size={'small'} backColor={'transparent'} spinnerColor={currentTheme.iconColorDark} />
                 ) : (
                   <AntDesign
-                    name={isFavourite  ? 'heart' : 'hearto'}
+                    name={isFavourite ? 'heart' : 'hearto'}
                     size={scale(15)}
                     color={isFavourite ? 'red' : 'black'} 
-                    style={{ opacity: 1 }} 
-                    onPress={toggleWishlist} 
+                    style={{ opacity: 1 }}
                   />
                 )}
               </TouchableOpacity>
-              {/*    {(!isAvailable || !isOpen()) && (
-                <View style={{ ...styles().featureOverlay, top: 40 }}>
-                  <TextDefault
-                    style={[
-                      styles(currentTheme).featureText,
-                      {
-                        ...alignment.MTxSmall,
-                        ...alignment.PLsmall,
-                        ...alignment.PRsmall,
-                        ...alignment.PTxSmall,
-                        ...alignment.PBxSmall
-                      }
-                    ]}
-                    textColor={currentTheme.fontWhite}
-                    numberOfLines={1}
-                    small
-                    bold
-                    uppercase>
-                    {t('Closed')}
-                  </TextDefault>
-                </View>
-              )}
-*/}
-
-
-              {/*    <View style={styles(currentTheme).deliveryRestaurantOverlay}>
-                <TextDefault
-                  textColor={currentTheme.fontMainColor}
-                  numberOfLines={1}
-                  small
-                  bolder
-                  center>
-                  {item.deliveryTime + ' '}
-                  {t('min')}
-                </TextDefault>
-              </View> */}
             </View>
           </View>
           <View style={styles().descriptionContainer}>
@@ -228,19 +177,17 @@ function Item(props) {
                 <Feather name="star" size={18} color={currentTheme.newIconColor} />
                 <TextDefault
                   textColor={currentTheme.fontThirdColor}
-
                   H4
                   bolder
                   style={{ marginLeft: scale(2), marginRight: scale(5) }}
                 >
-                  {item.avg_rating}
+                  {item.avg_rating || "0.0"}
                 </TextDefault>
                 <TextDefault
                   textColor={currentTheme.fontNewColor}
                   style={{ marginLeft: scale(2) }}
-
                   H5>
-                  ({item.rating_count})
+                  ({item.rating_count || 0})
                 </TextDefault>
               </View>
             </View>
@@ -251,47 +198,68 @@ function Item(props) {
               Normal
               textColor={currentTheme.fontNewColor}
             >
-              {item?.address}
+              {item?.address || (isStore ? t('store') : t('item'))}
             </TextDefault>
             <View style={styles().priceRestaurant}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 5,
-                  justifyContent: 'center',
-                  marginRight: 18
-                }}>
-                <AntDesign name="clockcircleo" size={16}
-                  color={currentTheme.fontNewColor} />
-                <TextDefault
-                  textColor={currentTheme.fontNewColor}
-                  numberOfLines={1}
-                  bold
-                  Normal>
-                  {item.delivery_time}
-
-                </TextDefault>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 4,
-                  justifyContent: 'center',
-                  marginRight: 10
-                }}>
-                {/* <MaterialIcons name="directions-bike" size={16}
-                color={currentTheme.fontNewColor}/> */}
-                {/* <TextDefault
-                  style={styles().offerCategoty}
-                  textColor={currentTheme.fontNewColor}
-                numberOfLines={1}
-                bold
-                Normal>
-                  {configuration.currencySymbol + '' + item.minimumOrder}{' '}
-                </TextDefault> */}
-              </View>
+              {isStore && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    justifyContent: 'center',
+                    marginRight: 18
+                  }}>
+                  <AntDesign name="clockcircleo" size={16}
+                    color={currentTheme.fontNewColor} />
+                  <TextDefault
+                    textColor={currentTheme.fontNewColor}
+                    numberOfLines={1}
+                    bold
+                    Normal>
+                    {item.delivery_time || t('30-40 min')}
+                  </TextDefault>
+                </View>
+              )}
+              {isStore && (
+                <TouchableOpacity
+                  onPress={handleSecondaryStoreNavigation}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: currentTheme.newClickableColor,
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 5
+                  }}>
+                  <TextDefault
+                    textColor={currentTheme.tagColor}
+                    numberOfLines={1}
+                    bold
+                    Small>
+                    {t('viewProducts')}
+                  </TextDefault>
+                </TouchableOpacity>
+              )}
+              {!isStore && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    justifyContent: 'center',
+                    marginRight: 10
+                  }}>
+                  <TextDefault
+                    style={styles().offerCategoty}
+                    textColor={currentTheme.fontNewColor}
+                    numberOfLines={1}
+                    bold
+                    Normal>
+                    {item.price ? configuration.currencySymbol + ' ' + item.price : ''}
+                  </TextDefault>
+                </View>
+              )}
             </View>
           </View>
         </View>
