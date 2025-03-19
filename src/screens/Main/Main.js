@@ -396,7 +396,7 @@ function Main(props) {
   };
 
 
-  if (error) return <ErrorView />
+  // if (error) return <ErrorView />
 
   return (
     <>

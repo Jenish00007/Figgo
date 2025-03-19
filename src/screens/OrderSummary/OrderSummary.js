@@ -1,25 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
   ScrollView, 
   TouchableOpacity, 
   TextInput,
-  Alert
+  Alert,
+  ActivityIndicator,
+  useColorScheme
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useUserContext } from './../../context/User';
 import OrderSummaryStyles from './OrderSummaryStyles';
-import PaymentMethod from '../../components/Payment/PaymentMethod' // Import the new PaymentMethod component
+import PaymentMethod from '../../components/Payment/PaymentMethod';
+import AuthContext from '../../context/Auth';
+import { theme } from '../../utils/themeColors'; // Import the theme object
 
 const OrderSummary = ({ route }) => {
   // Get cart data from navigation params
   const { cartItems: navigationCartItems } = route.params || {};
-  
+  const { token } = useContext(AuthContext);
+
   const { cart, clearCart, updateCart } = useUserContext();
   const navigation = useNavigation();
+  
+  // Get the current color scheme (system preference)
+  const colorScheme = useColorScheme();
+  
+  // Use the Dark theme if system preference is dark, otherwise use Pink theme
+  const currentTheme = colorScheme === 'dark' ? theme.Dark : theme.Pink;
   
   // Initialize with navigation params if available, otherwise use context
   const [cartItems, setCartItems] = useState(navigationCartItems || (cart?.items || []));
@@ -28,7 +39,7 @@ const OrderSummary = ({ route }) => {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('');
-  
+  const [isLoading, setIsLoading] = useState(false);
   // Form state for new address
   const [newAddress, setNewAddress] = useState({
     name: '',
@@ -149,7 +160,8 @@ const OrderSummary = ({ route }) => {
 
   // Handle payment method selection
   const handleSelectPayment = (method) => {
-    setPaymentMethod(method);
+    //setPaymentMethod(paymentMethod);
+    setPaymentMethod("digital_payment");
   };
 
   // Handle form input changes
@@ -157,7 +169,7 @@ const OrderSummary = ({ route }) => {
     setNewAddress({ ...newAddress, [field]: value });
   };
 
-  // Handle checkout completion
+  // Handle checkout completion with API integration
   const handlePlaceOrder = async () => {
     // Refresh cart data one more time before placing order
     if (!navigationCartItems) {
@@ -175,7 +187,7 @@ const OrderSummary = ({ route }) => {
     }
     
     try {
-      // Create order object
+      setIsLoading(true);
       const order = {
         id: Date.now().toString(),
         items: cartItems,
@@ -185,23 +197,50 @@ const OrderSummary = ({ route }) => {
         date: new Date().toISOString(),
         status: 'Placed'
       };
-      
-      // Save order to AsyncStorage
-      const storedOrders = await AsyncStorage.getItem('orders');
-      const orders = storedOrders ? JSON.parse(storedOrders) : [];
-      orders.push(order);
-      await AsyncStorage.setItem('orders', JSON.stringify(orders));
-      
-      // Clear cart using context if we're using context
-      if (!navigationCartItems && clearCart) {
-        clearCart();
+
+      const headers = {
+        'zoneId': '[3,1]',
+        "moduleId": '1',
+        'X-localization': "en",
+        'Connection': "keep-alive",
+        'Authorization': token ? `Bearer ${token}` : '',
       }
+      const orderDeatil = `order_amount=${totalAmount}&payment_method=${paymentMethod}&order_type=delivery&store_id=${cartItems[0].item.store_id}&distance=9693.34`
+      const cust_Address =`address=${selectedAddress.address}&latitude=23.79354466376145&longitude=90.41166342794895` 
+      const cust_Detail=`contact_person_name=${selectedAddress.name}&contact_person_number=${selectedAddress.phone}&contact_person_email=${selectedAddress.email}`
+
+      const uri=`https://6ammart-admin.6amtech.com/api/v1/customer/order/place?${orderDeatil}&${cust_Address}&${cust_Detail}`
       
-      // Navigate to order confirmation
-      navigation.navigate('OrderConfirmation', { order });
+      const response = await fetch(uri, {
+        method: 'POST',
+        headers: headers
+      });
+      
+      const responseData = await response.json();
+      if (response.ok) {
+        
+        // Clear cart using context if we're using context
+        if (!navigationCartItems && clearCart) {
+          clearCart();
+        }
+        
+        const storedOrders = await AsyncStorage.getItem('orders');
+        const orders = storedOrders ? JSON.parse(storedOrders) : [];
+        orders.push(order);
+        await AsyncStorage.setItem('orders', JSON.stringify(orders));
+        
+        // Navigate to order confirmation
+        navigation.navigate('OrderConfirmation', { order });
+      } else {
+        // Handle API error
+        console.error('API Error:', responseData);
+        Alert.alert('Error', responseData.message || 'Failed to place order');
+      }
     } catch (error) {
       console.error('Error placing order', error);
-      Alert.alert('Error', 'Failed to place order');
+      Alert.alert('Error', 'Failed to place order. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -231,29 +270,29 @@ const OrderSummary = ({ route }) => {
   const styles = OrderSummaryStyles;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: currentTheme.themeBackground }]}>
       {/* Checkout Progress Bar */}
-      <View style={styles.progressBar}>
+      <View style={[styles.progressBar, { backgroundColor: currentTheme.itemCardColor }]}>
         <View style={styles.progressStep}>
-          <View style={[styles.stepCircle, { backgroundColor: '#2874f0' }]}>
+          <View style={[styles.stepCircle, { backgroundColor: currentTheme.primary }]}>
             <Text style={styles.stepNumber}>1</Text>
           </View>
-          <Text style={[styles.stepText, { color: '#2874f0' }]}>Delivery Address</Text>
+          <Text style={[styles.stepText, { color: currentTheme.primary }]}>Delivery Address</Text>
         </View>
-        <View style={[styles.progressLine, activeSection === 'payment' || activeSection === 'summary' ? styles.activeLine : {}]} />
+        <View style={[styles.progressLine, activeSection === 'payment' || activeSection === 'summary' ? { backgroundColor: currentTheme.primary } : { backgroundColor: currentTheme.borderColor }]} />
         <View style={styles.progressStep}>
-          <View style={[styles.stepCircle, activeSection === 'payment' || activeSection === 'summary' ? styles.activeStep : {}]}>
+          <View style={[styles.stepCircle, activeSection === 'payment' || activeSection === 'summary' ? { backgroundColor: currentTheme.primary } : { backgroundColor: currentTheme.borderColor }]}>
             <Text style={styles.stepNumber}>2</Text>
           </View>
-          <Text style={[styles.stepText, activeSection === 'payment' || activeSection === 'summary' ? { color: '#2874f0' } : {}]}>Payment Method</Text>
+          <Text style={[styles.stepText, activeSection === 'payment' || activeSection === 'summary' ? { color: currentTheme.primary } : { color: currentTheme.fontSecondColor }]}>Payment Method</Text>
         </View>
       </View>
 
       <ScrollView style={styles.content}>
         {/* Address Section */}
         {activeSection === 'address' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Select Delivery Address</Text>
+          <View style={[styles.section, { backgroundColor: currentTheme.itemCardColor }]}>
+            <Text style={[styles.sectionTitle, { color: currentTheme.fontMainColor }]}>Select Delivery Address</Text>
             
             {/* Address List */}
             {addresses.map((address) => (
@@ -261,22 +300,23 @@ const OrderSummary = ({ route }) => {
                 key={address.id} 
                 style={[
                   styles.addressCard,
-                  selectedAddress?.id === address.id && styles.selectedAddressCard
+                  { borderColor: currentTheme.borderColor },
+                  selectedAddress?.id === address.id && { borderColor: currentTheme.primary, backgroundColor: currentTheme.color8 }
                 ]}
                 onPress={() => handleSelectAddress(address)}
               >
-                <View style={styles.addressTypeContainer}>
-                  <Text style={styles.addressType}>{address.addressType}</Text>
+                <View style={[styles.addressTypeContainer, { backgroundColor: currentTheme.color8 }]}>
+                  <Text style={[styles.addressType, { color: currentTheme.fontSecondColor }]}>{address.addressType}</Text>
                 </View>
-                <Text style={styles.addressName}>{address.name}</Text>
-                <Text style={styles.addressDetails}>
+                <Text style={[styles.addressName, { color: currentTheme.fontMainColor }]}>{address.name}</Text>
+                <Text style={[styles.addressDetails, { color: currentTheme.fontSecondColor }]}>
                   {address.address}, {address.locality}, {address.city}, {address.state} - {address.pincode}
                 </Text>
-                <Text style={styles.addressPhone}>Phone: {address.phone}</Text>
+                <Text style={[styles.addressPhone, { color: currentTheme.fontSecondColor }]}>Phone: {address.phone}</Text>
                 
                 {selectedAddress?.id === address.id && (
                   <View style={styles.selectedCheckmark}>
-                    <Icon name="check-circle" size={24} color="#2874f0" />
+                    <Icon name="check-circle" size={24} color={currentTheme.primary} />
                   </View>
                 )}
               </TouchableOpacity>
@@ -285,26 +325,36 @@ const OrderSummary = ({ route }) => {
             {/* Add New Address Button */}
             {!showAddressForm ? (
               <TouchableOpacity 
-                style={styles.addAddressButton} 
+                style={[styles.addAddressButton, { borderColor: currentTheme.primary }]} 
                 onPress={() => setShowAddressForm(true)}
               >
-                <Icon name="add" size={24} color="#2874f0" />
-                <Text style={styles.addAddressText}>Add New Address</Text>
+                <Icon name="add" size={24} color={currentTheme.primary} />
+                <Text style={[styles.addAddressText, { color: currentTheme.primary }]}>Add New Address</Text>
               </TouchableOpacity>
             ) : (
-              <View style={styles.addressForm}>
-                <Text style={styles.formTitle}>Add New Address</Text>
+              <View style={[styles.addressForm, { backgroundColor: currentTheme.color8 }]}>
+                <Text style={[styles.formTitle, { color: currentTheme.fontMainColor }]}>Add New Address</Text>
                 
                 <View style={styles.formRow}>
                   <TextInput
-                    style={[styles.input, styles.halfInput]}
+                    style={[styles.input, styles.halfInput, { 
+                      backgroundColor: currentTheme.themeBackground, 
+                      color: currentTheme.fontMainColor,
+                      borderColor: currentTheme.borderColor 
+                    }]}
                     placeholder="Full Name *"
+                    placeholderTextColor={currentTheme.fontSecondColor}
                     value={newAddress.name}
                     onChangeText={(text) => handleInputChange('name', text)}
                   />
                   <TextInput
-                    style={[styles.input, styles.halfInput]}
+                    style={[styles.input, styles.halfInput, { 
+                      backgroundColor: currentTheme.themeBackground, 
+                      color: currentTheme.fontMainColor,
+                      borderColor: currentTheme.borderColor 
+                    }]}
                     placeholder="Phone Number *"
+                    placeholderTextColor={currentTheme.fontSecondColor}
                     keyboardType="phone-pad"
                     value={newAddress.phone}
                     onChangeText={(text) => handleInputChange('phone', text)}
@@ -313,23 +363,38 @@ const OrderSummary = ({ route }) => {
                 
                 <View style={styles.formRow}>
                   <TextInput
-                    style={[styles.input, styles.halfInput]}
+                    style={[styles.input, styles.halfInput, { 
+                      backgroundColor: currentTheme.themeBackground, 
+                      color: currentTheme.fontMainColor,
+                      borderColor: currentTheme.borderColor 
+                    }]}
                     placeholder="Pincode *"
+                    placeholderTextColor={currentTheme.fontSecondColor}
                     keyboardType="number-pad"
                     value={newAddress.pincode}
                     onChangeText={(text) => handleInputChange('pincode', text)}
                   />
                   <TextInput
-                    style={[styles.input, styles.halfInput]}
+                    style={[styles.input, styles.halfInput, { 
+                      backgroundColor: currentTheme.themeBackground, 
+                      color: currentTheme.fontMainColor,
+                      borderColor: currentTheme.borderColor 
+                    }]}
                     placeholder="Locality"
+                    placeholderTextColor={currentTheme.fontSecondColor}
                     value={newAddress.locality}
                     onChangeText={(text) => handleInputChange('locality', text)}
                   />
                 </View>
                 
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { 
+                    backgroundColor: currentTheme.themeBackground, 
+                    color: currentTheme.fontMainColor,
+                    borderColor: currentTheme.borderColor 
+                  }]}
                   placeholder="Address (House No, Building, Street, Area) *"
+                  placeholderTextColor={currentTheme.fontSecondColor}
                   multiline
                   numberOfLines={3}
                   value={newAddress.address}
@@ -338,39 +403,65 @@ const OrderSummary = ({ route }) => {
                 
                 <View style={styles.formRow}>
                   <TextInput
-                    style={[styles.input, styles.halfInput]}
+                    style={[styles.input, styles.halfInput, { 
+                      backgroundColor: currentTheme.themeBackground, 
+                      color: currentTheme.fontMainColor,
+                      borderColor: currentTheme.borderColor 
+                    }]}
                     placeholder="City/Town *"
+                    placeholderTextColor={currentTheme.fontSecondColor}
                     value={newAddress.city}
                     onChangeText={(text) => handleInputChange('city', text)}
                   />
                   <TextInput
-                    style={[styles.input, styles.halfInput]}
+                    style={[styles.input, styles.halfInput, { 
+                      backgroundColor: currentTheme.themeBackground, 
+                      color: currentTheme.fontMainColor,
+                      borderColor: currentTheme.borderColor 
+                    }]}
                     placeholder="State *"
+                    placeholderTextColor={currentTheme.fontSecondColor}
                     value={newAddress.state}
                     onChangeText={(text) => handleInputChange('state', text)}
                   />
                 </View>
                 
                 <View style={styles.addressTypeSelector}>
-                  <Text style={styles.addressTypeLabel}>Address Type:</Text>
+                  <Text style={[styles.addressTypeLabel, { color: currentTheme.fontSecondColor }]}>Address Type:</Text>
                   <View style={styles.addressTypeOptions}>
                     <TouchableOpacity
                       style={[
                         styles.addressTypeOption,
-                        newAddress.addressType === 'Home' && styles.activeAddressType
+                        { borderColor: currentTheme.borderColor },
+                        newAddress.addressType === 'Home' && { 
+                          borderColor: currentTheme.primary, 
+                          backgroundColor: currentTheme.color8 
+                        }
                       ]}
                       onPress={() => handleInputChange('addressType', 'Home')}
                     >
-                      <Text style={newAddress.addressType === 'Home' ? styles.activeAddressTypeText : styles.addressTypeOptionText}>Home</Text>
+                      <Text style={[
+                        newAddress.addressType === 'Home' 
+                          ? { color: currentTheme.primary, fontWeight: 'bold' } 
+                          : { color: currentTheme.fontSecondColor }
+                      ]}>Home</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[
                         styles.addressTypeOption,
-                        newAddress.addressType === 'Work' && styles.activeAddressType
+                        { borderColor: currentTheme.borderColor },
+                        newAddress.addressType === 'Work' && { 
+                          borderColor: currentTheme.primary, 
+                          backgroundColor: currentTheme.color8 
+                        }
                       ]}
                       onPress={() => handleInputChange('addressType', 'Work')}
                     >
-                      <Text style={newAddress.addressType === 'Work' ? styles.activeAddressTypeText : styles.addressTypeOptionText}>Work</Text>
+                      <Text style={[
+                        newAddress.addressType === 'Work' 
+                          ? { color: currentTheme.primary, fontWeight: 'bold' } 
+                          : { color: currentTheme.fontSecondColor }
+                      ]}>Work</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -380,10 +471,10 @@ const OrderSummary = ({ route }) => {
                     style={styles.cancelButton} 
                     onPress={() => setShowAddressForm(false)}
                   >
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                    <Text style={[styles.cancelButtonText, { color: currentTheme.fontSecondColor }]}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={styles.saveButton} 
+                    style={[styles.saveButton, { backgroundColor: currentTheme.primary }]} 
                     onPress={saveAddress}
                   >
                     <Text style={styles.saveButtonText}>Save Address</Text>
@@ -399,35 +490,42 @@ const OrderSummary = ({ route }) => {
           <PaymentMethod
             selectedMethod={paymentMethod}
             onSelectMethod={handleSelectPayment}
+            theme={currentTheme} // Pass the theme to the PaymentMethod component
           />
         )}
         
         {/* Order Summary */}
-        <View style={styles.orderSummary}>
-          <Text style={styles.summaryTitle}>Price Details</Text>
+        <View style={[styles.orderSummary, { backgroundColor: currentTheme.itemCardColor }]}>
+          <Text style={[styles.summaryTitle, { color: currentTheme.fontMainColor }]}>Price Details</Text>
           <View style={styles.summaryRow}>
-            <Text>Price ({cartItems.length} items)</Text>
-            <Text>₹{totalAmount.toFixed(2)}</Text>
+            <Text style={{ color: currentTheme.fontSecondColor }}>Price ({cartItems.length} items)</Text>
+            <Text style={{ color: currentTheme.fontMainColor }}>₹{totalAmount.toFixed(2)}</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text>Delivery Charges</Text>
-            <Text style={styles.freeDelivery}>FREE</Text>
+            <Text style={{ color: currentTheme.fontSecondColor }}>Delivery Charges</Text>
+            <Text style={[styles.freeDelivery, { color: currentTheme.success || '#388e3c' }]}>FREE</Text>
           </View>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: currentTheme.borderBottomColor }]} />
           <View style={styles.summaryRow}>
-            <Text style={styles.totalText}>Total Amount</Text>
-            <Text style={styles.totalText}>₹{totalAmount.toFixed(2)}</Text>
+            <Text style={[styles.totalText, { color: currentTheme.fontMainColor }]}>Total Amount</Text>
+            <Text style={[styles.totalText, { color: currentTheme.primary }]}>₹{totalAmount.toFixed(2)}</Text>
           </View>
         </View>
       </ScrollView>
       
       {/* Bottom Action Bar */}
-      <View style={styles.actionBar}>
+      <View style={[styles.actionBar, { 
+        backgroundColor: currentTheme.itemCardColor,
+        borderTopColor: currentTheme.borderColor 
+      }]}>
         <View style={styles.amountContainer}>
-          <Text style={styles.amountText}>₹{totalAmount.toFixed(2)}</Text>
+          <Text style={[styles.amountText, { color: currentTheme.fontMainColor }]}>₹{totalAmount.toFixed(2)}</Text>
         </View>
-        <TouchableOpacity style={styles.proceedButton} onPress={proceedToNext}>
-          <Text style={styles.proceedButtonText}>
+        <TouchableOpacity 
+          style={[styles.proceedButton, { backgroundColor: currentTheme.buttonBackground }]} 
+          onPress={proceedToNext}
+        >
+          <Text style={[styles.proceedButtonText, { color: currentTheme.buttonText }]}>
             {activeSection === 'address' ? 'Continue' : 'Place Order'}
           </Text>
         </TouchableOpacity>

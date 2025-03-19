@@ -37,38 +37,41 @@ function Item(props) {
     }
   }, [initialFavourite]);
 
-// Function to handle navigation based on item type
-const handleNavigation = () => {
-  if (isStore) {
-    // Pass the entire store object as a parameter
-    if (item.is_featured) {
-      navigation.navigate('FeaturedStoreDetails', { 
-        store: item,
-        isFeatured: true
-      });
+  // Function to handle navigation based on item type
+  const handleNavigation = () => {
+    if (isStore) {
+      // Check if store is featured or has a special property to determine navigation
+      if (item.is_featured) {
+        // Navigate to featured store details
+        navigation.navigate('FeaturedStoreDetails', { 
+          id: item.id, 
+          name: item.name,
+          isFeatured: true
+        });
+      } else {
+        // Navigate to regular store details
+        navigation.navigate('Restaurant', { 
+          id: item.id, 
+          name: item.name 
+        });
+      }
     } else {
-      navigation.navigate('Restaurant', { 
-        store: item
+      // Navigate to item details
+      navigation.navigate('ProductDetail', { id: item.id, name: item.name });
+    }
+  };
+
+  // Add a second navigation method for stores - could be used from a different button
+  const handleSecondaryStoreNavigation = () => {
+    if (isStore) {
+      // Navigate to store products or offerings
+      navigation.navigate('StoreProducts', { 
+        storeId: item.id, 
+        storeName: item.name,
+        category: 'all'
       });
     }
-  } else {
-    // Pass the entire product object as a parameter
-    navigation.navigate('ProductDetail', { 
-      product: item 
-    });
-  }
-};
-
-// Add a second navigation method for stores - could be used from a different button
-const handleSecondaryStoreNavigation = () => {
-  if (isStore) {
-    // Navigate to store products or offerings with full store details
-    navigation.navigate('StoreProducts', { 
-      store: item,
-      category: 'all'
-    });
-  }
-};
+  };
 
   // Function to handle adding/removing from wishlist
   const toggleWishlist = async () => {

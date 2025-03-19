@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { modelId } from 'expo-device';
+import AddToFavourites from '../Favourites/AddtoFavourites';
+import UserContext from '../../context/User';
 
-const Products = ({ item}) => {
+const Products = ({ item }) => {
   const navigation = useNavigation();
-
+  const{addCartItem}=useContext(UserContext);
+  
   // Function to limit the product name to 10 characters
   const getShortenedName = (name) => {
     if (name.length > 10) {
@@ -14,36 +17,36 @@ const Products = ({ item}) => {
     }
     return name;
   };
-  
-  
-
+      
   return (
     <View style={styles.container}>
-     
-        <View style={styles.itemWrapper}>
-          <TouchableOpacity
-            onPress={() => navigation.push('ProductDetail',{product:item })}
-          >
-            <View style={styles.itemContainer}>
+      <View style={styles.itemWrapper}>
+        <TouchableOpacity
+          onPress={() => navigation.push('ProductDetail',{product:item })}
+        >
+          <View style={styles.itemContainer}>
+            <View style={styles.imageContainer}>
               <ImageBackground
                 source={{ uri: item.image_full_url }}
                 style={styles.cardImageBG}
                 resizeMode="cover"
               >
-                {/* Optional: Add Rating Icon or other components here */}
+                <View style={styles.favoritePosition}>
+                  <AddToFavourites product={item}/>
+                </View>
               </ImageBackground>
-              <Text style={styles.cardTitle}>{getShortenedName(item.name)}</Text>
-              <View style={styles.cardFooterRow}>
-                <Text style={styles.cardPriceCurrency}>₹</Text>
-                <Text style={styles.cardPrice}>{item.price}</Text>
-                <TouchableOpacity>
-                  <Icon style={styles.addIcon} name="add" size={24} color="red" />
-                </TouchableOpacity>
-              </View>
             </View>
-          </TouchableOpacity>
-        </View>
-   
+            <Text style={styles.cardTitle}>{getShortenedName(item.name)}</Text>
+            <View style={styles.cardFooterRow}>
+              <Text style={styles.cardPriceCurrency}>₹</Text>
+              <Text style={styles.cardPrice}>{item.price}</Text>
+              <TouchableOpacity onPress={() => addCartItem(item)}>
+                <Icon style={styles.addIcon} name="add" size={24} color="red" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -55,16 +58,14 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     marginTop: 10,
-    paddingHorizontal: 10, 
-  
+    paddingHorizontal: 10,
   },
   itemWrapper: {
     flex: 1,
-    
     marginBottom: 10,
   },
   itemContainer: {
-    padding: 12, 
+    padding: 12,
     borderRadius: 12,
     backgroundColor: 'white',
     shadowColor: "rgba(0, 0, 0, 0.5)",
@@ -73,30 +74,39 @@ const styles = StyleSheet.create({
       height: 11,
     },
     elevation: 24,
-    marginBottom: 10, 
-    width:150,
-  
+    marginBottom: 10,
+    width: 150,
+  },
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+    marginBottom: 10,
   },
   cardImageBG: {
-    width: '100%', // Ensure the image fills the card width
-    height: 130, // Fixed height for the image
-    marginBottom: 10, // Adjust margin to create space between image and text
-    borderRadius: 8, // Optionally, add rounded corners to the image
+    width: '100%',
+    height: 130,
+    borderRadius: 8,
     overflow: 'hidden',
+  },
+  favoritePosition: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    zIndex: 1,
   },
   cardTitle: {
     color: 'black',
     fontSize: 16,
-    fontWeight: 'bold', // Make title bold for better emphasis
+    fontWeight: 'bold',
     width: '100%',
     textAlign: 'center',
-    marginBottom: 5, // Space between title and footer
-    overflow: 'hidden', // Ensure text truncates properly
+    marginBottom: 5,
+    overflow: 'hidden',
   },
   cardFooterRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'start', // Ensure price and icon are spaced out
+    justifyContent: 'start',
   },
   cardPriceCurrency: {
     color: 'black',
@@ -108,7 +118,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   addIcon: {
-    marginLeft: 70, 
+    marginLeft: 70,
   },
 });
 

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+import AddToFavourites from '../Favourites/AddtoFavourites';
 
 // CategoryListView component
 const CategoryListView = ({ data }) => {
@@ -73,11 +74,7 @@ const CategoryListView = ({ data }) => {
                 {item?.name}
               </Text>
               <Text style={styles.textStyle}>{item?.rating}</Text>
-              <Icon
-                name="favorite" 
-                size={20}
-                color="red"
-              />
+              <AddToFavourites restaurantId={item}/>
 
             </View>
             <View style={{ flexDirection: 'row', paddingRight: 16 }}>

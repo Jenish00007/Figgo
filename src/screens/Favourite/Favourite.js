@@ -1,52 +1,57 @@
-import { useFocusEffect, useNavigation } from '@react-navigation/native'
-import React, { useContext, useEffect, useState, useCallback } from 'react'
+import { useFocusEffect } from '@react-navigation/native'
+import React, { useContext, useCallback, useState } from 'react'
 import {
   FlatList,
-  Platform,
-  StatusBar,
   View,
-  Text,
+  StyleSheet,
   TouchableOpacity,
-  StyleSheet
+  Text,
+  Dimensions
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import Item from '../../components/Main/Stores/Item'
+
+// Components
+import Products from '../../components/Products/Products'
+import NewRestaurantCard from './../../components/Main/FeaturedStores/NewRestaurantCard'
 import Spinner from '../../components/Spinner/Spinner'
-import { LocationContext } from '../../context/Location'
-import ThemeContext from '../../ui/ThemeContext/ThemeContext'
-import { scale } from '../../utils/scaling'
-import { theme } from '../../utils/themeColors'
-import Analytics from '../../utils/analytics'
-import { HeaderBackButton } from '@react-navigation/elements'
-import { MaterialIcons } from '@expo/vector-icons'
-import { useTranslation } from 'react-i18next'
-import navigationService from '../../routes/navigationService'
 import ErrorView from '../../components/ErrorView/ErrorView'
 import EmptyView from '../../components/EmptyView/EmptyView'
+
+// Context
+import { LocationContext } from '../../context/Location'
+import ThemeContext from '../../ui/ThemeContext/ThemeContext'
 import AuthContext from '../../context/Auth'
 
+// Utils
+import { theme } from '../../utils/themeColors'
+import { useTranslation } from 'react-i18next'
+
+const { width } = Dimensions.get('window')
+
 function Favourite() {
-  const analytics = Analytics()
   const { t } = useTranslation()
-  const navigation = useNavigation()
   const themeContext = useContext(ThemeContext)
   const currentTheme = theme[themeContext.ThemeValue]
   const { location } = useContext(LocationContext)
+  const { token } = useContext(AuthContext)
   
-  const [data, setData] = useState({ store: [], item: [] })
+  // State
+  const [favoriteData, setFavoriteData] = useState({ 
+    item: [], 
+    store: [] 
+  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [refreshing, setRefreshing] = useState(false)
-  const { token } = useContext(AuthContext)
-  const [activeTab, setActiveTab] = useState('store') // Default to 'store' tab
+  const [activeTab, setActiveTab] = useState('stores') // Default to 'stores' tab
 
   // Network-only fetch function
-  const fetchFavouriteRestaurants = useCallback(async () => {
+  const fetchFavouriteData = useCallback(async () => {
     try {
       setLoading(true)
 
       const moduleIds = [1, 4]
-      const queryString = moduleIds.map(id => `moduleId=${id}`).join('&');
+      const queryString = moduleIds.map(id => `moduleId=${id}`).join('&')
       
       const headers = {
         'zoneId': '[1]',
@@ -64,12 +69,11 @@ function Favourite() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to fetch favourite restaurants')
+        throw new Error('Failed to fetch favourite data')
       }
 
       const result = await response.json()
-      console.log('API Response:', result)
-      setData(result)
+      setFavoriteData(result)
       setError(null)
     } catch (err) {
       console.log('Fetch error:', err)
@@ -80,76 +84,22 @@ function Favourite() {
     }
   }, [location, token])
 
-  const handleRefresh = () => {
-    setRefreshing(true)
-    fetchFavouriteRestaurants()
+  const handleRemoveFromWishlist = () => {
+    // Refresh data after removing from wishlist
+    fetchFavouriteData()
   }
 
-  // Fetch data when component mounts
-  useEffect(() => {
-    fetchFavouriteRestaurants()
-  }, [fetchFavouriteRestaurants])
-  
-  // Also fetch data when the screen comes into focus
+  const handleRefresh = () => {
+    setRefreshing(true)
+    fetchFavouriteData()
+  }
+
+  // Fetch data when the screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      fetchFavouriteRestaurants()
-      if (Platform.OS === 'android') {
-        StatusBar.setBackgroundColor(currentTheme.menuBar)
-      }
-      StatusBar.setBarStyle(
-        themeContext.ThemeValue === 'Dark' ? 'light-content' : 'dark-content'
-      )
-    }, [fetchFavouriteRestaurants, currentTheme, themeContext.ThemeValue])
+      fetchFavouriteData()
+    }, [fetchFavouriteData])
   )
-
-  useEffect(() => {
-    async function Track() {
-      await analytics.track(analytics.events.NAVIGATE_TO_FAVOURITES)
-    }
-    Track()
-  }, [])
-
-  useEffect(() => {
-    navigation.setOptions({
-      title: t('titleFavourite'),
-      headerTitleAlign: 'center',
-      headerRight: null,
-      headerTitleStyle: {
-        color: currentTheme.newFontcolor,
-        fontWeight: 'bold'
-      },
-      headerTitleContainerStyle: {
-        marginTop: '2%',
-        paddingLeft: scale(25),
-        paddingRight: scale(25),
-        height: '75%',
-        marginLeft: 0
-      },
-      headerStyle: {
-        backgroundColor: currentTheme.newheaderBG,
-        elevation: 0
-      },
-      headerLeft: () => (
-        <HeaderBackButton
-          truncatedLabel=""
-          backImage={() => (
-            <View>
-              <MaterialIcons name="arrow-back" size={25} color={currentTheme.newFontcolor} />
-            </View>
-          )}
-          onPress={() => {
-            navigationService.goBack()
-          }}
-        />
-      )
-    })
-  }, [navigation, currentTheme, t])
-
-  const handleRemoveFromWishlist = (itemId) => {
-    // Refresh the wishlist data
-    fetchFavouriteRestaurants();
-  };
 
   if (loading && !refreshing) {
     return (
@@ -179,72 +129,44 @@ function Favourite() {
     </TouchableOpacity>
   );
   
-  // Check if both lists are empty
-  if ((!data.store || data.store.length === 0) && (!data.item || data.item.length === 0)) {
-    return (
-      <SafeAreaView edges={['bottom']} style={[styles.flex, { backgroundColor: currentTheme.themeBackground }]}>
-        <View style={styles.tabContainer}>
-          <TabButton 
-            title={t('Stores')} 
-            isActive={activeTab === 'store'} 
-            onPress={() => setActiveTab('store')} 
-          />
-          <TabButton 
-            title={t('Items')} 
-            isActive={activeTab === 'item'} 
-            onPress={() => setActiveTab('item')} 
-          />
-        </View>
-        <View style={[styles.flex, { backgroundColor: currentTheme.themeBackground }]}>
-          <EmptyView
-            title={activeTab === 'store' ? 'noFavoriteStores' : 'noFavoriteItems'}
-            description={activeTab === 'store' ? 'emptyFavStoresDesc' : 'emptyFavItemsDesc'}
-            buttonText={'emptyFavBtn'}
-          />
-        </View>
-      </SafeAreaView>
-    );
-  }
-  
   return (
     <SafeAreaView edges={['bottom']} style={[styles.flex, { backgroundColor: currentTheme.themeBackground }]}>
+      {/* Tab Headers */}
       <View style={styles.tabContainer}>
         <TabButton 
           title={t('Stores')} 
-          isActive={activeTab === 'store'} 
-          onPress={() => setActiveTab('store')} 
+          isActive={activeTab === 'stores'} 
+          onPress={() => setActiveTab('stores')} 
         />
         <TabButton 
           title={t('Items')} 
-          isActive={activeTab === 'item'} 
-          onPress={() => setActiveTab('item')} 
+          isActive={activeTab === 'items'} 
+          onPress={() => setActiveTab('items')} 
         />
       </View>
       
+      {/* Content Area */}
       <View style={[styles.flex, { backgroundColor: currentTheme.themeBackground }]}>
-        {activeTab === 'store' ? (
-          data.store && data.store.length > 0 ? (
+        {/* Stores Tab */}
+        {activeTab === 'stores' && (
+          favoriteData.store && favoriteData.store.length > 0 ? (
             <FlatList
-              data={data.store}
+              data={favoriteData.store}
               keyExtractor={(item) => `store-${item.id}`}
               refreshing={refreshing}
               onRefresh={handleRefresh}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
-                <Item 
-                  item={item} 
-                  isStore={true} 
-                  isFavourite={true}
-                  onRemoveFromWishlist={handleRemoveFromWishlist}
-                />
+                <View style={styles.storeCardContainer}>
+                  <NewRestaurantCard 
+                    {...item}
+                    onRemoveFromWishlist={handleRemoveFromWishlist}
+                    isFavorite={true}
+                    theme={currentTheme}
+                  />
+                </View>
               )}
-              ListEmptyComponent={
-                <EmptyView
-                  title={'noFavoriteStores'}
-                  description={'emptyFavStoresDesc'}
-                  buttonText={'emptyFavBtn'}
-                />
-              }
+              contentContainerStyle={styles.listContainer}
             />
           ) : (
             <EmptyView
@@ -253,29 +175,26 @@ function Favourite() {
               buttonText={'emptyFavBtn'}
             />
           )
-        ) : (
-          data.item && data.item.length > 0 ? (
+        )}
+        
+        {/* Items Tab */}
+        {activeTab === 'items' && (
+          favoriteData.item && favoriteData.item.length > 0 ? (
             <FlatList
-              data={data.item}
+              data={favoriteData.item}
               keyExtractor={(item) => `item-${item.id}`}
               refreshing={refreshing}
               onRefresh={handleRefresh}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
-                <Item 
+                <Products 
                   item={item} 
-                  isStore={false} 
-                  isFavourite={true}
                   onRemoveFromWishlist={handleRemoveFromWishlist}
+                  isFavorite={true}
+                  theme={currentTheme}
                 />
               )}
-              ListEmptyComponent={
-                <EmptyView
-                  title={'noFavoriteItems'}
-                  description={'emptyFavItemsDesc'}
-                  buttonText={'emptyFavBtn'}
-                />
-              }
+              contentContainerStyle={styles.listContainer}
             />
           ) : (
             <EmptyView
@@ -296,7 +215,7 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     width: '100%',
     borderBottomWidth: 1,
     borderBottomColor: '#E8E8E8'
@@ -311,40 +230,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  emptyStateContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8
   },
-  emptyImage: {
-    width: 200,
-    height: 200,
-    marginBottom: 20
-  },
-  emptyTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center'
-  },
-  emptyDescription: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 30,
-    color: '#888'
-  },
-  orderButton: {
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  orderButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000'
+  storeCardContainer: {
+    marginBottom: 16,
+    width: '100%',
+    height: 'auto', // Changed from fixed height to auto
+    minHeight: 150, // Adding minimum height instead
+    backgroundColor: 'transparent', // Changed from black to transparent
+    borderRadius: 10,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4
   }
 });
 

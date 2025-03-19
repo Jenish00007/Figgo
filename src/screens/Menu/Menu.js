@@ -665,7 +665,7 @@ function Menu({ route, props }) {
     )
   }
 
-  if (error) return <ErrorView />
+  // if (error) return <ErrorView />
   if (loading) return loadingScreen()
 
   //Search Function

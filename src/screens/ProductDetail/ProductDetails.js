@@ -1,12 +1,26 @@
 import React, { useContext, useState, useRef } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, ScrollView, SafeAreaView, StatusBar, FlatList, Dimensions } from 'react-native';
+import { 
+  View, 
+  Text, 
+  Image, 
+  TouchableOpacity, 
+  Alert, 
+  ScrollView, 
+  SafeAreaView, 
+  StatusBar, 
+  FlatList, 
+  Dimensions,
+  useColorScheme
+} from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { useUserContext } from './../../context/User';
+
 import AddToFavourites from './../../components/Favourites/AddtoFavourites';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import AuthContext from '../../context/Auth';
 import { LocationContext } from '../../context/Location';
 import UserContext from '../../context/User';
+import { theme } from '../../utils/themeColors'; // Import the theme object
+import styles from './ProductDetailsStyles'; // Base styles
 
 const { width } = Dimensions.get('window');
 
@@ -19,12 +33,21 @@ const ProductDetail = (profile) => {
     const { isLoggedIn } = useContext(UserContext);
     const [loading, setLoading] = useState(false);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
-    
     const flatListRef = useRef(null);
+    
+    // Get the current color scheme (system preference)
+    const colorScheme = useColorScheme();
+    
+    // Use the Dark theme if system preference is dark, otherwise use Pink theme
+    const currentTheme = colorScheme === 'dark' ? theme.Dark : theme.Pink;
     
     // Check if the product has multiple images
     const hasMultipleImages = product?.images_full_url && product.images_full_url.length > 0;
     const images = hasMultipleImages ? product.images_full_url : [product?.image_full_url];
+
+    // Stock status display
+    const stockStatus = product?.stock > 0 ? 'In Stock' : 'Out of Stock';
+    const stockColor = product?.stock > 0 ? '#2E7D32' : '#D32F2F';
 
     // Handle image change when dots are clicked
     const handleImageChange = (index) => {
@@ -41,10 +64,33 @@ const ProductDetail = (profile) => {
         }
     };
 
-    //const { addCartItem } = useUserContext();
+    // Render rating stars
+    const renderRatingStars = (rating) => {
+        const stars = [];
+        const fullStars = Math.floor(rating || 0);
+        const halfStar = rating % 1 >= 0.5;
+        
+        for (let i = 0; i < 5; i++) {
+            if (i < fullStars) {
+                stars.push(<FontAwesome key={i} name="star" size={16} color="#FFC107" />);
+            } else if (i === fullStars && halfStar) {
+                stars.push(<FontAwesome key={i} name="star-half-o" size={16} color="#FFC107" />);
+            } else {
+                stars.push(<FontAwesome key={i} name="star-o" size={16} color="#FFC107" />);
+            }
+        }
+        return stars;
+    };
+
     const addToCart = async () => {
         if (!isLoggedIn) {
             navigation.navigate('Login');
+            return;
+        }
+
+        // Check if product is in stock
+        if (product?.stock <= 0) {
+            Alert.alert("Out of Stock", "This product is currently unavailable.");
             return;
         }
 
@@ -59,6 +105,20 @@ const ProductDetail = (profile) => {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             };
+            //List cart Items
+            const cartResponse = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/list`, {
+                'method': 'GET',
+                headers: headers,
+                });
+            const cartItems = await cartResponse.json();
+            const isProductInCart = cartItems?.some(item => item.item_id === product.id);
+
+            if (isProductInCart) {
+                Alert.alert("Info", "This product is already in your cart.");
+                setLoading(false);
+                return;
+            }            
+
             const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/add?guest_id=${profile.guest_id}`, {
                 method: 'POST',
                 headers: headers,
@@ -89,13 +149,16 @@ const ProductDetail = (profile) => {
     };
     
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+        <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.themeBackground }]}>
+            <StatusBar 
+                barStyle={colorScheme === 'dark' ? "light-content" : "dark-content"} 
+                backgroundColor={currentTheme.themeBackground} 
+            />
             
             <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
                 
                 {/* Product Image Section with Favorite Icon */}
-                <View style={styles.imageContainer}>
+                <View style={[styles.imageContainer, { backgroundColor: currentTheme.itemCardColor }]}>
                     {hasMultipleImages ? (
                         <>
                             <FlatList
@@ -142,27 +205,64 @@ const ProductDetail = (profile) => {
                 </View>
                 
                 {/* Product Information Section */}
-                <View style={styles.infoSection}>
+                <View style={[styles.infoSection, { backgroundColor: currentTheme.itemCardColor }]}>
                     <View style={styles.nameAndPrice}>
-                        <Text style={styles.productName}>{product?.name}</Text>
-                        <Text style={styles.productPrice}>₹{product?.price}</Text>
+                        <Text style={[styles.productName, { color: currentTheme.fontMainColor }]}>
+                            {product?.name}
+                        </Text>
+                        <Text style={[styles.productPrice, { color: currentTheme.primary }]}>
+                            ₹{product?.price}
+                        </Text>
                     </View>
                     
-                    <View style={styles.divider} />
+                    {/* Rating and Stock Status */}
+                    <View style={styles.ratingStockContainer}>
+                        <View style={styles.ratingContainer}>
+                            <View style={styles.starsContainer}>
+                                {renderRatingStars(product?.avg_rating)}
+                            </View>
+                            <Text style={[styles.ratingText, { color: currentTheme.fontSecondColor }]}>
+                                ({product?.rating_count || 0} reviews)
+                            </Text>
+                        </View>
+                        <View style={[styles.stockBadge, {backgroundColor: stockColor + '20'}]}>
+                            <Text style={[styles.stockText, {color: stockColor}]}>
+                                {stockStatus}
+                            </Text>
+                        </View>
+                    </View>
+                    
+                    <View style={[styles.divider, { backgroundColor: currentTheme.borderBottomColor }]} />
                     
                     <View style={styles.descriptionContainer}>
-                        <Text style={styles.sectionTitle}>Description</Text>
-                        <Text style={styles.productDescription}>
+                        <Text style={[styles.sectionTitle, { color: currentTheme.fontMainColor }]}>
+                            Description
+                        </Text>
+                        <Text style={[styles.productDescription, { color: currentTheme.fontSecondColor }]}>
                             {product?.description || 'No description available for this product.'}
                         </Text>
                     </View>
+
+                    {/* Nutrition Information */}
+                    {product?.nutritions_name && product.nutritions_name.length > 0 && (
+                        <View style={styles.nutritionContainer}>
+                            <Text style={[styles.sectionTitle, { color: currentTheme.fontMainColor }]}>
+                                Nutrition Information
+                            </Text>
+                            {product.nutritions_name.map((nutrition, index) => (
+                                <Text key={index} style={[styles.nutritionText, { color: currentTheme.fontSecondColor }]}>
+                                    • {nutrition}
+                                </Text>
+                            ))}
+                        </View>
+                    )}
                 </View>
             </ScrollView>
             
             {/* Fixed bottom action buttons */}
-            <View style={styles.bottomActions}>
+            <View style={[styles.bottomActions, { backgroundColor: currentTheme.itemCardColor }]}>
                 <TouchableOpacity 
-                    style={styles.cartButton} 
+                    style={[styles.cartButton, { backgroundColor: currentTheme.buttonBackgroundPink}]} 
                     onPress={() => navigation.navigate('Cart')}
                 >
                     <MaterialIcons name="shopping-cart" size={20} color="#fff" />
@@ -170,150 +270,22 @@ const ProductDetail = (profile) => {
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
-                    style={[styles.addButton, loading && { opacity: 0.7 }]}  
+                    style={[
+                        styles.addButton, 
+                        { backgroundColor: currentTheme.primary },
+                        (loading || product?.stock <= 0) && { opacity: 0.7 }
+                    ]}  
                     onPress={addToCart}
-                    disabled={loading}
+                    disabled={loading || product?.stock <= 0}
                 >
                     <MaterialIcons name="add-shopping-cart" size={20} color="#fff" />
-                    <Text style={styles.buttonText}>{loading ? "Adding..." : "Add to Cart"}</Text>
+                    <Text style={styles.buttonText}>
+                        {loading ? "Adding..." : product?.stock <= 0 ? "Out of Stock" : "Add to Cart"}
+                    </Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
     );
 };
-
-// Styles remain unchanged
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f9f9f9',
-    },
-    scrollView: {
-        flex: 1,
-    },
-    imageContainer: {
-        width: '100%',
-        height: 300,
-        backgroundColor: '#ffffff',
-        position: 'relative',
-    },
-    productImage: {
-        width: '100%',
-        height: '100%',
-    },
-    dotContainer: {
-        position: 'absolute',
-        bottom: 15,
-        left: 0,
-        right: 0,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    dot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: 'rgba(255, 255, 255, 0.5)',
-        margin: 4,
-    },
-    activeDot: {
-        backgroundColor: '#ffffff',
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-    },
-    favIconContainer: {
-        position: 'absolute',
-        top: 15,
-        right: 15,
-        backgroundColor: '#fff',
-        borderRadius: 50,
-        padding: 8,
-        elevation: 5,
-    },
-    infoSection: {
-        backgroundColor: '#ffffff',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        marginTop: -20,
-        paddingHorizontal: 20,
-        paddingTop: 25,
-        paddingBottom: 100,
-    },
-    nameAndPrice: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 15,
-    },
-    productName: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#222222',
-        flex: 1,
-    },
-    productPrice: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#2E7D32',
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#e0e0e0',
-        marginBottom: 20,
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#555555',
-        marginBottom: 8,
-    },
-    descriptionContainer: {
-        marginBottom: 20,
-    },
-    productDescription: {
-        fontSize: 14,
-        lineHeight: 22,
-        color: '#666666',
-    },
-    bottomActions: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        flexDirection: 'row',
-        backgroundColor: '#ffffff',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        elevation: 8,
-    },
-    cartButton: {
-        flex: 1,
-        backgroundColor: '#546E7A',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 12,
-        borderRadius: 8,
-        marginRight: 10,
-    },
-    addButton: {
-        flex: 1.5,
-        backgroundColor: '#2E7D32',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 12,
-        borderRadius: 8,
-        marginLeft: 10,
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-        marginLeft: 8,
-    },
-});
 
 export default ProductDetail;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AddToFavourites from '../Favourites/AddtoFavourites';
 
 
 const NearByStore = ({item}) => { 
@@ -28,10 +29,7 @@ const NearByStore = ({item}) => {
                 <Text style={supermarketStyles.title}>{name}</Text>
             </View>
             <TouchableOpacity>
-                <Image
-                    source={require('../../assets/icons/fullHeart.png')} // Ensure this path is correct
-                    style={supermarketStyles.heartIcon}
-                />
+               <AddToFavourites restaurantId={item}/>
             </TouchableOpacity>
         </View>
 

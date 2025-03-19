@@ -92,54 +92,49 @@ console.log(networkStatus)
       console.log('error on logout', error)
     }
   }
+//add to cart
+ const addToCart = async () => {
+        
 
-  const clearCart = async () => {
-  
-    console.log('clearCart')
-  }
+        try {
+            const headers = {
+                'moduleId': '1',
+                'zoneId': '[1]',
+                'latitude': location?.latitude?.toString() || '23.79354466376145',
+                'longitude': location?.longitude?.toString() || '90.41166342794895',
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+            const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/add?guest_id=${profile.guest_id}`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    item_id: item.id,
+                    quantity: 1, // Adjust quantity as needed
+                    price: item.price,
+                    name: item.name,
+                    image: item.image_full_url,
+                    model: "Item"
+                }),
+            });
+   
+            const result = await response.text();
+            console.log("Add to Cart Response:", result);
 
-  const addQuantity = async (key, quantity = 1) => {
-  
-    console.log('addQuantity')
-  }
-
-  const deleteItem = async key => {
+            if (response.ok) {
+                Alert.alert("Success", "Product added to cart successfully!");
+            } else {
+                Alert.alert("Error", result.message || "Failed to add product to cart.");
+            }
+        } catch (error) {
+            console.error("Error adding to cart:", error);
+            Alert.alert("Error", "An error occurred while adding to cart.");
+        } finally {
+            setLoading(false);
+        }
+    };
     
-    console.log('deleteItem')
-  }
-
-  const removeQuantity = async key => {
-   
-    console.log('removeQuantity')
-  }
-
-  const checkItemCart = itemId => {
   
-    console.log('checkItemCart')
-  }
-  
-  const numberOfCartItems = () => {
- 
-  }
-
-  const addCartItem = async (
-    id,
-    variation,
-    quantity = 1,
-    addons = [],
-    clearFlag,
-    specialInstructions = ''
-  ) => {
-   
-  }
-
-  const updateCart = async cart => {
-
-  }
-
-  const setCartRestaurant = async id => {
-
-  }
   return (
     <UserContext.Provider
       value={{
@@ -148,17 +143,7 @@ console.log(networkStatus)
         errorProfile,
         formetedProfileData,
         logout,
-        cart,
-        cartCount: numberOfCartItems(),
-        clearCart,
-        updateCart,
-        addQuantity,
-        removeQuantity,
-        addCartItem,
-        checkItemCart,
-        deleteItem,
-        restaurant,
-        setCartRestaurant,
+       addToCart,
         networkStatus,
         isPickup,
         setIsPickup,
