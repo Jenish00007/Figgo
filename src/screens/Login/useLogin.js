@@ -84,7 +84,6 @@ export const useLogin = () => {
           ).data
         }
       }
-
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
@@ -98,9 +97,7 @@ export const useLogin = () => {
           alreadyInApp: false
         })
       })
-
       const data = await response.json()
-      
       if (!response.ok) {
         if (response.status === 401 || data.message === 'Unauthenticated') {
           // Clear token and trigger logout
