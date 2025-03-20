@@ -34,19 +34,9 @@ import CustomApartmentIcon from '../../assets/SVG/imageComponents/CustomApartmen
 import { useTranslation } from 'react-i18next'
 import AuthContext from '../../context/Auth'
 
-// const DELETE_ADDRESS = gql`
-//   ${deleteAddress}
-// `
-
 function Addresses() {
   const Analytics = analytics()
-
   const navigation = useNavigation()
-  // const [mutate, { loading: loadingMutation }] = useMutation(DELETE_ADDRESS, {
-  //   onCompleted
-  // })
-  //const { profile, refetchProfile, networkStatus } = useContext(UserContext)
-
   const themeContext = useContext(ThemeContext)
   const currentTheme = theme[themeContext.ThemeValue]
   const { t } = useTranslation()
@@ -70,16 +60,12 @@ function Addresses() {
         'longitude': location?.longitude?.toString() || '90.41166342794895',
         'Authorization': token ? `Bearer ${token}` : '',
         'Content-Type': 'application/json',
-        // These headers ensure a fresh request every time
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
+       
       }
       
       const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/customer/address/list', {
         method: 'GET',
-        headers: headers,
-        cache: 'no-store'
+        headers: headers
       })
 
       if (!response.ok) {
@@ -89,7 +75,6 @@ function Addresses() {
       const result = await response.json()
       console.log('API Response:', result)
       
-      // Set the addresses array from the response
       setAddresses(result.addresses || [])
       setError(null)
     } catch (err) {
@@ -106,13 +91,13 @@ function Addresses() {
     fetchAddress()
   }
 
-  // Fetch data when component mounts
   useEffect(() => {
     fetchAddress()
   }, [fetchAddress])
 
   function onCompleted() {
     FlashMessage({ message: t('addressDeletedMessage') })
+    fetchAddress()
   }
 
   useFocusEffect(
@@ -200,6 +185,40 @@ function Addresses() {
     )
   }
 
+
+  const onDeleteAddress = async (addressId) => {
+    console.log("Delete address with ID:", addressId);
+  
+    try {
+      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/address/delete?address_id=${addressId}`, {
+        method: 'DELETE', // Use DELETE method to delete the address
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'zoneId': '[3,1]', // Pass zoneId in the headers
+          latitude: '23.793544663762145', // Pass the latitude in the headers
+          longitude: '90.41166342794895', // Pass the longitude in the headers
+          'X-localization': 'en', 
+        },
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        // Handle success, show a success message, or update UI
+        onCompleted()
+        console.log('Address deleted successfully:', data);
+      } else {
+        // Handle failure, show an error message
+        console.error('Error deleting address:', data);
+        FlashMessage({ message: t('addressDeleteFailedMessage') });
+      }
+    } catch (error) {
+      console.error('Error with the delete API call:', error);
+      FlashMessage({ message: t('addressDeleteFailedMessage') });
+    }
+  };
+
   return (
     <View style={styles(currentTheme).flex}>
       <FlatList
@@ -264,8 +283,8 @@ function Addresses() {
                   activeOpacity={0.7}
                   //disabled={loadingMutation}
                   onPress={() => {
-                    //mutate({ variables: { id: address._id } })
-                    console.log("Delete address with ID:", address.id);
+                   
+                    onDeleteAddress(address.id);
                     FlashMessage({ message: t('addressDeletedMessage') })
                   }}
                 >

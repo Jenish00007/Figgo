@@ -21,6 +21,7 @@ import gql from 'graphql-tag'
 import { profile } from '../../../apollo/queries'
 import { FlashMessage } from '../../../ui/FlashMessage/FlashMessage'
 import Spinner from '../../Spinner/Spinner'
+import AddToFavourites from '../../Favourites/AddtoFavourites'
 
 const ADD_FAVOURITE = gql`
   ${addFavouriteRestaurant}
@@ -72,11 +73,7 @@ function NewRestaurantCard(props) {
               onPress={handleAddToFavorites}>
               <View style={styles(currentTheme).favouriteOverlay}>
                 
-                  <AntDesign
-                    name={heart ? 'heart' : 'hearto'}
-                    size={scale(15)}
-                    color={currentTheme.iconColor}
-                  />
+                 <AddToFavourites restaurantId={props}/>
                 
               </View>
             </TouchableOpacity>

@@ -149,11 +149,8 @@ const ProductDetail = (profile) => {
     };
     
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.themeBackground }]}>
-            <StatusBar
-                barStyle={colorScheme === 'dark' ? "light-content" : "dark-content"}
-                backgroundColor={currentTheme.themeBackground} 
-            />
+        <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
             
             <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
                 

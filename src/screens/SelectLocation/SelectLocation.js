@@ -153,7 +153,7 @@ export default function SelectLocation(props) {
           >
             {t('selectLocation')}
           </TextDefault>
-
+          <View style={styles(currentTheme).line} />
           <TouchableOpacity
             activeOpacity={0.7}
             style={styles(currentTheme).button}
@@ -173,7 +173,8 @@ export default function SelectLocation(props) {
               />
             )}
           </TouchableOpacity>
-          <View style={styles(currentTheme).line} />
+          
+          {/* <View style={styles(currentTheme).line} />
 
           <TouchableOpacity
             activeOpacity={0.7}
@@ -188,7 +189,7 @@ export default function SelectLocation(props) {
               {t('browseCities')}
             </TextDefault>
           </TouchableOpacity>
-          <View style={styles(currentTheme).line} />
+          <View style={styles(currentTheme).line} /> */}
         </View>
         <View style={{ paddingBottom: inset.bottom }} />
       </View>

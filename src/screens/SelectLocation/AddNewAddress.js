@@ -249,21 +249,21 @@ const CityModal = React.memo(
           {!selectedValue && (
             <Text style={styles(theme).cityField}>{t('selectCity')}</Text>
           )}
-          <Feather
+          {/* <Feather
             name='chevron-down'
             size={18}
             color={theme.newIconColor}
             style={styles().icon1}
-          />
+          /> */}
         </TouchableOpacity>
-        <ModalDropdown
+        {/* <ModalDropdown
           theme={theme}
           visible={cityModalVisible}
           onItemPress={onSelect}
           onClose={() => {
             setCityModalVisible(false)
           }}
-        />
+        /> */}
       </View>
     )
   },

@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 import CustomOtherIcon from '../../assets/SVG/imageComponents/CustomOtherIcon'
 import CustomHomeIcon from '../../assets/SVG/imageComponents/CustomHomeIcon'
 import CustomWorkIcon from '../../assets/SVG/imageComponents/CustomWorkIcon'
+import AuthContext from '../../context/Auth'
 import {
   StackActions,
   useFocusEffect,
@@ -50,7 +51,7 @@ function SaveAddress(props) {
   const currentTheme = theme[themeContext.ThemeValue]
   const [selectedLabel, setSelectedLabel] = useState('')
   const inset = useSafeAreaInsets()
-
+  const {  token } = useContext(AuthContext)
 
   const [mutate, { loading }] = useMutation(locationData?.id ? EDIT_ADDRESS : CREATE_ADDRESS, {
     onCompleted,
@@ -128,24 +129,63 @@ function SaveAddress(props) {
     })
   })
 
-  const onSelectLocation = () => {
+  const onSelectLocation = async () => {
     if (!selectedLabel) {
-      Alert.alert('Alert', t('alertLocation'))
-      return
+      Alert.alert('Alert', t('alertLocation'));
+      return;
     }
+  
     const addressInput = {
       longitude: `${locationData.longitude}`,
       latitude: `${locationData.latitude}`,
-      deliveryAddress: locationData.deliveryAddress,
+      address: locationData.deliveryAddress,
       details: locationData.deliveryAddress,
-      label: selectedLabel
+      label: selectedLabel,
+      id: locationData.id || null,
+      address_type: 'home', 
+      contact_person_number: '+917418291374', 
+      additional_address: null,
+      contact_person_name: 'Jenish1', 
+      road: 'street name',
+      house: 'house', 
+      floor: 'floor', 
+      zone_id: 1,
+      zone_ids: null, 
+      area_ids: null 
+    };
+  
+    try {
+      const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/customer/address/add', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'zoneId': '[3,1]',
+          latitude: '23.793544663762145', 
+          longitude: '90.41166342794895',
+          'X-localization': 'en', 
+        },
+        body: JSON.stringify(addressInput)
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        Alert.alert('Address added successfully:');
+        navigation.navigate('Addresses')
+        //console.log('Address added successfully:', data);
+      } else {
+        // Handle failure, show an error message
+        console.error('Error adding address:', data);
+        Alert.alert('Error', 'Failed to add the address.');
+      }
+    } catch (error) {
+      console.error('Error with the API call:', error);
+      Alert.alert('Error', 'An error occurred while adding the address.');
     }
-    if (locationData.id) {
-      addressInput._id = locationData.id
-    }
+  };
 
-    mutate({ variables: { addressInput } })
-  }
+  
   const handleLabelSelection = (label) => {
     setSelectedLabel(label)
   }
@@ -212,11 +252,11 @@ function SaveAddress(props) {
                       <View style={styles().locationIcon}>
                         <TouchableOpacity
                           style={styles().locationIconStyles}
-                          onPress={() => handleLabelSelection('Apartment')}
+                          onPress={() => handleLabelSelection('apartment')}
                         >
                           <CustomApartmentIcon
                             iconColor={
-                              selectedLabel === 'Apartment'
+                              selectedLabel === 'apartment'
                                 ? currentTheme.newheaderColor
                                 : currentTheme.darkBgFont
                             }
@@ -226,13 +266,13 @@ function SaveAddress(props) {
                       <View style={styles().locationTypes}>
                         <TouchableOpacity
                           style={styles().locationStyles}
-                          onPress={() => handleLabelSelection('Apartment')}
+                          onPress={() => handleLabelSelection('apartment')}
                         >
                           <TextDefault
                             H5
                             bolder
                             textColor={
-                              selectedLabel === 'Apartment'
+                              selectedLabel === 'apartment'
                                 ? currentTheme.newheaderColor
                                 : currentTheme.darkBgFont
                             }
@@ -246,11 +286,11 @@ function SaveAddress(props) {
                       <View style={styles().locationIcon}>
                         <TouchableOpacity
                           style={styles().locationIconStyles}
-                          onPress={() => handleLabelSelection('House')}
+                          onPress={() => handleLabelSelection('home')}
                         >
                           <CustomHomeIcon
                             iconColor={
-                              selectedLabel === 'House'
+                              selectedLabel === 'home'
                                 ? currentTheme.newheaderColor
                                 : currentTheme.darkBgFont
                             }
@@ -260,13 +300,13 @@ function SaveAddress(props) {
                       <View style={styles().locationTypes}>
                         <TouchableOpacity
                           style={styles().locationStyles}
-                          onPress={() => handleLabelSelection('House')}
+                          onPress={() => handleLabelSelection('home')}
                         >
                           <TextDefault
                             H5
                             bolder
                             textColor={
-                              selectedLabel === 'House'
+                              selectedLabel === 'home'
                                 ? currentTheme.newheaderColor
                                 : currentTheme.darkBgFont
                             }
@@ -280,11 +320,11 @@ function SaveAddress(props) {
                       <View style={styles().locationIcon}>
                         <TouchableOpacity
                           style={styles().locationIconStyles}
-                          onPress={() => handleLabelSelection('Office')}
+                          onPress={() => handleLabelSelection('office')}
                         >
                           <CustomWorkIcon
                             iconColor={
-                              selectedLabel === 'Office'
+                              selectedLabel === 'office'
                                 ? currentTheme.newheaderColor
                                 : currentTheme.darkBgFont
                             }
@@ -294,13 +334,13 @@ function SaveAddress(props) {
                       <View style={styles().locationTypes}>
                         <TouchableOpacity
                           style={styles().locationStyles}
-                          onPress={() => handleLabelSelection('Office')}
+                          onPress={() => handleLabelSelection('office')}
                         >
                           <TextDefault
                             H5
                             bolder
                             textColor={
-                              selectedLabel === 'Office'
+                              selectedLabel === 'office'
                                 ? currentTheme.newheaderColor
                                 : currentTheme.darkBgFont
                             }
@@ -314,11 +354,11 @@ function SaveAddress(props) {
                       <View style={styles().locationIcon}>
                         <TouchableOpacity
                           style={styles().locationIconStyles}
-                          onPress={() => handleLabelSelection('Other')}
+                          onPress={() => handleLabelSelection('other')}
                         >
                           <CustomOtherIcon
                             iconColor={
-                              selectedLabel === 'Other'
+                              selectedLabel === 'other'
                                 ? currentTheme.newheaderColor
                                 : currentTheme.darkBgFont
                             }
@@ -328,13 +368,13 @@ function SaveAddress(props) {
                       <View style={styles().locationTypes}>
                         <TouchableOpacity
                           style={styles().locationStyles}
-                          onPress={() => handleLabelSelection('Other')}
+                          onPress={() => handleLabelSelection('other')}
                         >
                           <TextDefault
                             H5
                             bolder
                             textColor={
-                              selectedLabel === 'Other'
+                              selectedLabel === 'other'
                                 ? currentTheme.newheaderColor
                                 : currentTheme.darkBgFont
                             }

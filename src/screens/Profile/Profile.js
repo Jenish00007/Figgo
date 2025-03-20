@@ -1,613 +1,242 @@
-import React, {
-  useState,
-  useRef,
-  useContext,
-  useLayoutEffect,
-  useEffect
-} from 'react'
-import {
-  View,
-  TouchableOpacity,
+import React, { useContext, useState } from "react";
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  TextInput, 
+  ActivityIndicator, 
+  Alert,
+  ScrollView,
   KeyboardAvoidingView,
   Platform,
-  StatusBar,
-  Text,
-  Modal,
-  Pressable
-} from 'react-native'
-import { TextField, OutlinedTextField } from 'react-native-material-textfield'
-import { scale } from '../../utils/scaling'
-import ChangePassword from './ChangePassword'
-import { theme } from '../../utils/themeColors'
-import UserContext from '../../context/User'
-import ThemeContext from '../../ui/ThemeContext/ThemeContext'
-import styles from './styles'
-import { FlashMessage } from '../../ui/FlashMessage/FlashMessage'
-import TextDefault from '../../components/Text/TextDefault/TextDefault'
-import { alignment } from '../../utils/alignment'
-import {
-  useFocusEffect,
-  useNavigation,
-  useRoute
-} from '@react-navigation/native'
-import analytics from '../../utils/analytics'
-import { Feather } from '@expo/vector-icons'
-import { MaterialIcons } from '@expo/vector-icons'
-import { HeaderBackButton } from '@react-navigation/elements'
-import navigationService from '../../routes/navigationService'
-import { useTranslation } from 'react-i18next'
-import Spinner from '../../components/Spinner/Spinner'
+  useColorScheme
+} from "react-native";
+import { Feather } from "@expo/vector-icons";  
+import UserContext from "../../context/User";
+import AuthContext from "../../context/Auth";
+import { theme } from '../../utils/themeColors'; // Import the theme object
 
-
-
-function Profile(props) {
-  const Analytics = analytics()
-  const navigation = useNavigation()
-  const route = useRoute()
-  const { params } = route
-  const { t } = useTranslation()
-  const refName = useRef()
-  const [nameError, setNameError] = useState('')
-  const [toggleEmailView, setToggleEmailView] = useState(true)
-  const [toggleNameView, setToggleNameView] = useState(params?.editName)
-  const [toggleView, setToggleView] = useState(true)
-  const [modelVisible, setModalVisible] = useState(false)
-  const [showPass, setShowPass] = useState(false)
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false)
-
-  const {  formetedProfileData, logout } = useContext(UserContext)
-  const themeContext = useContext(ThemeContext)
-  const currentTheme = theme[themeContext.ThemeValue]
-  const backScreen = props.route.params ? props.route.params.backScreen : null
+const ProfilePage = () => {
+  const { formetedProfileData } = useContext(UserContext);
+  const { token } = useContext(AuthContext);
+  const [loading, setLoading] = useState(false);
+  const [userData, setUserDataLocal] = useState({ ...formetedProfileData });
   
-  useFocusEffect(() => {
-    if (Platform.OS === 'android') {
-      StatusBar.setBackgroundColor(currentTheme.menuBar)
+  // Get the current color scheme (system preference)
+  const colorScheme = useColorScheme();
+  
+  // Use the Dark theme if system preference is dark, otherwise use Pink theme
+  const currentTheme = colorScheme === 'dark' ? theme.Dark : theme.Pink;
+
+  const handleChange = (field, value) => {
+    setUserDataLocal((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateProfile = async () => {
+    if (!token) {
+      Alert.alert("Error", "Authentication token is missing. Please log in.");
+      return;
     }
-    StatusBar.setBarStyle(
-      themeContext.ThemeValue === 'Dark' ? 'light-content' : 'dark-content'
-    )
-  })
- 
-  useLayoutEffect(() => {
-    props.navigation.setOptions({
-      title: t('titleProfile'),
-      headerRight: null,
-      headerTitleAlign: 'center',
-      headerTitleStyle: {
-        color: currentTheme.newFontcolor,
-        fontWeight: 'bold'
-      },
-      headerTitleContainerStyle: {
-        marginTop: '2%',
-        paddingLeft: scale(25),
-        paddingRight: scale(25),
-        height: '75%',
-        marginLeft: 0
-      },
-      headerStyle: {
-        backgroundColor: currentTheme.newheaderBG,
-        elevation: 0
-      },
-      passChecker: showPass,
-      closeIcon: toggleView,
-      closeModal: setToggleView,
-      modalSetter: setModalVisible,
-      passwordButton: setShowPass,
-      headerLeft: () => (
-        <HeaderBackButton
-          truncatedLabel=''
-          backImage={() => (
-            <View>
-              <MaterialIcons
-                name='arrow-back'
-                size={25}
-                color={currentTheme.newIconColor}
+  
+    setLoading(true);
+    try {
+      const response = await fetch("https://6ammart-admin.6amtech.com/api/v1/customer/update-profile", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-localization": "en",
+          "moduleId": "1",
+          "zoneId": JSON.stringify([3, 1]),
+          "latitude": "23.793544663762145",
+          "longitude": "90.41166342794895",
+        },
+        body: JSON.stringify({
+          name: userData.f_name,
+          email: userData.email,
+          phone: userData.phone,
+        }),
+      });
+  
+      const result = await response.json();
+      console.log("API Response:", result);
+  
+      if (response.ok) {
+        Alert.alert(
+          "Success", 
+          "Profile updated successfully!"
+        );
+      } else {
+        throw new Error(result.errors?.[0]?.message || "Profile update failed.");
+      }
+    } catch (error) {
+      console.log("Update Error:", error);
+      Alert.alert("Error", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return (
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={[styles.container, { backgroundColor: currentTheme.themeBackground }]}
+    >
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+        <View style={styles.contentContainer}>
+          <View style={[styles.profileCard, { backgroundColor: currentTheme.itemCardColor }]}>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: currentTheme.fontSecondColor }]}>First Name</Text>
+              <TextInput
+                style={[styles.input, { 
+                  backgroundColor: currentTheme.color8, 
+                  color: currentTheme.fontMainColor,
+                  borderColor: currentTheme.borderColor 
+                }]}
+                value={userData.f_name}
+                onChangeText={(text) => handleChange("f_name", text)}
+                placeholderTextColor={currentTheme.fontSecondColor}
               />
             </View>
-          )}
-          onPress={() => {
-            navigationService.goBack()
-          }}
-        />
-      )
-    })
-  }, [props.navigation, showPass, toggleView])
 
-  useEffect(() => {
-    if (backScreen) {
-      viewHideAndShowName()
-      viewHideAndShowEmail()
-    }
-  }, [backScreen])
-
-  function viewHideAndShowName() {
-    setToggleNameView((prev) => !prev)
-  }
-  function viewHideAndShowEmail() {
-    setToggleEmailView((prev) => !prev)
-  }
-
-
-  
-
-
-  const handleNamePress = () => {
-    viewHideAndShowName()
-  }
-  const handleNamePressUpdate = async () => {
-    await updateName()
-    viewHideAndShowName()
-  }
-
-
-  function changeNameTab() {
-    return (
-      <>
-        <View style={styles(currentTheme).containerInfo}>
-          <TextDefault
-            textColor={currentTheme.iconColor}
-            style={{ fontSize: scale(13) }}
-            bolder
-          >
-            {formetedProfileData?.f_name || 'No name available'}
-          </TextDefault>
-        </View>
-      </>
-    )
-  }
-
-  function changeEmailTab() {
-    return (
-      <>
-        <View style={styles(currentTheme).containerInfo}>
-          <View style={styles(currentTheme).flexRow}>
-            <TextDefault
-              style={{ fontSize: scale(13) }}
-              textColor={currentTheme.iconColor}
-              bolder
-            >
-              {formetedProfileData?.email}
-            </TextDefault>
-          </View>
-          {formetedProfileData !== '' && (
-            <View
-              style={[
-                styles().verifiedButton,
-                {
-                  backgroundColor: formetedProfileData?.is_email_verified
-                    ? currentTheme.newheaderColor
-                    : currentTheme.buttonText
-                }
-              ]}
-            >
-             <TextDefault
-                textColor={
-                  formetedProfileData?.is_email_verified
-                    ? currentTheme.color4
-                    : currentTheme.white
-                }
-                bold
-              >
-                {formetedProfileData?.is_email_verified ? t('verified') : t('unverified')}
-              </TextDefault>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: currentTheme.fontSecondColor }]}>Email Address</Text>
+              <TextInput
+                style={[styles.input, { 
+                  backgroundColor: currentTheme.color8, 
+                  color: currentTheme.fontMainColor,
+                  borderColor: currentTheme.borderColor 
+                }]}
+                value={userData.email}
+                onChangeText={(text) => handleChange("email", text)}
+                placeholderTextColor={currentTheme.fontSecondColor}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
             </View>
-          )}
-        </View>
-      </>
-    )
-  }
 
-  function changePasswordTab() {
-    return (
-      <>
-        <View style={styles(currentTheme).containerInfo}>
-          <TextDefault
-            textColor={currentTheme.iconColor}
-            style={{ fontSize: scale(13) }}
-            bolder
-          >
-            ***********
-          </TextDefault>
-        </View>
-      </>
-    )
-  }
-
-  function changePhoneTab() {
-    return (
-      <>
-        <View style={styles(currentTheme).containerInfo}>
-          <View style={styles(currentTheme).flexRow}>
-            <TextDefault
-              style={{ fontSize: scale(13) }}
-              textColor={currentTheme.iconColor}
-              bolder
-            >
-              {formetedProfileData?.phone}
-            </TextDefault>
-          </View>
-          {formetedProfileData !== '' && (
-            <View
-              style={[
-                styles().verifiedButton,
-                {
-                  backgroundColor: formetedProfileData?.is_phone_verified
-                    ? currentTheme.main
-                    : currentTheme.fontFourthColor
-                }
-              ]}
-            >
-              <TextDefault
-                textColor={
-                  formetedProfileData?.is_phone_verified
-                    ? currentTheme.color4
-                    : currentTheme.white
-                }
-                bold
-              >
-                {formetedProfileData?.is_phone_verified ? t('verified') : t('unverified')}
-              </TextDefault>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: currentTheme.fontSecondColor }]}>Phone Number</Text>
+              <TextInput
+                style={[styles.input, { 
+                  backgroundColor: currentTheme.color8, 
+                  color: currentTheme.fontMainColor,
+                  borderColor: currentTheme.borderColor 
+                }]}
+                value={userData.phone}
+                onChangeText={(text) => handleChange("phone", text)}
+                placeholderTextColor={currentTheme.fontSecondColor}
+                keyboardType="phone-pad"
+              />
             </View>
-          )}
-        </View>
-      </>
-    )
-  }
 
-  const showModal = () => {
-    setModalVisible(true)
-  }
-
-  return (
-    <>
-      <ChangePassword
-        modalVisible={modelVisible}
-        hideModal={() => {
-          setModalVisible(false)
-        }}
-      />
-      <View style={styles(currentTheme).formContainer}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : null}
-          style={styles(currentTheme).flex}
-        >
-          <View style={styles(currentTheme).mainContainer}>
-            <View>
-              <View style={styles(currentTheme).formSubContainer}>
-                <View style={{ flex: 3 }}>
-                  <View style={styles(currentTheme).containerHeading}>
-                    {!toggleNameView && (
-                      <>
-                        <View style={styles(currentTheme).headingTitle}>
-                          <TextDefault
-                            H5
-                            B700
-                            bolder
-                            left
-                            textColor={currentTheme.darkBgFont}
-                            style={styles(currentTheme).textAlignLeft}
-                          >
-                            {t('name')}
-                          </TextDefault>
-                        </View>
-                      </>
-                    )}
-                  </View>
-                  {!toggleNameView ? (
-                    changeNameTab()
-                  ) : (
-                    <View>
-                      <View style={styles(currentTheme).containerHeading}>
-                        <View style={styles(currentTheme).headingTitle}>
-                          <TextDefault
-                            H5
-                            B700
-                            bolder
-                            left
-                            textColor={currentTheme.newFontcolor}
-                            style={styles(currentTheme).textAlignLeft}
-                          >
-                            {t('name')}
-                          </TextDefault>
-                        </View>
-                      </View>
-                      <View style={{ marginTop: 10 }}>
-                        <OutlinedTextField
-                          ref={refName}
-                          defaultValue={formetedProfileData?.f_name}
-                          autoFocus={true}
-                          maxLength={20}
-                          textColor={currentTheme.newFontcolor}
-                          baseColor={currentTheme.newFontcolor}
-                          errorColor={currentTheme.textErrorColor}
-                          tintColor={
-                            !nameError ? currentTheme.newFontcolor : 'red'
-                          }
-                          error={nameError}
-                        />
-                      </View>
-
-                      <TouchableOpacity
-                        disabled={loadingMutation}
-                        activeOpacity={0.7}
-                        style={styles(currentTheme).saveContainer}
-                        onPress={handleNamePressUpdate}
-                      >
-                        <TextDefault bold>{t('update')}</TextDefault>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </View>
-                <View style={styles().headingLink}>
-                  <TouchableOpacity
-                    activeOpacity={0.3}
-                    style={styles().headingButton}
-                    onPress={handleNamePress}
-                  >
-                    <TextDefault textColor={currentTheme.editProfileButton}>
-                      {t('edit')}
-                    </TextDefault>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* email */}
-              <View style={styles(currentTheme).formSubContainer}>
-                <View style={{ flex: 3 }}>
-                  <View style={styles().containerHeading}>
-                    <View style={styles().headingTitle}>
-                      <TextDefault
-                        H5
-                        B700
-                        bolder
-                        left
-                        textColor={currentTheme.darkBgFont}
-                        style={styles(currentTheme).textAlignLeft}
-                      >
-                        {t('email')}
-                      </TextDefault>
-                    </View>
-                  </View>
-                  {changeEmailTab()}
-                </View>
-                <View style={{ flex: 1 }} />
-              </View>
-
-              {/* password */}
-              <View style={styles(currentTheme).formSubContainer}>
-                <View style={{ flex: 3 }}>
-                  <View style={styles().containerHeading}>
-                    <View style={styles().headingTitle}>
-                      <TextDefault
-                        H5
-                        B700
-                        bolder
-                        left
-                        textColor={currentTheme.darkBgFont}
-                        style={styles(currentTheme).textAlignLeft}
-                      >
-                        {t('password')}
-                      </TextDefault>
-                    </View>
-                  </View>
-                  {changePasswordTab()}
-                </View>
-                <View style={styles().headingLink}>
-                  <TouchableOpacity
-                    activeOpacity={0.3}
-                    style={{ ...styles().headingButton }}
-                    onPress={showModal}
-                  >
-                    <TextDefault textColor={currentTheme.editProfileButton}>
-                      {t('change')}
-                    </TextDefault>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* phone */}
-              <View style={styles(currentTheme).formSubContainer}>
-                <View style={{ flex: 3 }}>
-                  <View style={styles().containerHeading}>
-                    {toggleView && (
-                      <>
-                        <View style={styles().headingTitle}>
-                          <TextDefault
-                            H5
-                            B700
-                            bolder
-                            left
-                            textColor={currentTheme.darkBgFont}
-                            style={styles(currentTheme).textAlignLeft}
-                          >
-                            {t('mobileNumber')}
-                          </TextDefault>
-                        </View>
-                      </>
-                    )}
-                  </View>
-                  {toggleView ? (
-                    changePhoneTab()
-                  ) : (
-                    <View>
-                      <View style={styles().containerHeading}>
-                        <View style={styles().headingTitle}>
-                          <TextDefault
-                            textColor={currentTheme.fontMainColor}
-                            H5
-                            B700
-                            bolder
-                            style={styles(currentTheme).textAlignLeft}
-                          >
-                            {t('mobileNumber')}
-                          </TextDefault>
-                        </View>
-                      </View>
-
-                      <View>
-                        <View style={{ ...alignment.MTxSmall }}></View>
-
-                        <View style={styles().flexRow}>
-                          <View>
-                            <TextDefault>{formattedPhone}</TextDefault>
-                          </View>
-                          <View style={styles().phoneDetailsContainer}>
-                            {(formetedProfileData?.phone === '' ||
-                              !formetedProfileData?.is_phone_verified) && (
-                              <TouchableOpacity
-                                onPress={() =>
-                                  props.navigation.navigate(
-                                    formattedPhone === ''
-                                      ? 'PhoneNumber'
-                                      : 'PhoneOtp',
-                                    { prevScreen: 'Profile' }
-                                  )
-                                }
-                                disabled={
-                                  formetedProfileData?.is_phone_verified &&
-                                  formetedProfileData.phone !== ''
-                                }
-                              >
-                                <TextDefault
-                                  bold
-                                  textColor={
-                                    formetedProfileData?.is_phone_verified
-                                      ? currentTheme.startColor
-                                      : currentTheme.textErrorColor
-                                  }
-                                >
-                                  {formetedProfileData.phone === ''
-                                    ? t('addPhone')
-                                    : formetedProfileData?.is_phone_verified
-                                      ? t('verified')
-                                      : t('verify')}
-                                </TextDefault>
-                              </TouchableOpacity>
-                            )}
-                            {formetedProfileData.phone !== '' && (
-                              <Feather
-                                style={{ marginLeft: 10, marginTop: -5 }}
-                                name='check'
-                                size={20}
-                                color={currentTheme.black}
-                                onPress={() =>
-                                  props.navigation.navigate('PhoneNumber', {
-                                    prevScreen: 'Profile'
-                                  })
-                                }
-                              />
-                            )}
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  )}
-                </View>
-                <View style={styles().headingLink}>
-                  <TouchableOpacity
-                    activeOpacity={0.3}
-                    style={styles().headingButton}
-                    onPress={() =>
-                      props.navigation.navigate('PhoneNumber', {
-                        prevScreen: 'Profile'
-                      })
-                    }
-                  >
-                    <TextDefault textColor={currentTheme.editProfileButton}>
-                      {t('edit')}
-                    </TextDefault>
-                  </TouchableOpacity>
-                </View>
-              </View>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: currentTheme.primary }]}>Security</Text>
+              <View style={[styles.divider, { backgroundColor: currentTheme.borderBottomColor }]} />
             </View>
-            <View style={{ alignItems: 'center' }}>
-              <TouchableOpacity onPress={() => setDeleteModalVisible(true)}>
-                <TextDefault
-                  bolder
-                  H4
-                  textColor={currentTheme.deleteAccountBtn}
-                >
-                  {t('DeleteAccount')}
-                </TextDefault>
-              </TouchableOpacity>
-            </View>
-            <View style={{ alignItems: 'center' }}>
-              <TouchableOpacity onPress={logout}>
-                <TextDefault
-                  bolder
-                  H4
-                  textColor={currentTheme.deleteAccountBtn}
-                >
-                  Logout
-                </TextDefault>
-              </TouchableOpacity>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: currentTheme.fontSecondColor }]}>Password</Text>
+              <View style={[styles.passwordField, { 
+                backgroundColor: currentTheme.color8, 
+                borderColor: currentTheme.borderColor 
+              }]}>
+                <Text style={[styles.passwordDots, { color: currentTheme.fontMainColor }]}>••••••••</Text>
+              </View>
             </View>
           </View>
-          <Modal
-            onBackdropPress={() => setDeleteModalVisible(false)}
-            onBackButtonPress={() => setDeleteModalVisible(false)}
-            visible={deleteModalVisible}
-            onRequestClose={() => {
-              setDeleteModalVisible(false)
-            }}
-          >
-            <View style={styles().centeredView}>
-              <View style={styles(currentTheme).modalView}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    gap: 24,
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingHorizontal: scale(10)
-                  }}
-                >
-                  <TextDefault bolder H3 textColor={currentTheme.newFontcolor}>
-                    {t('DeleteConfirmation')}
-                  </TextDefault>
-                  <Feather
-                    name='x-circle'
-                    size={24}
-                    color={currentTheme.newFontcolor}
-                    onPress={() => setDeleteModalVisible(!deleteModalVisible)}
-                  />
-                </View>
-                {/* <TextDefault H5 textColor={currentTheme.newFontcolor}>
-                  {t('permanentDeleteMessage')}
-                </TextDefault>
-                <TouchableOpacity
-                  style={[
-                    styles(currentTheme).btn,
-                    styles().btnDelete,
-                    { opacity: deactivateLoading ? 0.5 : 1 }
-                  ]}
-                 
-                >
-                  {deactivateLoading ? (
-                    <Spinner backColor='transparent' size='small' />
-                  ) : (
-                    <TextDefault bolder H4 textColor={currentTheme.white}>
-                      {t('yesSure')}
-                    </TextDefault>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles(currentTheme).btn, styles().btnCancel]}
-                  onPress={() => setDeleteModalVisible(false)}
-                  disabled={deactivateLoading}
-                >
-                  <TextDefault bolder H4 textColor={currentTheme.black}>
-                    {t('noDelete')}
-                  </TextDefault>
-                </TouchableOpacity> */}
-              </View>
-            </View>
-          </Modal>
-        </KeyboardAvoidingView>
-      </View>
-    </>
-  )
-}
+        </View>
+      </ScrollView>
+      
+      <TouchableOpacity 
+        style={[styles.saveButton, { backgroundColor: currentTheme.buttonBackground }]} 
+        onPress={updateProfile} 
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color={currentTheme.buttonText} />
+        ) : (
+          <Text style={[styles.saveButtonText, { color: currentTheme.buttonText }]}>Save Changes</Text>
+        )}
+      </TouchableOpacity>
+    </KeyboardAvoidingView>
+  );
+};
 
-export default Profile
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 20,
+    paddingBottom: 100,
+  },
+  profileCard: {
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  sectionHeader: {
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  divider: {
+    height: 1,
+    marginTop: 8,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  input: {
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    borderWidth: 1,
+  },
+  passwordField: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+  },
+  passwordDots: {
+    fontSize: 16,
+  },
+  saveButton: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    right: 20,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  saveButtonText: {
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+});
+
+export default ProfilePage;

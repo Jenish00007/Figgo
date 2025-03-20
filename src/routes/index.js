@@ -63,6 +63,7 @@ import Notification from '../screens/Notification/Notification'
 import ProductDetails from '../screens/ProductDetail/ProductDetails'
 import Options from '../screens/Options/Options'
 import OrderSummary from '../screens/OrderSummary/OrderSummary'
+import OrderConfirmation from '../screens/OrderConfirmation/Orderconfirmation'
 
 
 const NavigationStack = createStackNavigator()
@@ -180,6 +181,8 @@ function NoDrawer() {
       <NavigationStack.Screen name='Options' component={Options}/>
       <NavigationStack.Screen name='OrderSummary' component={OrderSummary}/>
       <NavigationStack.Screen name='OrderDetails' component={OrderDetail}/>
+      <NavigationStack.Screen name='OrderConfirmation' component={OrderConfirmation}/>
+
 
     </NavigationStack.Navigator>
   )

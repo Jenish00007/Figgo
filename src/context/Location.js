@@ -1,19 +1,12 @@
 import React, { createContext, useState, useEffect } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import axios from 'axios'
-import { useQuery } from '@apollo/client'
-import gql from 'graphql-tag'
-import { cities } from '../apollo/queries'
-
-const GET_CITIES = gql`
-  ${cities}
-`
 
 export const LocationContext = createContext()
 
 export const LocationProvider = ({ children }) => {
   const [location, setLocation] = useState(null)
-  const [country, setCountry] = useState('IL')
+  const [country, setCountry] = useState('IN')
   const [cities, setCities] = useState([])
   const [loadingCountry, setLoadingCountry] = useState(true)
   const [errorCountry, setErrorCountry] = useState('')
@@ -62,22 +55,31 @@ export const LocationProvider = ({ children }) => {
     fetchCountry()
   }, [])
 
-  const { loading, error, data } = useQuery(GET_CITIES, {
-    variables: { iso: country || 'US' },
-    skip: !country // Skip the query if country is not provided
-  })
-  //console.log('cities Data inside context', cities)
-  // useEffect(() => {
-  //   if (!loading && !error && data) {
-  //     setCities(data.getCountryByIso.cities || [])
-  //   }
-  // }, [loading, error, data])
+ 
+  useEffect(() => {
+    const fetchCities = async () => {
+      if (country) {
+        try {
+          // Example of another REST API to fetch cities by country code (change this API to your desired source)
+          const citiesResponse = await axios.get(`https://api.example.com/cities/${country}`)
+          setCities(citiesResponse.data || [])
+        } catch (error) {
+          console.error('Error fetching cities:', error)
+        }
+      }
+    }
+
+    if (country && !loadingCountry) {
+      fetchCities()
+    }
+  }, [country, loadingCountry])
+
   return (
     <LocationContext.Provider
       value={{
         location,
         setLocation,
-        cities: data?.getCountryByIso?.cities || []
+        cities
       }}>
       {children}
     </LocationContext.Provider>

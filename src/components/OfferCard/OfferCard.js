@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AddToFavourites from '../Favourites/AddtoFavourites';
 
 const OfferCard = ({item}) => {
   
@@ -26,10 +27,7 @@ const OfferCard = ({item}) => {
                         <Text style={supermarketStyles.title}>{name}</Text>
                     </View>
                     
-                    <Image
-                        source={require('../../assets/icons/fullHeart.png')}
-                        style={supermarketStyles.heartIcon}
-                    />
+                    <AddToFavourites restaurantId={item}/>
                 </View>
 
                 <View style={supermarketStyles.addressContainer}>
