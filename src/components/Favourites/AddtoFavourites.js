@@ -27,7 +27,7 @@ const AddToFavourites = ({ product, restaurantId }) => {
             //const moduleIds = [1, 4]
             //const queryString = moduleIds.map(id => `moduleId=${id}`).join('&');      
             const headers = {
-                'moduleId': '1',
+                //'moduleId': '1',
                 'zoneId': '[1]',
                 'latitude': location?.latitude?.toString() || '23.79354466376145',
                 'longitude': location?.longitude?.toString() || '90.41166342794895',

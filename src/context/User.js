@@ -51,7 +51,7 @@ console.log(networkStatus)
         });
 
         const data = await response.json();
-        
+        console.log("Data       ",data)
         if (response.ok) {
       
           setProfile(data); 

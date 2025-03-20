@@ -16,6 +16,7 @@ import OrdersContext from '../../context/Orders'
 import { HeaderBackButton } from '@react-navigation/elements'
 import { useTranslation } from 'react-i18next'
 import ReviewModal from '../../components/Review'
+import AuthContext from '../../context/Auth'
 
 const orderStatusActive = ['PENDING', 'PICKED', 'ACCEPTED', 'ASSIGNED']
 const orderStatusInactive = ['DELIVERED', 'COMPLETED']
@@ -25,23 +26,69 @@ function MyOrders(props) {
   const [reviewInfo, setReviewInfo] = useState()
   const analytics = Analytics()
   const { t } = useTranslation()
-  const {
-    orders,
-    loadingOrders,
-    errorOrders,
-    reFetchOrders,
-    fetchMoreOrdersFunc,
-    networkStatusOrders
-  } = useContext(OrdersContext)
+  // const {
+  //   orders,
+  //   loadingOrders,
+  //   errorOrders,
+  //   reFetchOrders,
+  //   fetchMoreOrdersFunc,
+  //   networkStatusOrders
+  // } = useContext(OrdersContext)
   const themeContext = useContext(ThemeContext)
   const currentTheme = theme[themeContext.ThemeValue]
   const [selectedTab, setSelectedTab] = useState('current')
   const inset = useSafeAreaInsets()
+  const { token } = useContext(AuthContext)
+
+  const [orders, setOrders] = useState([])
+  const [loadingOrders, setLoading] = useState(true)
+  const [errorOrders, setError] = useState(null)
+
+  // Fetch orders when component mounts
+  useEffect(() => {
+    fetchOrders()
+  }, [])
+
+  // Fetch orders from the API
+  const fetchOrders = async () => {
+    try {
+      setLoading(true)
+      const headers = {
+        'moduleId': '1',
+        'zoneId': '[1]',
+        'latitude': '23.79354466376145',
+        'longitude': '90.41166342794895',
+        'Authorization': token ? `Bearer ${token}` : ''
+      }
+
+      // Modify this URL to get a list of all orders if available
+      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/order/track?order_id=100102&contact_number=917418291377`, {
+        method: 'GET',
+        headers: headers,
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        // If data.orders exists use that, otherwise wrap the single order in an array
+        const ordersList = data.orders ? data.orders : [data];
+        setOrders(ordersList)
+      } else {
+        throw new Error(data.message || 'Failed to fetch orders')
+      }
+    } catch (err) {
+      setError(err.message)
+      Alert.alert('Error', err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const activeOrders = useMemo(() => {
-    return orders.filter(o => orderStatusActive.includes(o.orderStatus))
+    return orders.filter(o => orderStatusActive.includes(o.order_status || o.orderStatus))
   }, [orders])
   const pastOrders = useMemo(() => {
-    return orders.filter(o => orderStatusInactive.includes(o.orderStatus))
+    return orders.filter(o => orderStatusInactive.includes(o.order_status || o.orderStatus))
   }, [orders])
   const openReviewModal = ()=>{
     reviewModalRef.current.open()
@@ -125,6 +172,12 @@ function MyOrders(props) {
     openReviewModal()
   }
 
+  // Reload orders function for pull-to-refresh
+  const reloadOrders = () => {
+    fetchOrders()
+  }
+  
+
   return (
     <>
       <View style={styles(currentTheme).container}>
@@ -149,6 +202,7 @@ function MyOrders(props) {
             activeOrders={activeOrders}
             loading={loadingOrders}
             error={errorOrders}
+            reFetchOrders={reloadOrders}
           />
         )}
         {selectedTab === 'past' && (
@@ -158,6 +212,7 @@ function MyOrders(props) {
             loading={loadingOrders}
             error={errorOrders}
             onPressReview={onPressReview}
+            reFetchOrders={reloadOrders}
           />
         )}
 
@@ -168,7 +223,13 @@ function MyOrders(props) {
           }}
         />
       </View>
-      <ReviewModal ref={reviewModalRef} onOverlayPress={closeReviewModal} theme={currentTheme} orderId={reviewInfo?.order._id} rating={reviewInfo?.selectedRating}/>
+      <ReviewModal 
+        ref={reviewModalRef} 
+        onOverlayPress={closeReviewModal} 
+        theme={currentTheme} 
+        orderId={reviewInfo?.order?.id || reviewInfo?.order?._id} 
+        rating={reviewInfo?.selectedRating}
+      />
     </>
   )
 }

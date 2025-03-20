@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, FlatList, ActivityIndicator, Alert, Touc
 import { useNavigation } from '@react-navigation/native';
 import AuthContext from '../../context/Auth';
 
-const CartPage = (profile) => {
+const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
@@ -23,11 +23,10 @@ const CartPage = (profile) => {
         'latitude': '23.793544663762145',
         'longitude': '90.41166342794895'
       };    
-      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/list?guest_id=${profile.guest_id}`, {
+      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/list`, {
         'method': 'GET',
         headers: headers,
       });
-
       if (!response.ok) {
         throw new Error('Failed to fetch cart');
       }

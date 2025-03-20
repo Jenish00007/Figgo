@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "description": "Ordering app built in React Native using Expo for IOS and Android.",
     "slug": "shopygram",
-    "owner": "suman_07",
+    "owner": "zeenathshameena",
     "privacy": "public",
     "androidStatusBar": {
       "backgroundColor": "#000"
@@ -84,7 +84,7 @@
       [
         "expo-updates",
         {
-          "username": "suman_07"
+          "username": "zeenathshameena"
         }
       ],
       [
@@ -108,7 +108,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "3bd4f9a9-b87c-48cc-9e7c-f21b5623fffc"
+        "projectId": "cd9114ac-ca10-412e-af46-66fb21d7a860"
       }
     }
   }

@@ -1,23 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
   ScrollView, 
   TouchableOpacity, 
   TextInput,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useUserContext } from './../../context/User';
 import OrderSummaryStyles from './OrderSummaryStyles';
-import PaymentMethod from '../../components/Payment/PaymentMethod' // Import the new PaymentMethod component
+import PaymentMethod from '../../components/Payment/PaymentMethod';
+import AuthContext from '../../context/Auth'
+import Addresses from '../Addresses/Addresses';
 
 const OrderSummary = ({ route }) => {
   // Get cart data from navigation params
   const { cartItems: navigationCartItems } = route.params || {};
-  
+  const { token } = useContext(AuthContext)
+
   const { cart, clearCart, updateCart } = useUserContext();
   const navigation = useNavigation();
   
@@ -28,7 +32,7 @@ const OrderSummary = ({ route }) => {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('');
-  
+  const [isLoading, setIsLoading] = useState(false);
   // Form state for new address
   const [newAddress, setNewAddress] = useState({
     name: '',
@@ -149,7 +153,9 @@ const OrderSummary = ({ route }) => {
 
   // Handle payment method selection
   const handleSelectPayment = (method) => {
-    setPaymentMethod(method);
+    //setPaymentMethod(paymentMethod);
+    setPaymentMethod("digital_payment");
+
   };
 
   // Handle form input changes
@@ -157,7 +163,33 @@ const OrderSummary = ({ route }) => {
     setNewAddress({ ...newAddress, [field]: value });
   };
 
-  // Handle checkout completion
+  // Format cart items for API request
+  const formatCartItemsForApi = (items) => {
+    return items.map(item => ({
+      item_id: item.id,
+      quantity: item.quantity,
+      price: item.price,
+      variations: item.variations || [],
+      store_id: item.store_id
+      // Add any other required fields based on the API documentation
+    }));
+  };
+
+  // Format address for API request
+  // const formatAddressForApi = (addresses) => {
+  //   return {
+  //     contact_person_name: addresses.name,
+  //     contact_person_number: addresses.phone,
+  //     address: addresses.address,
+  //     city: addresses.city,
+  //     state: addaddressesress.state,
+  //     zip: addresses.pincode,
+  //     country: "India", 
+  //     address_type: addresses.addressType
+  //   };
+  // };
+
+  // Handle checkout completion with API integration
   const handlePlaceOrder = async () => {
     // Refresh cart data one more time before placing order
     if (!navigationCartItems) {
@@ -175,7 +207,7 @@ const OrderSummary = ({ route }) => {
     }
     
     try {
-      // Create order object
+      setIsLoading(true);
       const order = {
         id: Date.now().toString(),
         items: cartItems,
@@ -185,23 +217,72 @@ const OrderSummary = ({ route }) => {
         date: new Date().toISOString(),
         status: 'Placed'
       };
-      
-      // Save order to AsyncStorage
-      const storedOrders = await AsyncStorage.getItem('orders');
-      const orders = storedOrders ? JSON.parse(storedOrders) : [];
-      orders.push(order);
-      await AsyncStorage.setItem('orders', JSON.stringify(orders));
-      
-      // Clear cart using context if we're using context
-      if (!navigationCartItems && clearCart) {
-        clearCart();
+
+      // Prepare order data for the API request
+      // const orderData = {
+      //    cart_id : 46,
+      //    cart: formatCartItemsForApi(cartItems),
+        // order_amount: totalAmount,
+        // payment_method: paymentMethod.toLowerCase(),
+        // order_type: 'delivery', // Assuming delivery order type
+        // delivery_address: formatAddressForApi(selectedAddress),
+        // Add any other required fields based on the API documentation
+      //};
+      const headers = {
+        'zoneId': '[3,1]',
+        "moduleId": '1',
+        'X-localization': "en",
+        'Connection': "keep-alive",
+        'Authorization': token ? `Bearer ${token}` : '',
       }
+      const orderDeatil = `order_amount=${totalAmount}&payment_method=${paymentMethod}&order_type=delivery&store_id=${cartItems[0].item.store_id}&distance=9693.34`
+      const cust_Address =`address=${selectedAddress.address}&latitude=23.79354466376145&longitude=90.41166342794895` 
+      const cust_Detail=`contact_person_name=${selectedAddress.name}&contact_person_number=${selectedAddress.phone}&contact_person_email=${selectedAddress.email}`
+
+      const uri=`https://6ammart-admin.6amtech.com/api/v1/customer/order/place?${orderDeatil}&${cust_Address}&${cust_Detail}`
       
-      // Navigate to order confirmation
-      navigation.navigate('OrderConfirmation', { order });
+      const response = await fetch(uri, {
+        method: 'POST',
+        headers: headers
+      });
+      
+      const responseData = await response.json();
+      if (response.ok) {
+        
+        // Clear cart using context if we're using context
+        if (!navigationCartItems && clearCart) {
+          clearCart();
+        }
+        
+        // Save order to local storage for history
+        // const order = {
+        //   id: responseData.order_id || Date.now().toString(),
+        //   items: cartItems,
+        //   totalAmount,
+        //   address: selectedAddress,
+        //   paymentMethod,
+        //   date: new Date().toISOString(),
+        //   status: 'Placed',
+        //   apiResponse: responseData // Store API response for reference
+        // };
+        
+        const storedOrders = await AsyncStorage.getItem('orders');
+        const orders = storedOrders ? JSON.parse(storedOrders) : [];
+        orders.push(order);
+        await AsyncStorage.setItem('orders', JSON.stringify(orders));
+        
+        // Navigate to order confirmation
+        navigation.navigate('OrderConfirmation', { order });
+      } else {
+        // Handle API error
+        console.error('API Error:', responseData);
+        Alert.alert('Error', responseData.message || 'Failed to place order');
+      }
     } catch (error) {
       console.error('Error placing order', error);
-      Alert.alert('Error', 'Failed to place order');
+      Alert.alert('Error', 'Failed to place order. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
