@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "description": "Ordering app built in React Native using Expo for IOS and Android.",
     "slug": "shopygram",
-    "owner": "zeenathshameena",
+    "owner": "jenish_65",
     "privacy": "public",
     "androidStatusBar": {
       "backgroundColor": "#000"
@@ -56,7 +56,7 @@
       "androidCollapsedTitle": "Figgo"
     },
     "android": {
-      "versionCode": 9,
+      "versionCode": 12,
       "package": "com.jebilinjebilin.ShopMart",
       "googleServicesFile": "./google-services.json",
       "userInterfaceStyle": "automatic",
@@ -108,7 +108,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "cd9114ac-ca10-412e-af46-66fb21d7a860"
+        "projectId": "9f042587-5507-4ccc-8440-9bed7243457e"
       }
     }
   }

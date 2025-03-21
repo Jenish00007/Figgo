@@ -35,19 +35,23 @@ function BottomTab({ screen }) {
         <Text style={getTextStyle('HOME')}>Home</Text>
       </TouchableOpacity>
 
-      {/* Cart Icon */}
+      {/* Favourite Button */}
       <TouchableOpacity
-        onPress={() => navigation.navigate('Favourite')}
+        onPress={() => {
+          if (isLoggedIn) {
+            navigation.navigate('Favourite');
+          } else {
+            navigation.navigate('Login');
+          }
+        }}
         style={styles.footerBtnContainer}
       >
         <View style={styles.imgContainer}>
           <SimpleLineIcons
-            name="heart" // Solid green icon
+            name="heart"
             size={scale(20)}
             color={getIconColor('WhereToGo')}
           />
-
-
           {cartCount > 0 && (
             <View style={styles.badgeContainer}>
               <Text style={styles.badgeText}>{cartCount}</Text>
@@ -57,10 +61,15 @@ function BottomTab({ screen }) {
         <Text style={getTextStyle('WhereToGo')}>Favourite</Text>
       </TouchableOpacity>
 
-
-      {/* Cart Icon */}
+      {/* Cart Button */}
       <TouchableOpacity
-        onPress={() => navigation.navigate('Cart')}
+        onPress={() => {
+          if (isLoggedIn) {
+            navigation.navigate('Cart');
+          } else {
+            navigation.navigate('Login');
+          }
+        }}
         style={styles.footerBtnContainer}
       >
         <MaterialCommunityIcons
@@ -71,9 +80,15 @@ function BottomTab({ screen }) {
         <Text style={getTextStyle('FAVOURITES')}>Cart</Text>
       </TouchableOpacity>
 
-      {/* Favourites Icon */}
+      {/* Orders Button */}
       <TouchableOpacity
-        onPress={() => navigation.navigate('MyOrders')}
+        onPress={() => {
+          if (isLoggedIn) {
+            navigation.navigate('MyOrders');
+          } else {
+            navigation.navigate('Login');
+          }
+        }}
         style={styles.footerBtnContainer}
       >
         <MaterialCommunityIcons
@@ -88,7 +103,7 @@ function BottomTab({ screen }) {
       <TouchableOpacity
         onPress={() => {
           if (isLoggedIn) {
-            navigation.navigate('Options');
+            navigation.navigate('Profile');
           } else {
             navigation.navigate('Login');
           }

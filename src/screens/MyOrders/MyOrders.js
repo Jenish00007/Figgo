@@ -61,18 +61,25 @@ function MyOrders(props) {
         'Authorization': token ? `Bearer ${token}` : ''
       }
 
-      // Modify this URL to get a list of all orders if available
-      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/order/track?order_id=100102&contact_number=917418291377`, {
-        method: 'GET',
-        headers: headers,
-      })
+      // Get user's phone number from AuthContext or wherever it's stored
+      const userPhone = '917418291377' // Replace this with actual user phone number from your auth context
+      
+      // Fetch orders using the user's phone number
+      const response = await fetch(
+        `https://6ammart-admin.6amtech.com/api/v1/customer/order/list?contact_number=${userPhone}&offset=1&limit=20`,
+        {
+          method: 'GET',
+          headers: headers,
+        }
+      )
       
       const data = await response.json()
       
       if (response.ok) {
-        // If data.orders exists use that, otherwise wrap the single order in an array
-        const ordersList = data.orders ? data.orders : [data];
-        setOrders(ordersList)
+        if (!data || !data.orders) {
+          throw new Error('No orders data received')
+        }
+        setOrders(data.orders)
       } else {
         throw new Error(data.message || 'Failed to fetch orders')
       }
@@ -85,11 +92,13 @@ function MyOrders(props) {
   }
 
   const activeOrders = useMemo(() => {
-    return orders.filter(o => orderStatusActive.includes(o.order_status || o.orderStatus))
+    return orders.filter(o => orderStatusActive.includes(o.order_status?.toUpperCase()))
   }, [orders])
+
   const pastOrders = useMemo(() => {
-    return orders.filter(o => orderStatusInactive.includes(o.order_status || o.orderStatus))
+    return orders.filter(o => orderStatusInactive.includes(o.order_status?.toUpperCase()))
   }, [orders])
+
   const openReviewModal = ()=>{
     reviewModalRef.current.open()
   }
@@ -206,12 +215,19 @@ function MyOrders(props) {
           />
         )}
         {selectedTab === 'past' && (
-          <PastOrders
+          // <PastOrders
+          //   navigation={props.navigation}
+          //   pastOrders={pastOrders}
+          //   loading={loadingOrders}
+          //   error={errorOrders}
+          //   onPressReview={onPressReview}
+          //   reFetchOrders={reloadOrders}
+          // />
+          <ActiveOrders
             navigation={props.navigation}
-            pastOrders={pastOrders}
+            activeOrders={activeOrders}
             loading={loadingOrders}
             error={errorOrders}
-            onPressReview={onPressReview}
             reFetchOrders={reloadOrders}
           />
         )}

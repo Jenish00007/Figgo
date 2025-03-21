@@ -73,7 +73,7 @@ function NewRestaurantCard(props) {
               onPress={handleAddToFavorites}>
               <View style={styles(currentTheme).favouriteOverlay}>
                 
-                 <AddToFavourites restaurantId={props}/>
+                 <AddToFavourites restaurantId={props.id}/>
                 
               </View>
             </TouchableOpacity>

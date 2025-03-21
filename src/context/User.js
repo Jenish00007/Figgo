@@ -10,15 +10,12 @@ import AuthContext from './Auth'
 import analytics from '../utils/analytics'
 import { useTranslation } from 'react-i18next'
 
-
 const UserContext = React.createContext({})
 
 export const UserProvider = props => {
   const Analytics = analytics()
-
   const { t } = useTranslation()
-
-  const {  token,setToken } = useContext(AuthContext)
+  const { token, setToken } = useContext(AuthContext)
   const { location, setLocation } = useContext(LocationContext)
   const [cart, setCart] = useState([])
   const [restaurant, setRestaurant] = useState(null)
@@ -30,7 +27,6 @@ export const UserProvider = props => {
   const [errorProfile, setErrorProfile] = useState(null)
   const networkStatus='1'
 
-console.log(networkStatus)
   useEffect(() => {
     const fetchProfileData = async () => {
       if (!token) {
@@ -74,12 +70,13 @@ console.log(networkStatus)
     fetchProfileData();
   }, [token]);
 
-
-
   const logout = async () => {
     try {
+      // Remove token from AsyncStorage
       await AsyncStorage.removeItem('token')
       setToken(null)
+      
+      // Reset location if needed
       if (location.id) {
         setLocation({
           label: t('selectedLocation'),
@@ -88,51 +85,64 @@ console.log(networkStatus)
           deliveryAddress: location.deliveryAddress
         })
       }
+
+      // Clear any other user-related data
+      setProfile(null)
+      setFormetedProfileData(null)
+      setCart([])
+
+      return true
     } catch (error) {
       console.log('error on logout', error)
+      return false
     }
   }
-//add to cart
- const addToCart = async () => {
-        
 
-        try {
-            const headers = {
-                'moduleId': '1',
-                'zoneId': '[1]',
-                'latitude': location?.latitude?.toString() || '23.79354466376145',
-                'longitude': location?.longitude?.toString() || '90.41166342794895',
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            };
-            const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/add?guest_id=${profile.guest_id}`, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({
-                    item_id: item.id,
-                    quantity: 1, // Adjust quantity as needed
-                    price: item.price,
-                    name: item.name,
-                    image: item.image_full_url,
-                    model: "Item"
-                }),
-            });
-   
-            const result = await response.text();
-            console.log("Add to Cart Response:", result);
+  //add to cart
+ const addToCart = async (item) => {
+    try {
+      if (!token) {
+        throw new Error('User not logged in');
+      }
 
-            if (response.ok) {
-                Alert.alert("Success", "Product added to cart successfully!");
-            } else {
-                Alert.alert("Error", result.message || "Failed to add product to cart.");
-            }
-        } catch (error) {
-            console.error("Error adding to cart:", error);
-            Alert.alert("Error", "An error occurred while adding to cart.");
-        } finally {
-            setLoading(false);
-        }
-    };
+      const headers = {
+        'moduleId': '1',
+        'zoneId': '[1]',
+        'latitude': location?.latitude?.toString() || '23.79354466376145',
+        'longitude': location?.longitude?.toString() || '90.41166342794895',
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      // Add item to cart
+      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/add`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          item_id: item.id,
+          quantity: item.quantity || 1,
+          price: item.price,
+          name: item.name,
+          image: item.image,
+          model: item.type === 'restaurant' ? 'Restaurant' : 'Item'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to add item to cart');
+      }
+
+      // Update local cart state
+      const updatedCart = [...cart, item];
+      setCart(updatedCart);
+
+      return true;
+    } catch (error) {
+      console.error('Error in addToCart:', error);
+      throw error;
+    }
+  };
     
   
   return (
@@ -143,7 +153,9 @@ console.log(networkStatus)
         errorProfile,
         formetedProfileData,
         logout,
-       addToCart,
+        addToCart,
+        cart,
+        setCart,
         networkStatus,
         isPickup,
         setIsPickup,

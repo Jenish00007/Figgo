@@ -5,14 +5,17 @@ import {
   ScrollView, 
   TouchableOpacity, 
   TextInput,
-  Alert
+  Alert,
+  useColorScheme
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useUserContext } from './../../context/User';
 import OrderSummaryStyles from './OrderSummaryStyles';
-import PaymentMethod from '../../components/Payment/PaymentMethod' // Import the new PaymentMethod component
+import PaymentMethod from '../../components/Payment/PaymentMethod';
+import ThemeContext from '../../ui/ThemeContext/ThemeContext';
+import { theme } from '../../utils/themeColors';
 
 const OrderSummary = ({ route }) => {
   // Get cart data from navigation params
@@ -21,11 +24,9 @@ const OrderSummary = ({ route }) => {
   const { cart, clearCart, updateCart } = useUserContext();
   const navigation = useNavigation();
   
-  // Get the current color scheme (system preference)
-  const colorScheme = useColorScheme();
-  
-  // Use the Dark theme if system preference is dark, otherwise use Pink theme
-  const currentTheme = colorScheme === 'dark' ? theme.Dark : theme.Pink;
+  // Get theme from context
+  const themeContext = useContext(ThemeContext);
+  const currentTheme = theme[themeContext.ThemeValue];
   
   // Initialize with navigation params if available, otherwise use context
   const [cartItems, setCartItems] = useState(navigationCartItems || (cart?.items || []));

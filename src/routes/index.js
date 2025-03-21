@@ -108,7 +108,7 @@ function NoDrawer() {
       {<NavigationStack.Screen name='ItemDetail' component={ItemDetail} />}
       <NavigationStack.Screen name='Cart' component={Cart} />
       <NavigationStack.Screen name='Checkout' component={Checkout} />
-      <NavigationStack.Screen name='Profile' component={Profile} />
+      <NavigationStack.Screen name='Options' component={Profile} />
       <NavigationStack.Screen name='SearchPage' component={SearchPage} />
       <NavigationStack.Screen name='Addresses' component={Addresses} />
       <NavigationStack.Screen name='NewAddress' component={NewAddress} />
@@ -178,7 +178,7 @@ function NoDrawer() {
       <NavigationStack.Screen name='ChatWithRider' component={ChatScreen} />
       <NavigationStack.Screen name='Notification' component={Notification}/>
       <NavigationStack.Screen name='ProductDetail' component={ProductDetails}/>
-      <NavigationStack.Screen name='Options' component={Options}/>
+      <NavigationStack.Screen name='Profile' component={Options}/>
       <NavigationStack.Screen name='OrderSummary' component={OrderSummary}/>
       <NavigationStack.Screen name='OrderDetails' component={OrderDetail}/>
       <NavigationStack.Screen name='OrderConfirmation' component={OrderConfirmation}/>

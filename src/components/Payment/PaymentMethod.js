@@ -4,9 +4,9 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const PaymentMethod = ({ selectedMethod, onSelectMethod, theme }) => {
   const paymentOptions = [
-    { id: 'digital_payment', title: 'Digital Payment', icon: 'payment' },
+    // { id: 'digital_payment', title: 'Digital Payment', icon: 'payment' },
     { id: 'cash_on_delivery', title: 'Cash on Delivery', icon: 'attach-money' },
-    { id: 'wallet', title: 'Wallet', icon: 'account-balance-wallet' },
+    // { id: 'wallet', title: 'Wallet', icon: 'account-balance-wallet' },
   ];
 
   return (

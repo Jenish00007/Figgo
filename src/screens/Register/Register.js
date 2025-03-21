@@ -6,7 +6,8 @@ import {
   ScrollView,
   Platform,
   TextInput,
-  Text
+  Text,
+  Image
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import styles from './styles'
@@ -74,12 +75,10 @@ function Register(props) {
           <View style={styles(currentTheme).mainContainer}>
             <View style={styles().subContainer}>
               <View style={styles().logoContainer}>
-                {/* <Image
-                  source={require('../../../assets/login-icon.png')}
-                  style={styles().logoContainer}
-                /> */}
-
-                <SimpleLineIcons name='user' size={30} color={currentTheme.newIconColor} />
+                <Image
+                  source={require('../../assets/images/logo.png')}
+                  style={styles().logo}
+                />
               </View>
               <View>
                 <TextDefault

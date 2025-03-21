@@ -25,6 +25,7 @@ import { useNavigation } from '@react-navigation/native';
 import BottomTab from '../../components/BottomTab/BottomTab';
 import Search from '../../components/Main/Search/Search';
 import ThemeContext from '../../ui/ThemeContext/ThemeContext'
+import NewFiggoStore from '../../components/NewFiggoStore/NewFiggoStore';
 
 const SubCategory = ({ route }) => {
   const { category } = route.params;
@@ -314,32 +315,62 @@ const SubCategory = ({ route }) => {
               </View>
 
               {/* List Header */}
-              <View style={styles().listHeader}>
-                <Text
-                  style={[
-                    styles().itemHeaderText,
-                    contentType === 'products' ? styles().activeHeaderText : styles().inactiveHeaderText
-                  ]}
-                  onPress={() => handleContentTypeChange('products')}
-                >
-                  Items
-                </Text>
-                <Text
-                  style={[
-                    styles().storesHeaderText,
-                    contentType === 'stores' ? styles().activeStoresText : styles().inactiveHeaderText
-                  ]}
-                  onPress={() => handleContentTypeChange('stores')}
-                >
-                  Stores
-                </Text>
+              <View style={[styles().listHeader, { 
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '100%',
+                paddingHorizontal: 20,
+                marginTop: 10
+              }]}>
+                <View style={{ 
+                  flex: 1, 
+                  alignItems: 'center', 
+                  flexDirection: 'row', 
+                  justifyContent: 'center',
+                  paddingHorizontal: 20
+                }}>
+                  <Text
+                    style={[
+                      styles().itemHeaderText,
+                      { 
+                        marginRight: 60,
+                        minWidth: 50,
+                        textAlign: 'center'
+                      },
+                      contentType === 'products' ? styles().activeHeaderText : styles().inactiveHeaderText
+                    ]}
+                    onPress={() => handleContentTypeChange('products')}
+                  >
+                    Items
+                  </Text>
+                  <Text
+                    style={[
+                      styles().storesHeaderText,
+                      {
+                        minWidth: 50,
+                        textAlign: 'center'
+                      },
+                      contentType === 'stores' ? styles().activeStoresText : styles().inactiveHeaderText
+                    ]}
+                    onPress={() => handleContentTypeChange('stores')}
+                  >
+                    Stores
+                  </Text>
+                </View>
               </View>
 
               {/* Green Indicator */}
               <View
                 style={[
                   styles().indicator,
-                  contentType === 'stores' ? { marginLeft: 'auto', marginRight: 16 } : {}
+                  {
+                    width: 45,
+                    height: 2,
+                    alignSelf: 'center',
+                    marginTop: 5,
+                    transform: [{ translateX: contentType === 'stores' ? 55 : -55 }]
+                  }
                 ]}
               />
 
@@ -361,12 +392,16 @@ const SubCategory = ({ route }) => {
               {!loading && !error && (
                 contentType === 'products' ? (
                   <FlatList
+                    key={`products-grid`}
                     data={products}
-                    horizontal={true}
-                    showsHorizontalScrollIndicator={false}
+                    numColumns={2}
+                    showsVerticalScrollIndicator={false}
+                    columnWrapperStyle={{ justifyContent: 'space-between' }}
+                    contentContainerStyle={{ padding: 10 }}
                     renderItem={({ item }) => (
                       <Products
                         item={item}
+                        horizontal={false}
                       />
                     )}
                     keyExtractor={(item) => item.id.toString()}
@@ -378,13 +413,20 @@ const SubCategory = ({ route }) => {
                   />
                 ) : (
                   <FlatList
-                    horizontal={true}
-                    style={styles().storesList}
+                    key={`stores-list`}
+                    vertical={true}
+                    style={[styles().storesList, { 
+                      padding: 16,
+                      marginTop: 5
+                    }]}
                     showsVerticalScrollIndicator={false}
                     showsHorizontalScrollIndicator={false}
                     data={stores}
                     keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item }) => <NewRestaurantCard {...item} />}
+                    renderItem={({ item }) =>  <NewFiggoStore
+                    item={item}
+                    
+                  />}
                     ListEmptyComponent={
                       <View style={styles().emptyContainer}>
                         <Text style={styles().emptyText}>No stores found</Text>

@@ -6,8 +6,8 @@ const ThemeReducer = (state, action) => {
       AsyncStorage.setItem('theme', 'Pink')
       return 'Pink'
     case 'Dark':
-      AsyncStorage.setItem('theme', 'Dark')
-      return 'Dark'
+      AsyncStorage.setItem('theme', 'Pink')
+      return 'Pink'
     default:
       AsyncStorage.setItem('theme', 'Pink')
       return 'Pink'

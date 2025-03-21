@@ -12,6 +12,7 @@ import { calulateRemainingTime } from '../../utils/customFunctions';
 import Spinner from '../Spinner/Spinner';
 import EmptyView from '../EmptyView/EmptyView';
 import AuthContext from '../../context/Auth';
+import { StatusBar } from 'react-native';
 
 const ActiveOrders = ({ navigation }) => {
   const { t } = useTranslation();
@@ -23,6 +24,24 @@ const ActiveOrders = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeOrders, setActiveOrders] = useState([]);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerTitle: t('myOrders'),
+      headerTitleStyle: { 
+        color: currentTheme.newFontcolor,
+        fontSize: scale(18),
+        fontWeight: '600'
+      },
+      headerStyle: { 
+        backgroundColor: currentTheme.newheaderBG,
+        elevation: 0,
+        shadowOpacity: 0
+      },
+      headerTintColor: currentTheme.newFontcolor,
+      headerTitleAlign: 'center'
+    });
+  }, [navigation, currentTheme, t]);
 
   useEffect(() => {
     fetchActiveOrders();
@@ -38,14 +57,17 @@ const ActiveOrders = ({ navigation }) => {
   const fetchActiveOrders = async () => {
     try {
       setLoading(true);
+      const headers = {
+        'moduleId': '1',
+        'zoneId': '[1]',
+        'Authorization': token ? `Bearer ${token}` : ''
+      };
+
       const response = await fetch(
         'https://6ammart-admin.6amtech.com/api/v1/customer/order/running-orders?offset=1&limit=10',
         {
           method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+          headers: headers
         }
       );
       
@@ -61,82 +83,13 @@ const ActiveOrders = ({ navigation }) => {
         return;
       }
       
-      // Transform API response to match component requirements
-      const transformedOrders = data.orders.map(order => ({
-        id: order.id,
-        _id: order.id.toString(),
-        orderAmount: order.order_amount,
-        orderStatus: order.order_status.toUpperCase(),
-        created_at: order.created_at,
-        schedule_at: order.schedule_at,
-        restaurant: {
-          name: order.store?.name || 'Restaurant',
-          image: order.store?.logo || null
-        },
-        // Create placeholder items until we fetch details
-        items: [{
-          quantity: 1,
-          title: `Order #${order.id}`
-        }]
-      }));
-      
-      setActiveOrders(transformedOrders);
-      
-      // Fetch detailed information for each order
-      transformedOrders.forEach(order => {
-        fetchOrderDetails(order.id);
-      });
-      
+      setActiveOrders(data.orders);
       setError(null);
     } catch (err) {
-      setError(err);
+      setError(err.message || 'Failed to fetch active orders');
       console.error('Error fetching active orders:', err);
     } finally {
       setLoading(false);
-    }
-  };
-  
-  const fetchOrderDetails = async (orderId) => {
-    try {
-      const response = await fetch(
-        `https://6ammart-admin.6amtech.com/api/v1/customer/order/details/${orderId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      if (!response.ok) return;
-      
-      const data = await response.json();
-      
-      if (data.order) {
-        // Update the specific order with detailed information
-        setActiveOrders(prevOrders => {
-          return prevOrders.map(order => {
-            if (order.id === orderId) {
-              // Extract items from order details if available
-              const orderItems = data.order.details || data.order.items || [];
-              const items = orderItems.map(item => ({
-                quantity: item.quantity || 1,
-                title: item.food_name || item.item_name || item.name || 'Item',
-                variation: item.variation || null
-              }));
-              
-              return {
-                ...order,
-                items: items.length > 0 ? items : order.items
-              };
-            }
-            return order;
-          });
-        });
-      }
-    } catch (error) {
-      console.error(`Error fetching details for order ${orderId}:`, error);
     }
   };
 
@@ -147,29 +100,6 @@ const ActiveOrders = ({ navigation }) => {
         description={t('emptyActiveOrdersDesc')}
         buttonText={t('emptyActiveOrdersBtn')}
       />
-    );
-  };
-
-  const renderHeader = () => {
-    return (
-      <View style={styles.headerContainer}>
-        <TouchableOpacity style={styles.tabButton} onPress={() => {}}>
-          <TextDefault 
-            H4 
-            bold 
-            textColor={currentTheme.fontMainColor}>
-            {t('Current')}
-          </TextDefault>
-          <View style={[styles.activeTab, {backgroundColor: currentTheme.main}]} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabButton} onPress={() => {}}>
-          <TextDefault 
-            H4 
-            textColor={currentTheme.fontSecondColor}>
-            {t('Past')}
-          </TextDefault>
-        </TouchableOpacity>
-      </View>
     );
   };
 
@@ -193,16 +123,20 @@ const ActiveOrders = ({ navigation }) => {
       />
     );
   }
-  if (error) return <TextError text={error.message} />;
+  if (error) return <TextError text={error} />;
 
   return (
     <View style={[styles.container, {backgroundColor: currentTheme.themeBackground}]}>
-     
-     
+      <StatusBar
+        backgroundColor={currentTheme.newheaderBG}
+        barStyle="dark-content"
+        translucent={false}
+        animated={true}
+      />
       <FlatList
         data={activeOrders}
         renderItem={renderItem}
-        keyExtractor={(item) => item?.id?.toString() || item?._id || Math.random().toString()}
+        keyExtractor={(item) => item?.id?.toString()}
         ListEmptyComponent={emptyView}
         onRefresh={fetchActiveOrders}
         refreshing={loading}
@@ -214,40 +148,38 @@ const ActiveOrders = ({ navigation }) => {
 
 const OrderCard = ({ item, navigation, currentTheme, configuration }) => {
   const { t } = useTranslation();
-  const [orderData, setOrderData] = useState(item);
   
-  // Safety check - don't render if crucial data is missing
-  if (!orderData) {
-    return null;
-  }
+  if (!item) return null;
   
-  const remainingTime = calulateRemainingTime(orderData) || 15;
-  const orderId = orderData.id || orderData._id;
-  const date = new Date();
+  const remainingTime = calulateRemainingTime(item) || 15;
+  const orderId = item.id;
+  const date = new Date(item.created_at);
   const formattedDate = `${date.getDate()} ${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}, ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
+  
+  const orderStatus = item.order_status?.toUpperCase() || 'PENDING';
   
   return (
     <TouchableOpacity
       activeOpacity={0.7}
       style={[styles.cardContainer, {backgroundColor: currentTheme.white}]}
-      onPress={() => navigation.navigate('OrderDetail', { _id: orderId })}>
+      onPress={() => navigation.navigate('OrderDetail', { id: orderId })}>
       <View style={styles.cardHeader}>
-        {orderData.restaurant && orderData.restaurant.image ? (
+        {item.store?.logo_full_url ? (
           <Image
             style={styles.restaurantLogo}
-            source={require("./../../assets/icons/cross.png")}
-            resizeMode="contain"
+            source={{uri: item.store.logo_full_url}}
+            resizeMode="cover"
           />
         ) : (
           <View style={[styles.logoPlaceholder, {backgroundColor: currentTheme.secondaryBackground}]}>
             <TextDefault textColor={currentTheme.fontMainColor} center bold>
-              {orderData.restaurant?.name?.charAt(0) || 'R'}
+              {item.store?.name?.charAt(0) || 'R'}
             </TextDefault>
           </View>
         )}
         <View style={styles.orderInfoContainer}>
           <TextDefault textColor={currentTheme.fontMainColor} bold>
-            {`Order ID: #${orderId}`}
+            {`Order #${orderId}`}
           </TextDefault>
           <TextDefault small textColor={currentTheme.fontSecondColor}>
             {formattedDate}
@@ -255,17 +187,36 @@ const OrderCard = ({ item, navigation, currentTheme, configuration }) => {
         </View>
         <View style={[styles.statusBadge, {backgroundColor: currentTheme.secondaryBackground}]}>
           <TextDefault small textColor={currentTheme.statusColor || 'green'}>
-            {orderData.orderStatus}
+            {orderStatus}
           </TextDefault>
         </View>
       </View>
+
+      <View style={styles.orderDetails}>
+        <View style={styles.orderDetailRow}>
+          <TextDefault style={styles.orderDetailLabel}>
+            {t('Restaurant')}
+          </TextDefault>
+          <TextDefault style={styles.orderDetailValue}>
+            {item.store?.name || 'N/A'}
+          </TextDefault>
+        </View>
+        <View style={styles.orderDetailRow}>
+          <TextDefault style={styles.orderDetailLabel}>
+            {t('Amount')}
+          </TextDefault>
+          <TextDefault style={styles.orderDetailValue}>
+            ₹{item.order_amount?.toFixed(2) || '0.00'}
+          </TextDefault>
+        </View>
+      </View>
+
       <View style={styles.trackButtonContainer}>
         <TouchableOpacity 
           style={[styles.trackButton, {borderColor: currentTheme.statusColor || 'green'}]}
-          onPress={() => navigation.navigate('OrderTracking', { orderId })}>
-          
+          onPress={() => navigation.navigate('OrderDetail', { id: orderId })}>
           <TextDefault small textColor={currentTheme.statusColor || 'green'}>
-            {t('Track Order')}
+            {t('View Details')}
           </TextDefault>
         </TouchableOpacity>
       </View>
@@ -276,43 +227,6 @@ const OrderCard = ({ item, navigation, currentTheme, configuration }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: scale(15),
-    paddingVertical: scale(10),
-  },
-  backButton: {
-    padding: scale(5),
-  },
-  backIcon: {
-    width: scale(20),
-    height: scale(20),
-  },
-  placeholderView: {
-    width: scale(20),
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: scale(20),
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-  },
-  tabButton: {
-    paddingVertical: scale(15),
-    marginRight: scale(30),
-    alignItems: 'center',
-    position: 'relative',
-  },
-  activeTab: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: scale(3),
-    borderRadius: scale(3),
   },
   listContent: {
     padding: scale(15),
@@ -330,44 +244,64 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: scale(10),
   },
   restaurantLogo: {
-    width: scale(40),
-    height: scale(40),
-    borderRadius: scale(20),
+    width: scale(50),
+    height: scale(50),
+    borderRadius: scale(25),
+    backgroundColor: '#f0f0f0',
   },
   logoPlaceholder: {
-    width: scale(40),
-    height: scale(40),
-    borderRadius: scale(20),
+    width: scale(50),
+    height: scale(50),
+    borderRadius: scale(25),
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f0f0f0',
   },
   orderInfoContainer: {
     flex: 1,
-    marginLeft: scale(10),
+    marginLeft: scale(15),
   },
   statusBadge: {
-    paddingHorizontal: scale(10),
-    paddingVertical: scale(5),
-    borderRadius: scale(5),
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(6),
+    borderRadius: scale(20),
+    backgroundColor: '#f0f0f0',
   },
   trackButtonContainer: {
-    marginTop: scale(15),
+    marginTop: scale(10),
     alignItems: 'flex-end',
   },
   trackButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: scale(12),
-    paddingVertical: scale(6),
-    borderRadius: scale(5),
+    paddingHorizontal: scale(15),
+    paddingVertical: scale(8),
+    borderRadius: scale(20),
     borderWidth: 1,
   },
-  trackIcon: {
-    width: scale(16),
-    height: scale(16),
-    marginRight: scale(5),
+  orderDetails: {
+    marginTop: scale(10),
+    paddingTop: scale(10),
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  orderDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: scale(5),
+  },
+  orderDetailLabel: {
+    color: '#666',
+    fontSize: scale(12),
+  },
+  orderDetailValue: {
+    color: '#333',
+    fontSize: scale(12),
+    fontWeight: '500',
   },
 });
 

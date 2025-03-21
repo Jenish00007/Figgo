@@ -122,14 +122,7 @@ const handleSecondaryStoreNavigation = () => {
     }
   };
 
-  // Get the appropriate image URL based on item type
-  const getImageUrl = () => {
-    if (isStore) {
-      return item.cover_photo_full_url || item.logo_full_url;
-    } else {
-      return item.image_full_url || item.thumbnail_full_url;
-    }
-  };
+ 
 
   return (
     <TouchableOpacity
@@ -141,7 +134,7 @@ const handleSecondaryStoreNavigation = () => {
           <View style={styles().imageContainer}>
             <Image
               resizeMode="cover"
-              source={{ uri: getImageUrl() }}
+              source={{ uri:item.cover_photo_full_url }}
               style={styles().img}
             />
             <View style={styles().overlayRestaurantContainer}>
@@ -256,7 +249,7 @@ const handleSecondaryStoreNavigation = () => {
                     numberOfLines={1}
                     bold
                     Normal>
-                    {item.price ? configuration.currencySymbol + ' ' + item.price : ''}
+                    {item?.price ? `${configuration.currencySymbol} ${item.price}` : ''}
                   </TextDefault>
                 </View>
               )}

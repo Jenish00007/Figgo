@@ -138,7 +138,7 @@ function Login(props) {
                       </TextDefault>
                     </View>
                   )}
-                  <TouchableOpacity
+                  {/* <TouchableOpacity
                     style={alignment.MBsmall}
                     activeOpacity={0.7}
                     onPress={() =>
@@ -150,7 +150,7 @@ function Login(props) {
                       bolder>
                       {t('forgotPassword')}
                     </TextDefault>
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
                 <View style={[styles.termsContainer, { alignItems: 'center', justifyContent: 'center' }]}>
                   <TextDefault textColor="black" style={{ textAlign: 'center' }}>
@@ -201,23 +201,23 @@ function Login(props) {
                 {/* Or Divider */}
                 <View style={[styles.orContainer, { alignItems: 'center', justifyContent: 'center' }]}>
                   <TextDefault textColor="black" style={{ textAlign: 'center' }}>
-                    Or
+                    
                   </TextDefault>
                 </View>
 
                 {/* Social Login Divider */}
-                <View style={[styles.dividerContainer, { alignItems: 'center', justifyContent: 'center' }]}>
+                {/* <View style={[styles.dividerContainer, { alignItems: 'center', justifyContent: 'center' }]}>
                   <View style={styles.divider} />
                   <TextDefault textColor="black" style={[styles.dividerText, { textAlign: 'center' }]}>
                     or Continue with
                   </TextDefault>
                   <View style={styles.divider} />
-                </View>
+                </View> */}
 
                 {/* Social Button */}
-                <View style={[styles.socialContainer, { alignItems: 'center', justifyContent: 'center' }]}>
+                {/* <View style={[styles.socialContainer, { alignItems: 'center', justifyContent: 'center' }]}>
                   <TouchableOpacity style={styles.socialButton}>
-                    {/* Replace with actual Google icon */}
+                
                     <View style={styles.googleIconPlaceholder}>
                       <View style={styles().logoContainer}>
                         <Image
@@ -227,7 +227,7 @@ function Login(props) {
                       </View>
                     </View>
                   </TouchableOpacity>
-                </View>
+                </View> */}
 
 
               </View>
