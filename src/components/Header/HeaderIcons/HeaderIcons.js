@@ -286,7 +286,6 @@ function DarkBackButton(props) {
       style={{
         backgroundColor: props.themeBackground,
         borderRadius: 5,
-    
       }}
     >
       <Ionicons
@@ -299,4 +298,15 @@ function DarkBackButton(props) {
   )
 }
 
-export { BackButton, LeftButton, RightButton, DarkBackButton }
+function HelpButton({ iconBackground, navigation, t }) {
+  return (
+    <TouchableOpacity
+      onPress={() => navigation.navigate('Help')}
+      style={[styles().rightContainer, { backgroundColor: iconBackground }]}
+    >
+      <MaterialIcons name="help-outline" size={24} color="white" />
+    </TouchableOpacity>
+  )
+}
+
+export { BackButton, LeftButton, RightButton, DarkBackButton, HelpButton }

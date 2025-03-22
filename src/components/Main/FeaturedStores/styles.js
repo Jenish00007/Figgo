@@ -121,7 +121,23 @@ const styles = (props = null) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: scale(4)
-    }
+    },
+    cartButton: {
+      position: 'absolute',
+      bottom: 10,
+      right: 10,
+      backgroundColor: 'white',
+      borderRadius: 20,
+      padding: 8,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
   })
 
 export default styles

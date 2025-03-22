@@ -10,32 +10,26 @@ import {
   StatusBar,
   Modal,
   FlatList,
-  useColorScheme
+  usecurrentTheme,
+  StyleSheet
 } from 'react-native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import UserContext from '../../context/User';
 import { theme } from '../../utils/themeColors'; // Import the theme object
 import OptionsStyles from './OptionsStyles';
+import ThemeContext from '../../ui/ThemeContext/ThemeContext';
 
 export default function SettingsScreen() {
   const navigation = useNavigation();
-  const { formetedProfileData } = useContext(UserContext);
+  const { formetedProfileData, logout } = useContext(UserContext);
+  const themeContext = useContext(ThemeContext)
+  const currentTheme = theme[themeContext.ThemeValue]
   
-  // Get the current color scheme (system preference)
-  const colorScheme = useColorScheme();
-  
-  // Use the Dark theme if system preference is dark, otherwise use Pink theme
-  const currentTheme = colorScheme === 'dark' ? theme.Dark : theme.Pink;
-  
+
   // Get styles with theme colors
   const styles = OptionsStyles(currentTheme);
   
-  const [form, setForm] = useState({
-    darkMode: colorScheme === 'dark', // Initialize based on system setting
-    emailNotifications: true,
-    pushNotifications: false,
-  });
 
   const fullName = formetedProfileData ? 
     `${formetedProfileData.f_name || ''} ${formetedProfileData.l_name || ''}`.trim() : 
@@ -63,37 +57,54 @@ export default function SettingsScreen() {
     // and potentially update your app's localization context
   }, []);
 
+  // Handle logout
+  const handleLogout = async () => {
+    const success = await logout();
+    if (success) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    }
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar 
-        backgroundColor={currentTheme.themeBackground} 
-        barStyle={colorScheme === 'dark' ? "light-content" : "dark-content"} 
-      />
+    <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.themeBackground }]}>
       
-      {/* Profile Section */}
-      <View style={[styles.profile, { backgroundColor: currentTheme.itemCardColor }]}>
-        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
-          <View style={styles.profileAvatarWrapper}>
-            <Image
-              alt="Profile"
-              source={{
-                uri: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-              }}
-              style={[styles.profileAvatar, { borderColor: currentTheme.primary }]} />
+        <StatusBar 
+          backgroundColor={theme.Figgo.yellow} 
+          barStyle="dark-content"
+        />
+        
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContent}
+      >
+        {/* Profile Section */}
+        <View style={[styles.profile, { backgroundColor: currentTheme.itemCardColor }]}>
+          <TouchableOpacity 
+            style={styles.profileCenter}
+            onPress={() => navigation.navigate("Profile")}>
+            <View style={styles.profileAvatarWrapper}>
+              <Image
+                alt="Profile"
+                source={{
+                  uri: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+                }}
+                style={[styles.profileAvatar, { borderColor: currentTheme.primary }]} />
 
-            <View style={[styles.profileAction, { backgroundColor: currentTheme.primary, borderColor: currentTheme.itemCardColor }]}>
-              <FeatherIcon color="#fff" name="edit-3" size={15} />
+              <View style={[styles.profileAction, { backgroundColor: currentTheme.primary, borderColor: currentTheme.itemCardColor }]}>
+                <FeatherIcon color="#fff" name="edit-3" size={15} />
+              </View>
             </View>
+          </TouchableOpacity>
+
+          <View style={styles.profileInfo}>
+            <Text style={[styles.profileName, { color: currentTheme.fontMainColor }]}>{fullName}</Text>
+            <Text style={[styles.profileRole, { color: currentTheme.fontSecondColor }]}>Customer</Text>
           </View>
-        </TouchableOpacity>
-
-        <View style={styles.profileInfo}>
-          <Text style={[styles.profileName, { color: currentTheme.fontMainColor }]}>{fullName}</Text>
-          <Text style={[styles.profileRole, { color: currentTheme.fontSecondColor }]}>Customer</Text>
         </View>
-      </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
         {/* General Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: currentTheme.fontSecondColor }]}>General</Text>
@@ -168,7 +179,7 @@ export default function SettingsScreen() {
               size={20} />
           </TouchableOpacity>
 
-          <View style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
+          {/* <View style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="moon" size={20} />
             </View>
@@ -182,9 +193,9 @@ export default function SettingsScreen() {
               thumbColor={"#fff"}
               onValueChange={darkMode => setForm({ ...form, darkMode })}
               value={form.darkMode} />
-          </View>
+          </View> */}
 
-          <View style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
+          {/* <View style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="at-sign" size={20} />
             </View>
@@ -200,9 +211,9 @@ export default function SettingsScreen() {
                 setForm({ ...form, emailNotifications })
               }
               value={form.emailNotifications} />
-          </View>
+          </View> */}
 
-          <View style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
+          {/* <View style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="bell" size={20} />
             </View>
@@ -218,132 +229,106 @@ export default function SettingsScreen() {
                 setForm({ ...form, pushNotifications })
               }
               value={form.pushNotifications} />
-          </View>
+          </View> */}
         </View>
 
         
-        {/* Help & Support Section */}
+        {/* Help & Support Section with updated content */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: currentTheme.fontSecondColor }]}>Help & Support</Text>
 
           <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
-              <FeatherIcon color="#fff" name="message-circle" size={20} />
-            </View>
-
-            <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Live Chat</Text>
-
-            <View style={styles.rowSpacer} />
-
-            <FeatherIcon
-              color={currentTheme.fontSecondColor}
-              name="chevron-right"
-              size={20} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
-            <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="help-circle" size={20} />
             </View>
-
-            <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Help & Support</Text>
-
-            <View style={styles.rowSpacer} />
-
-            <FeatherIcon
-              color={currentTheme.fontSecondColor}
-              name="chevron-right"
-              size={20} />
+            <View style={styles.detailContainer}>
+              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Help & Support</Text>
+              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
+                Get help with your orders and questions
+              </Text>
+            </View>
+            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="info" size={20} />
             </View>
-
-            <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>About Us</Text>
-
-            <View style={styles.rowSpacer} />
-
-            <FeatherIcon
-              color={currentTheme.fontSecondColor}
-              name="chevron-right"
-              size={20} />
+            <View style={styles.detailContainer}>
+              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>About Us</Text>
+              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
+                Learn about our mission and values
+              </Text>
+            </View>
+            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
           </TouchableOpacity>
 
+          {/* Terms & Conditions with content */}
           <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="file-text" size={20} />
             </View>
-
-            <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Terms & Conditions</Text>
-
-            <View style={styles.rowSpacer} />
-
-            <FeatherIcon
-              color={currentTheme.fontSecondColor}
-              name="chevron-right"
-              size={20} />
+            <View style={styles.detailContainer}>
+              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Terms & Conditions</Text>
+              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
+                View our terms of service
+              </Text>
+            </View>
+            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
           </TouchableOpacity>
 
+          {/* Privacy Policy with content */}
           <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="shield" size={20} />
             </View>
-
-            <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Privacy Policy</Text>
-
-            <View style={styles.rowSpacer} />
-
-            <FeatherIcon
-              color={currentTheme.fontSecondColor}
-              name="chevron-right"
-              size={20} />
+            <View style={styles.detailContainer}>
+              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Privacy Policy</Text>
+              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
+                Learn how we protect your data
+              </Text>
+            </View>
+            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
           </TouchableOpacity>
 
+          {/* Other policies with content */}
           <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="refresh-cw" size={20} />
             </View>
-
-            <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Refund Policy</Text>
-
-            <View style={styles.rowSpacer} />
-
-            <FeatherIcon
-              color={currentTheme.fontSecondColor}
-              name="chevron-right"
-              size={20} />
+            <View style={styles.detailContainer}>
+              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Refund Policy</Text>
+              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
+                View our refund policy
+              </Text>
+            </View>
+            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="x-circle" size={20} />
             </View>
-
-            <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Cancellation Policy</Text>
-
-            <View style={styles.rowSpacer} />
-
-            <FeatherIcon
-              color={currentTheme.fontSecondColor}
-              name="chevron-right"
-              size={20} />
+            <View style={styles.detailContainer}>
+              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Cancellation Policy</Text>
+              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
+                View our cancellation policy
+              </Text>
+            </View>
+            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="truck" size={20} />
             </View>
-
-            <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Shipping Policy</Text>
-
-            <View style={styles.rowSpacer} />
-
-            <FeatherIcon
-              color={currentTheme.fontSecondColor}
-              name="chevron-right"
-              size={20} />
+            <View style={styles.detailContainer}>
+              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Shipping Policy</Text>
+              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
+                View our shipping policy
+              </Text>
+            </View>
+            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
           </TouchableOpacity>
         </View>
         
@@ -352,8 +337,9 @@ export default function SettingsScreen() {
           style={[
             styles.accountActionButton, 
             styles.logoutButton,
-            { backgroundColor: colorScheme === 'dark' ? 'rgba(255, 59, 48, 0.2)' : 'rgba(255, 59, 48, 0.1)' }
+            { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 59, 48, 0.2)' : 'rgba(255, 59, 48, 0.1)' }
           ]} 
+          onPress={handleLogout}
         >
           <FeatherIcon name="log-out" size={20} color="#FF3B30" />
           <Text style={styles.logoutButtonText}>Logout</Text>
@@ -364,7 +350,7 @@ export default function SettingsScreen() {
           style={[
             styles.accountActionButton, 
             styles.deleteAccountButton,
-            { backgroundColor: colorScheme === 'dark' ? 'rgba(255, 59, 48, 0.15)' : 'rgba(255, 59, 48, 0.05)' }
+            { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 59, 48, 0.15)' : 'rgba(255, 59, 48, 0.05)' }
           ]} 
           onPress={() => setDeleteModalVisible(true)}
         >
@@ -419,3 +405,31 @@ export default function SettingsScreen() {
     </SafeAreaView>
   );
 }
+
+// Update styles to improve spacing and alignment
+const styles = StyleSheet.create({
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingBottom: 30,
+  },
+  
+  detailContainer: {
+    flex: 1,
+    marginRight: 8,
+  },
+  
+  rowValue: {
+    fontSize: 12,
+    marginTop: 2,
+    opacity: 0.8,
+  },
+  
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 8,
+  },
+});

@@ -64,7 +64,7 @@ const AddToFavourites = ({ product, restaurantId }) => {
             const endpoint = isFavourite
                 ? `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/remove?${idKey}=${idValue}`
                 : `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/add?${idKey}=${idValue}`;
-            const method = isFavourite ? 'DELETE' : 'POST';
+            
             const headers = {
                 'moduleId': '1',
                 'zoneId': '[1]',
@@ -75,23 +75,21 @@ const AddToFavourites = ({ product, restaurantId }) => {
             };
 
             const response = await fetch(endpoint, {
-                method: method,
+                method: isFavourite ? 'DELETE' : 'POST',
                 headers: headers,
             });
-            const text = await response.text();
-            console.log("Api response:", text, "With", idKey, ":", idValue );
-            const result = JSON.parse(text);
-            console.log("Endpoint  ",endpoint)
 
-            if (response.ok) {
-                setIsFavourite(!isFavourite);
-                Alert.alert(
-                    isFavourite ? "Removed" : "Success",
-                    isFavourite ? "Removed from Favourites." : "Added to Favourites."
-                );
-            } else {
-                Alert.alert("Error", result.message || "Something went wrong.");
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
             }
+
+            const result = await response.json();
+
+            setIsFavourite(!isFavourite);
+            Alert.alert(
+                isFavourite ? "Removed" : "Success",
+                isFavourite ? "Removed from Favourites." : "Added to Favourites."
+            );
         } catch (error) {
             console.error("Error toggling favourites:", error);
             Alert.alert("Error", "Failed to update Favourites.");

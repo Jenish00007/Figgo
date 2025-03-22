@@ -46,6 +46,7 @@ const CategoryListView = ({ data }) => {
       }),
     ]).start();
   }, [index]);
+  const formattedDistance = item?.distance ? `${Math.round(item?.distance / 1000) || '100+'} km` : 'N/A';
 
   return (
     <Animated.View
@@ -74,24 +75,26 @@ const CategoryListView = ({ data }) => {
                 {item?.name}
               </Text>
               <Text style={styles.textStyle}>{item?.rating}</Text>
-              <AddToFavourites restaurantId={item}/>
+              <AddToFavourites restaurantId={item?.id}/>
 
             </View>
-            <View style={{ flexDirection: 'row', paddingRight: 16 }}>
-              <View style={styles.addIconView}>
-                <Icon name="place" size={20} color="white" />
+            <View style={{ flexDirection: 'row', paddingRight: 16, alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={styles.locationContainer}>
+                <View style={styles.addIconView}>
+                  <Icon name="place" size={20} color="white" />
+                </View>
+                <Text style={[styles.textStyle, styles.moneyText]}>
+                  {formattedDistance}
+                </Text>
               </View>
-              <Text style={[styles.textStyle, styles.moneyText]}>
-                10 Km
-              </Text>
               {!item.active && (
-                <View style={styles.closedBadge}>
-                  <Text style={styles.closedText}>Closed</Text>
+                <View style={styles.statusBadge}>
+                  <Text style={styles.statusText}>Closed</Text>
                 </View>
               )}
               {item?.active && (
-                <View style={styles.closedBadge}>
-                  <Text style={styles.closedText}>Open</Text>
+                <View style={[styles.statusBadge, styles.openBadge]}>
+                  <Text style={[styles.statusText, styles.openText]}>Open</Text>
                 </View>
               )}
             </View>
@@ -143,14 +146,38 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   moneyText: {
-    flex: 1,
     fontFamily: 'WorkSans-SemiBold',
-    color: '#FFD700',
+    color: '#666666',
+    fontSize: 14,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  statusBadge: {
+    backgroundColor: '#E0E0E0',
+    borderRadius: 20,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    marginLeft: 8,
+  },
+  statusText: {
+    color: '#666666',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  openBadge: {
+    backgroundColor: '#E6F2EA',
+  },
+  openText: {
+    color: '#28A745',
   },
   addIconView: {
     padding: 4,
     backgroundColor: '#FFD700',
     borderRadius: 8,
+    marginRight: 4,
   },
 });
 

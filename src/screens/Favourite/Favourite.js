@@ -6,7 +6,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   Text,
-  Dimensions
+  Dimensions,
+  Alert
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -25,6 +26,7 @@ import AuthContext from '../../context/Auth'
 // Utils
 import { theme } from '../../utils/themeColors'
 import { useTranslation } from 'react-i18next'
+import NewFiggoStore from '../../components/NewFiggoStore/NewFiggoStore'
 
 const { width } = Dimensions.get('window')
 
@@ -54,6 +56,7 @@ function Favourite() {
       const queryString = moduleIds.map(id => `moduleId=${id}`).join('&')
       
       const headers = {
+        'Content-Type': 'application/json',
         'zoneId': '[1]',
         'latitude': location.latitude?.toString() || '23.79354466376145',
         'longitude': location.longitude?.toString() || '90.41166342794895',
@@ -69,10 +72,16 @@ function Favourite() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to fetch favourite data')
+        const errorText = await response.text();
+        console.log('Error response:', errorText);
+        throw new Error(`Failed to fetch favourite data: ${response.status}`);
       }
 
       const result = await response.json()
+      if (!result) {
+        throw new Error('Empty response received');
+      }
+      
       setFavoriteData(result)
       setError(null)
     } catch (err) {
@@ -84,9 +93,46 @@ function Favourite() {
     }
   }, [location, token])
 
-  const handleRemoveFromWishlist = () => {
-    // Refresh data after removing from wishlist
-    fetchFavouriteData()
+  // Add this new function to handle adding/removing favorites
+  const handleToggleFavorite = async (storeId, isFavorite) => {
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+      }
+
+      const endpoint = `https://6ammart-admin.6amtech.com/api/v1/customer/wish-list/${isFavorite ? 'remove' : 'add'}`
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          store_id: storeId,
+          module_id: 1  // Assuming 1 is for stores
+        })
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('Toggle favorite error response:', errorText);
+        throw new Error(`Failed to ${isFavorite ? 'remove from' : 'add to'} favorites`);
+      }
+
+      // Refresh the favorites list
+      await fetchFavouriteData()
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
+      // You might want to add some user feedback here
+      Alert.alert(
+        'Error',
+        'Failed to update favorite status. Please try again.'
+      )
+    }
+  }
+
+  // Update the handleRemoveFromWishlist function
+  const handleRemoveFromWishlist = async (storeId) => {
+    await handleToggleFavorite(storeId, true)
   }
 
   const handleRefresh = () => {
@@ -157,23 +203,27 @@ function Favourite() {
               onRefresh={handleRefresh}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
-                <View style={styles.storeCardContainer}>
-                  <NewRestaurantCard 
-                    {...item}
-                    onRemoveFromWishlist={handleRemoveFromWishlist}
+               
+               
+                  <NewFiggoStore
+                    item={item}
+                    onRemoveFromWishlist={() => handleRemoveFromWishlist(item.id)}
+                    onToggleFavorite={(isFavorite) => handleToggleFavorite(item.id, isFavorite)}
                     isFavorite={true}
                     theme={currentTheme}
                   />
-                </View>
+          
               )}
               contentContainerStyle={styles.listContainer}
             />
           ) : (
-            <EmptyView
-              title={'noFavoriteStores'}
-              description={'emptyFavStoresDesc'}
-              buttonText={'emptyFavBtn'}
-            />
+            <View style={styles.emptyContainer}>
+              <EmptyView
+                title={'noFavoriteStores'}
+                description={'emptyFavStoresDesc'}
+                buttonText={'emptyFavBtn'}
+              />
+            </View>
           )
         )}
         
@@ -197,11 +247,13 @@ function Favourite() {
               contentContainerStyle={styles.listContainer}
             />
           ) : (
-            <EmptyView
-              title={'noFavoriteItems'}
-              description={'emptyFavItemsDesc'}
-              buttonText={'emptyFavBtn'}
-            />
+            <View style={styles.emptyContainer}>
+              <EmptyView
+                title={'noFavoriteItems'}
+                description={'emptyFavItemsDesc'}
+                buttonText={'emptyFavBtn'}
+              />
+            </View>
           )
         )}
       </View>
@@ -216,6 +268,7 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     width: '100%',
     borderBottomWidth: 1,
     borderBottomColor: '#E8E8E8'
@@ -223,30 +276,42 @@ const styles = StyleSheet.create({
   tabButton: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 15,
     borderBottomWidth: 3
   },
   tabButtonText: {
     fontSize: 18,
     fontWeight: '600',
+    textAlign: 'center'
   },
   listContainer: {
     paddingHorizontal: 16,
-    paddingVertical: 8
+    paddingVertical: 8,
+    width: '100%',
+    flexGrow: 1
   },
   storeCardContainer: {
     marginBottom: 16,
     width: '100%',
-    height: 'auto', // Changed from fixed height to auto
-    minHeight: 150, // Adding minimum height instead
-    backgroundColor: 'transparent', // Changed from black to transparent
+    backgroundColor: '#fff',
     borderRadius: 10,
     overflow: 'hidden',
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4
+    shadowRadius: 4,
+    alignSelf: 'center',
+    flex: 1,
+    padding: 12
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 16
   }
 });
 

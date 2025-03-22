@@ -3,34 +3,66 @@ import React from 'react';
 import { View, Image, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-// Assuming styles are defined here
-export const ProductCard = () => (
-  <View style={styles.container}>
-    <View style={styles.header}>
-      {/* Offer label on the left */}
-      <View style={styles.discountBadge}>
-        <Text style={styles.discountText}>9.0% OFF</Text>
+export const ProductCard = ({ 
+  item,
+  discount,
+  onAddToCart,
+  imageUrl,
+  title,
+  originalPrice,
+  price,
+  unit
+}) => {
+  // Handle unit display
+  const getUnitDisplay = () => {
+    if (!unit) return '';
+    if (typeof unit === 'string') return unit;
+    if (typeof unit === 'object' && unit.translations) {
+      // Get the first translation or fallback to empty string
+      const firstTranslation = Object.values(unit.translations)[0];
+      return firstTranslation?.name || '';
+    }
+    return '';
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        {/* Offer label on the left */}
+        {discount > 0 && (
+          <View style={styles.discountBadge}>
+            <Text style={styles.discountText}>{discount}% OFF</Text>
+          </View>
+        )}
+
+        {/* Heart icon on the right */}
+        <TouchableOpacity>
+          <Icon name="heart" size={24} color="#FF6347" style={styles.heartIcon} />
+        </TouchableOpacity>
+      </View>
+      <Image 
+        source={{ uri: imageUrl }} 
+        style={styles.productImage} 
+      />
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.unit}>{getUnitDisplay()}</Text>
+      <View style={styles.priceContainer}>
+        {discount > 0 && (
+          <Text style={styles.originalPrice}>₹ {originalPrice}</Text>
+        )}
+        <Text style={styles.price}>₹ {price}</Text>
       </View>
 
-      {/* Heart icon on the right */}
-      <TouchableOpacity>
-        <Image source={require('../../assets/icons/fullHeart.png')} style={styles.heartIcon} />
+      {/* Add Icon at the bottom-right */}
+      <TouchableOpacity 
+        style={styles.addIconContainer}
+        onPress={onAddToCart}
+      >
+        <Icon name="plus" size={20} color="#fff" style={styles.addIcon} />
       </TouchableOpacity>
     </View>
-    <Image source={require('../../assets/images/ItemsList/2.png')} style={styles.productImage} />
-    <Text style={styles.title}>Barilla Orzo Pasta</Text>
-    <Text style={styles.unit}>(Pack)</Text>
-    <View style={styles.priceContainer}>
-      <Text style={styles.originalPrice}>$ 46.00</Text>
-      <Text style={styles.price}>$ 43.70</Text>
-    </View>
-
-    {/* Add Icon at the bottom-right */}
-    <TouchableOpacity style={styles.addIconContainer}>
-      <Icon name="plus" size={20} color="#fff" style={styles.addIcon} />
-    </TouchableOpacity>
-  </View>
-);
+  );
+};
 
 // Define the styles here
 const styles = StyleSheet.create({
@@ -43,14 +75,14 @@ const styles = StyleSheet.create({
     elevation: 3,
     padding: 12,
     marginVertical: 8,
-    marginHorizontal: 16,
-    width: 180,
-    height: 280, // Ensure container has enough space for the bottom icon
-    position: 'relative', // Needed for absolute positioning of the add icon
+    marginHorizontal: 8,
+    width: '100%',
+    height: 280,
+    position: 'relative',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between', // Ensure both elements are spaced apart
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   discountBadge: {
@@ -61,6 +93,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
+    zIndex: 1,
   },
   discountText: {
     color: '#fff',
@@ -68,12 +101,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   heartIcon: {
-    width: 24,
-    height: 24,
-    tintColor: '#FF6347', // Heart icon color
     position: 'absolute',
     top: 10,
-    right: 10, // Position the heart icon to the right
+    right: 10,
+    zIndex: 1,
   },
   productImage: {
     width: '100%',
@@ -107,16 +138,14 @@ const styles = StyleSheet.create({
     color: '#008800',
     fontWeight: 'bold',
   },
-
-  // Style for Add Icon at bottom-right
   addIconContainer: {
     position: 'absolute',
     bottom: 10,
     right: 10,
-    backgroundColor: '#FF6347', // Add icon background color
+    backgroundColor: '#FF6347',
     borderRadius: 20,
     padding: 8,
-    elevation: 3, // Adding some shadow for better visibility on white background
+    elevation: 3,
   },
   addIcon: {
     alignSelf: 'center',

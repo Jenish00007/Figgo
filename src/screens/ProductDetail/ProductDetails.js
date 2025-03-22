@@ -259,8 +259,14 @@ const ProductDetail = (profile) => {
             {/* Fixed bottom action buttons */}
             <View style={[styles.bottomActions, { backgroundColor: currentTheme.itemCardColor }]}>
                 <TouchableOpacity 
-                    style={[styles.cartButton, { backgroundColor: currentTheme.buttonBackgroundPink}]} 
-                    onPress={() => navigation.navigate('Cart')}
+                    style={[styles.cartButton, { backgroundColor: currentTheme.primary }]} 
+                    onPress={() => {
+                        if (!isLoggedIn) {
+                            navigation.navigate('Login');
+                            return;
+                        }
+                        navigation.navigate('Cart');
+                    }}
                 >
                     <MaterialIcons name="shopping-cart" size={20} color="#fff" />
                     <Text style={styles.buttonText}>View Cart</Text>

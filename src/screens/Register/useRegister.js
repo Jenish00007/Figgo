@@ -89,23 +89,24 @@ const useRegister = () => {
 
   const registerAction = async () => {
     if (validateCredentials()) {
-      const requestData = {
-        f_name: firstname,
-        l_name: lastname,
-        phone: phone,
-        email: email.toLowerCase().trim(),
-        password: password,
-        ref_code: '', // Empty for now, you can modify this
-        cm_firebase_token: 'yourFirebaseToken', // Replace with actual token
-        guest_id: 'guest123', // Replace with actual guest ID if needed
-        name: firstname + ' ' + lastname
-      }
-
       try {
+        const requestData = {
+          f_name: firstname,
+          l_name: lastname,
+          phone: `+${country.callingCode[0]}${phone}`,
+          email: email.toLowerCase().trim(),
+          password: password,
+          ref_code: '',
+          cm_firebase_token: '',
+          guest_id: '',
+          name: `${firstname} ${lastname}`
+        }
+
         const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/auth/sign-up', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'X-localization': 'en',
           },
           body: JSON.stringify(requestData),
         })
@@ -113,14 +114,15 @@ const useRegister = () => {
         const data = await response.json()
 
         if (response.ok) {
-          // Handle success
-          navigation.navigate('Login', {
-            user: requestData,
+          FlashMessage({
+            message: t('registrationSuccess'),
+          })
+          navigation.replace('Login', {
+            email: email.toLowerCase().trim()
           })
         } else {
-          // Handle error response
           FlashMessage({
-            message: data?.message || t('phoneCheckingError'),
+            message: data?.errors?.[0]?.message || data?.message || t('registrationFailed'),
           })
         }
       } catch (error) {

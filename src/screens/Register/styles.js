@@ -41,9 +41,14 @@ const styles = (props = null) =>
       width: '48%'
     },
     logoContainer: {
-      // width: 120,
-      // height: 130,
-      //alignSelf: 'center'
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginVertical: 20
+    },
+    logo: {
+      width: 150,
+      height: 150,
+      resizeMode: 'contain'
     },
     form: {
       width: '100%'

@@ -7,11 +7,11 @@ import {
   FlatList, 
   ActivityIndicator, 
   Alert, 
-  TouchableOpacity,
-  useColorScheme
+  TouchableOpacity
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AuthContext from '../../context/Auth';
+import ThemeContext from '../../ui/ThemeContext/ThemeContext';
 import { theme } from '../../utils/themeColors'; // Import the theme object
 
 const CartPage = () => {
@@ -21,11 +21,12 @@ const CartPage = () => {
   const navigation = useNavigation();
   const { token } = useContext(AuthContext);
   
-  // Get the current color scheme (system preference)
-  const colorScheme = useColorScheme();
-  
+  // Get the current color scheme (system preferenFce)
+
+ const themeContext = useContext(ThemeContext)
+ const currentTheme = theme[themeContext.ThemeValue]
   // Use the Dark theme if system preference is dark, otherwise use Pink theme
-  const currentTheme = colorScheme === 'dark' ? theme.Dark : theme.Pink;
+ // const currentTheme = colorScheme === 'dark' ? theme.Dark : theme.Pink;
 
   useEffect(() => {
     fetchCartItems();
@@ -122,7 +123,7 @@ const CartPage = () => {
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
           style={[styles.addButton, { 
-            backgroundColor: currentTheme.buttonBackgroundPink,
+            backgroundColor: currentTheme.buttonBackground,
             shadowColor: currentTheme.shadowColor
           }]} 
           onPress={() => navigation.goBack()}
@@ -137,10 +138,23 @@ const CartPage = () => {
             backgroundColor: currentTheme.buttonBackground,
             shadowColor: currentTheme.shadowColor
           }]} 
-          onPress={() => navigation.navigate('OrderSummary', { cartItems })}
+          onPress={() => {
+            try {
+              if (!cartItems || cartItems.length === 0) {
+                Alert.alert('Error', 'Your cart is empty');
+                return;
+              }
+              navigation.navigate('OrderSummary', { 
+                cartItems: Array.isArray(cartItems) ? cartItems : []
+              });
+            } catch (error) {
+              console.error('Navigation error:', error);
+              Alert.alert('Error', 'Unable to proceed to order summary');
+            }
+          }}
         >
           <Text style={[styles.buttonText, { 
-            color: currentTheme.buttonText
+            color: currentTheme.buttonTextPink
           }]}>Confirm Order</Text>
         </TouchableOpacity>
       </View>

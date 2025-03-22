@@ -10,10 +10,12 @@ const OfferCard = ({item}) => {
         name,
         active,
         address,
-        distance,
+        distance,   
         logo_full_url
     } = item;
 
+    // Format distance to match the standardized format
+    const formattedDistance = item?.distance ? `${Math.round(item.distance / 1000) || '100+'} km` : 'N/A';
 
     return (
         <View style={supermarketStyles.container}>
@@ -27,7 +29,7 @@ const OfferCard = ({item}) => {
                         <Text style={supermarketStyles.title}>{name}</Text>
                     </View>
                     
-                    <AddToFavourites restaurantId={item}/>
+                    <AddToFavourites restaurantId={item?.id}/>
                 </View>
 
                 <View style={supermarketStyles.addressContainer}>
@@ -44,7 +46,7 @@ const OfferCard = ({item}) => {
                             source={require('../../assets/images/other.png')}
                             style={supermarketStyles.distanceIcon}
                         />
-                        <Text style={supermarketStyles.distance}>{distance}</Text>
+                        <Text style={supermarketStyles.distance}>{formattedDistance}</Text>
                     </View>
                     {!active && (
                         <View style={supermarketStyles.closedBadge}>

@@ -72,6 +72,8 @@ import NearByStore from '../../components/NearByStore/NearByStore'
 import Products from '../../components/Products/Products'
 import CategoryListView from '../../components/NearByShop/CategoryListView'
 import { MainRestaurantCard } from '../../components/Main/MainRestaurantCard'
+import NewFiggoStore from '../../components/NewFiggoStore/NewFiggoStore'
+import NewRestaurantCard from '../../components/Main/FeaturedStores/NewRestaurantCard'
 
 
 
@@ -710,8 +712,8 @@ function Menu({ route, props }) {
                         top: containerPaddingTop
                       }}
                       contentContainerStyle={{
-                        paddingTop:
-                          Platform.OS === 'ios' ? 0 : containerPaddingTop
+                        paddingTop: Platform.OS === 'ios' ? 0 : containerPaddingTop,
+                        paddingHorizontal: scale(12)
                       }}
                       contentOffset={{
                         y: -containerPaddingTop
@@ -736,8 +738,8 @@ function Menu({ route, props }) {
                         />
                       }
                       data={searchAllShops(search)}
-
-                      renderItem={({ item }) => <Item item={item} />}
+                      renderItem={({ item }) => <NewFiggoStore item={item} />}
+                      ItemSeparatorComponent={() => <View style={{ height: scale(8) }} />}
                     />
                   </View>
                 ) : (
@@ -793,8 +795,12 @@ function Menu({ route, props }) {
                       data={popularItem}
                       horizontal={true}
                       showsHorizontalScrollIndicator={false}
-                      renderItem={({ item }) => <Products
-                        item={item}/>}
+                      renderItem={({ item }) => (
+                        <Products
+                          item={item}
+                          horizontal={true}
+                        />
+                      )}
                       keyExtractor={(item) => item.id.toString()}
                     />
                     {/* New on Figgo Section */}
@@ -803,10 +809,8 @@ function Menu({ route, props }) {
                       data={nearbymarkets}
                       horizontal={true}
                       showsHorizontalScrollIndicator={false}
-                      renderItem={({ item }) => (
-                        <NearByStore
-                          item={item}
-                        />
+                      renderItem={({ item,index }) => (
+                        <CategoryListView data={{ item, index }} />
                       )}
                       keyExtractor={(item) => item.id.toString()}
                     />
@@ -817,31 +821,19 @@ function Menu({ route, props }) {
                       setFilters={setFilters}
                       applyFilters={applyFilters}
                     />
-                    <Animated.FlatList
-                      contentInset={{ top: containerPaddingTop }}
-                      contentContainerStyle={{
-                        paddingTop: Platform.OS === 'ios' ? 0 : containerPaddingTop
-                      }}
-                      contentOffset={{ y: -containerPaddingTop }}
-                      onScroll={onScroll}
-                      scrollIndicatorInsets={{ top: scrollIndicatorInsetTop }}
+                    <FlatList
+                      data={allStores}
+                      horizontal={false}
                       showsVerticalScrollIndicator={false}
-                      ListEmptyComponent={emptyView()}
-                      keyExtractor={(item, index) => index.toString()}
-                      refreshControl={
-                        <RefreshControl
-                          progressViewOffset={containerPaddingTop}
-                          colors={[currentTheme.iconColorPink]}
-                          refreshing={networkStatus === 4}
-                          onRefresh={() => {
-                            if (networkStatus === 7) {
-                              refetch()
-                            }
-                          }}
-                        />
-                      }
-                      data={search ? searchAllShops(search) : allStores}
-                      renderItem={({ item }) => <Item item={item} />}
+                      contentContainerStyle={{
+                        paddingHorizontal: scale(12),
+                        paddingBottom: scale(16)
+                      }}
+                      ItemSeparatorComponent={() => <View style={{ height: scale(8) }} />}
+                      renderItem={({ item }) => (
+                        <NewFiggoStore item={item} />
+                      )}
+                      keyExtractor={(item) => item.id.toString()}
                     />
                   </ScrollView>
                 )}
