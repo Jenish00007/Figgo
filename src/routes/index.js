@@ -64,6 +64,11 @@ import ProductDetails from '../screens/ProductDetail/ProductDetails'
 import Options from '../screens/Options/Options'
 import OrderSummary from '../screens/OrderSummary/OrderSummary'
 import OrderConfirmation from '../screens/OrderConfirmation/Orderconfirmation'
+import TermsAndConditions from '../screens/Policies/TermsAndConditions'
+import PrivacyPolicy from '../screens/Policies/PrivacyPolicy'
+import RefundPolicy from '../screens/Policies/RefundPolicy'
+import CancellationPolicy from '../screens/Policies/CancellationPolicy'
+import ShippingPolicy from '../screens/Policies/ShippingPolicy'
 
 
 const NavigationStack = createStackNavigator()
@@ -183,6 +188,12 @@ function NoDrawer() {
       <NavigationStack.Screen name='OrderDetails' component={OrderDetail}/>
       <NavigationStack.Screen name='OrderConfirmation' component={OrderConfirmation}/>
 
+      {/* Policy Screens */}
+      <NavigationStack.Screen name='TermsAndConditions' component={TermsAndConditions} />
+      <NavigationStack.Screen name='PrivacyPolicy' component={PrivacyPolicy} />
+      <NavigationStack.Screen name='RefundPolicy' component={RefundPolicy} />
+      <NavigationStack.Screen name='CancellationPolicy' component={CancellationPolicy} />
+      <NavigationStack.Screen name='ShippingPolicy' component={ShippingPolicy} />
 
     </NavigationStack.Navigator>
   )

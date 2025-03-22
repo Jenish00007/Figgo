@@ -277,6 +277,88 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: currentTheme.fontSecondColor }]}>Help & Support</Text>
 
+         
+
+          {/* Terms & Conditions with content */}
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('TermsAndConditions')}
+            style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
+            <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
+              <FeatherIcon color="#fff" name="file-text" size={20} />
+            </View>
+            <View style={styles.detailContainer}>
+              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Terms & Conditions</Text>
+              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
+                View our terms of service
+              </Text>
+            </View>
+            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
+          </TouchableOpacity>
+
+          {/* Privacy Policy with content */}
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+            style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
+            <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
+              <FeatherIcon color="#fff" name="shield" size={20} />
+            </View>
+            <View style={styles.detailContainer}>
+              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Privacy Policy</Text>
+              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
+                Learn how we protect your data
+              </Text>
+            </View>
+            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
+          </TouchableOpacity>
+
+          {/* Refund Policy */}
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('RefundPolicy')}
+            style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
+            <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
+              <FeatherIcon color="#fff" name="refresh-cw" size={20} />
+            </View>
+            <View style={styles.detailContainer}>
+              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Refund Policy</Text>
+              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
+                View our refund policy
+              </Text>
+            </View>
+            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
+          </TouchableOpacity>
+
+          {/* Cancellation Policy */}
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('CancellationPolicy')}
+            style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
+            <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
+              <FeatherIcon color="#fff" name="x-circle" size={20} />
+            </View>
+            <View style={styles.detailContainer}>
+              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Cancellation Policy</Text>
+              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
+                View our cancellation policy
+              </Text>
+            </View>
+            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
+          </TouchableOpacity>
+
+          {/* Shipping Policy */}
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('ShippingPolicy')}
+            style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
+            <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
+              <FeatherIcon color="#fff" name="truck" size={20} />
+            </View>
+            <View style={styles.detailContainer}>
+              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Shipping Policy</Text>
+              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
+                View our shipping policy
+              </Text>
+            </View>
+            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
+          </TouchableOpacity>
+
           <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="help-circle" size={20} />
@@ -302,74 +384,7 @@ export default function SettingsScreen() {
             </View>
             <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
           </TouchableOpacity>
-
-          {/* Terms & Conditions with content */}
-          <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
-            <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
-              <FeatherIcon color="#fff" name="file-text" size={20} />
-            </View>
-            <View style={styles.detailContainer}>
-              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Terms & Conditions</Text>
-              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
-                View our terms of service
-              </Text>
-            </View>
-            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
-          </TouchableOpacity>
-
-          {/* Privacy Policy with content */}
-          <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
-            <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
-              <FeatherIcon color="#fff" name="shield" size={20} />
-            </View>
-            <View style={styles.detailContainer}>
-              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Privacy Policy</Text>
-              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
-                Learn how we protect your data
-              </Text>
-            </View>
-            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
-          </TouchableOpacity>
-
-          {/* Other policies with content */}
-          <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
-            <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
-              <FeatherIcon color="#fff" name="refresh-cw" size={20} />
-            </View>
-            <View style={styles.detailContainer}>
-              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Refund Policy</Text>
-              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
-                View our refund policy
-              </Text>
-            </View>
-            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
-            <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
-              <FeatherIcon color="#fff" name="x-circle" size={20} />
-            </View>
-            <View style={styles.detailContainer}>
-              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Cancellation Policy</Text>
-              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
-                View our cancellation policy
-              </Text>
-            </View>
-            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
-            <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
-              <FeatherIcon color="#fff" name="truck" size={20} />
-            </View>
-            <View style={styles.detailContainer}>
-              <Text style={[styles.rowLabel, { color: currentTheme.fontMainColor }]}>Shipping Policy</Text>
-              <Text style={[styles.rowValue, { color: currentTheme.fontSecondColor }]}>
-                View our shipping policy
-              </Text>
-            </View>
-            <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
-          </TouchableOpacity>
+          
         </View>
         
         {/* Logout Button */}
