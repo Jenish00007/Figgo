@@ -343,22 +343,29 @@ function Restaurant(props) {
   const handleItemPress = async (ShopcategoriId) => {
     try {
       const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/items/latest?store_id=${propsData.id}&category_id=${ShopcategoriId}&offset=1&limit=13&type=all`, {
-        method: 'GET', // GET request method
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json', // Ensures the server knows we're sending JSON
-          'zoneId': '[1]', // Pass zoneId in the headers
+          'Content-Type': 'application/json',
+          'zoneId': '[1]',
           'moduleId': moduleId
         }
       });
       const json = await response.json();
 
-
-      setStoreDetailsById(json.products);
-      console.log(propsData.id);
-
-      console.log(ShopcategoriId);
+      // Check if products exist and have valid data
+      if (json?.products && Array.isArray(json.products)) {
+        // Filter out any products that don't have a valid price
+        const validProducts = json.products.filter(product => 
+          product && typeof product.price !== 'undefined'
+        );
+        setStoreDetailsById(validProducts);
+      } else {
+        console.log('No valid products found in response');
+        setStoreDetailsById([]);
+      }
     } catch (error) {
       console.error('Error fetching fetchStoreDetailsById:', error);
+      setStoreDetailsById([]);
     }
   };
 

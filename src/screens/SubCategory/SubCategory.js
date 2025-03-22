@@ -299,13 +299,22 @@ const SubCategory = ({ route }) => {
                 {tabs.map((tab) => (
                   <TouchableOpacity
                     key={tab}
-                    style={[styles().tab, activeTab === tab && styles().activeTab]}
+                    style={[
+                      styles().tab, 
+                      activeTab === tab && {
+                        ...styles().activeTab,
+                        backgroundColor: '#F7CA0F'
+                      }
+                    ]}
                     onPress={() => handleTabPress(tab)}
                   >
                     <Text
                       style={[
                         styles().tabText,
-                        activeTab === tab && styles().activeTabText
+                        activeTab === tab && {
+                          ...styles().activeTabText,
+                          color: '#000000'
+                        }
                       ]}
                     >
                       {tab}
@@ -336,9 +345,13 @@ const SubCategory = ({ route }) => {
                       { 
                         marginRight: 60,
                         minWidth: 50,
-                        textAlign: 'center'
+                        textAlign: 'center',
+                        color: currentTheme.fontSecondColor
                       },
-                      contentType === 'products' ? styles().activeHeaderText : styles().inactiveHeaderText
+                      contentType === 'products' ? {
+                        ...styles().activeHeaderText,
+                        color: '#F7CA0F'
+                      } : styles().inactiveHeaderText
                     ]}
                     onPress={() => handleContentTypeChange('products')}
                   >
@@ -349,9 +362,13 @@ const SubCategory = ({ route }) => {
                       styles().storesHeaderText,
                       {
                         minWidth: 50,
-                        textAlign: 'center'
+                        textAlign: 'center',
+                        color: currentTheme.fontSecondColor
                       },
-                      contentType === 'stores' ? styles().activeStoresText : styles().inactiveHeaderText
+                      contentType === 'stores' ? {
+                        ...styles().activeStoresText,
+                        color: '#F7CA0F'
+                      } : styles().inactiveHeaderText
                     ]}
                     onPress={() => handleContentTypeChange('stores')}
                   >
@@ -369,6 +386,7 @@ const SubCategory = ({ route }) => {
                     height: 2,
                     alignSelf: 'center',
                     marginTop: 5,
+                    backgroundColor: '#F7CA0F',
                     transform: [{ translateX: contentType === 'stores' ? 55 : -55 }]
                   }
                 ]}
@@ -396,18 +414,37 @@ const SubCategory = ({ route }) => {
                     data={products}
                     numColumns={2}
                     showsVerticalScrollIndicator={false}
-                    columnWrapperStyle={{ justifyContent: 'space-between' }}
-                    contentContainerStyle={{ padding: 10 }}
+                    columnWrapperStyle={{ 
+                      justifyContent: 'space-between',
+                      paddingHorizontal: 10,
+                      marginBottom: 10
+                    }}
+                    contentContainerStyle={{ 
+                      padding: 10,
+                      paddingBottom: 20
+                    }}
                     renderItem={({ item }) => (
-                      <Products
-                        item={item}
-                        horizontal={false}
-                      />
+                      <View style={{ 
+                        width: '48%', // Slightly less than 50% to account for spacing
+                        marginBottom: 10
+                      }}>
+                        <Products
+                          item={item}
+                          horizontal={false}
+                        />
+                      </View>
                     )}
                     keyExtractor={(item) => item.id.toString()}
                     ListEmptyComponent={
-                      <View style={styles().emptyContainer}>
-                        <Text style={styles().emptyText}>No products found</Text>
+                      <View style={[styles().emptyContainer, { 
+                        padding: 20,
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }]}>
+                        <Text style={[styles().emptyText, {
+                          fontSize: 16,
+                          color: currentTheme.fontSecondColor
+                        }]}>No products found</Text>
                       </View>
                     }
                   />
