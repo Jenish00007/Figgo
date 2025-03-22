@@ -47,7 +47,7 @@ const styles = (props = null) =>
       borderColor: props != null ? props.borderBottomColor : '#DAD6D6'
     },
     signupContainer: {
-      paddingVertical: scale(20),
+      paddingVertical: scale(50),
       display: 'flex',
       alignSelf: 'center',
       width: '100%',

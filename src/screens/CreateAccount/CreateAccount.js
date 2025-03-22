@@ -10,6 +10,7 @@ import { useCreateAccount } from './useCreateAccount'
 import { useTranslation } from 'react-i18next'
 import { scale } from '../../utils/scaling'
 import { alignment } from '../../utils/alignment'
+import { theme } from '../../utils/themeColors'
 const { height } = Dimensions.get('window')
 
 const CreateAccount = (props) => {
@@ -163,7 +164,7 @@ const CreateAccount = (props) => {
             </TouchableOpacity>
           </View>
 
-          <View style={{ marginBottom: scale(5) }}>{renderGoogleAction()}</View>
+        
           {enableApple && (
             <View style={{ marginBottom: scale(5) }}>
               {renderAppleAction()}
@@ -171,22 +172,22 @@ const CreateAccount = (props) => {
           )}
           <View style={{ marginBottom: scale(5) }}>{renderEmailAction()}</View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={styles(currentTheme).line} />
+            <View style={[styles(currentTheme).line, { backgroundColor: theme.Figgo.yellow }]} />
             <View style={{ marginBottom: scale(5) }}>
               <TextDefault
                 H4
                 bolder
-                textColor={currentTheme.newFontcolor}
+                textColor={theme.Figgo.yellow}
                 style={{ width: 50, textAlign: 'center' }}
               >
                 {t('or')}
               </TextDefault>
             </View>
-            <View style={styles(currentTheme).line} />
+            <View style={[styles(currentTheme).line, { backgroundColor: theme.Figgo.yellow }]} />
           </View>
           <TouchableOpacity
             activeOpacity={0.7}
-            style={styles(currentTheme).guestButton}
+            style={[styles(currentTheme).guestButton, { borderColor: theme.Figgo.yellow }]}
             onPress={() => {
               navigation.navigate('Main')
             }}
@@ -194,13 +195,13 @@ const CreateAccount = (props) => {
             {props.loadingIcon ? (
               <Spinner
                 backColor='rgba(0,0,0,0.1)'
-                spinnerColor={currentTheme.main}
+                spinnerColor={theme.Figgo.yellow}
               />
             ) : (
               <>
                 <TextDefault
                   H4
-                  textColor={currentTheme.newFontcolor}
+                  textColor={theme.Figgo.yellow}
                   style={alignment.MLsmall}
                   bold
                 >

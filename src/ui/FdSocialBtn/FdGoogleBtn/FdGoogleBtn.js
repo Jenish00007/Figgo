@@ -18,18 +18,18 @@ const FdGoogleBtn = props => {
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      style={styles(currentTheme).mainContainer}
+      style={[styles(currentTheme).mainContainer, { borderColor: theme.Figgo.yellow }]}
       onPressIn={props.onPressIn}
       onPress={props.onPress}>
       {props.loadingIcon ? (
         <Spinner
-        backColor={currentTheme.themeBackground}
-        spinnerColor={currentTheme.main}
+          backColor={currentTheme.themeBackground}
+          spinnerColor={theme.Figgo.yellow}
         />
       ) : (
         <>
-          <FontAwesome name="google" size={scale(18)} color={currentTheme.newIconColor} />
-          <TextDefault H4 textColor={currentTheme.newFontcolor} style={alignment.MLlarge} bold>
+          <FontAwesome name="google" size={scale(18)} color={theme.Figgo.yellow} />
+          <TextDefault H4 textColor={theme.Figgo.yellow} style={alignment.MLlarge} bold>
             {t('ContinueWithGoogle')}
           </TextDefault>
         </>

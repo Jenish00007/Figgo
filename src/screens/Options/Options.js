@@ -1,4 +1,4 @@
-import React, { useState, useContext, useCallback } from 'react';
+import React, { useState, useContext, useCallback, useEffect } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -8,23 +8,40 @@ import {
   Switch,
   Image,
   StatusBar,
-  Modal,
   FlatList,
   usecurrentTheme,
-  StyleSheet
+  StyleSheet,
+  ActivityIndicator
 } from 'react-native';
+import Modal from 'react-native-modal';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import UserContext from '../../context/User';
 import { theme } from '../../utils/themeColors'; // Import the theme object
 import OptionsStyles from './OptionsStyles';
 import ThemeContext from '../../ui/ThemeContext/ThemeContext';
+import RadioButton from '../../ui/FdRadioBtn/RadioBtn';
+import i18next from '../../../i18next';
+import { useTranslation } from 'react-i18next';
+
+// Define languageTypes before using it in state
+const languageTypes = [
+  { value: 'English', code: 'en', index: 0 },
+  { value: 'français', code: 'fr', index: 1 },
+  { value: 'ភាសាខ្មែរ', code: 'km', index: 2 },
+  { value: '中文', code: 'zh', index: 3 },
+  { value: 'Deutsche', code: 'de', index: 4 },
+  { value: 'العربية', code: 'ar', index: 5 },
+  { value: 'עִברִית', code: 'he', index: 6 }
+];
 
 export default function SettingsScreen() {
   const navigation = useNavigation();
   const { formetedProfileData, logout } = useContext(UserContext);
   const themeContext = useContext(ThemeContext)
   const currentTheme = theme[themeContext.ThemeValue]
+  const { t } = useTranslation();
   
 
   // Get styles with theme colors
@@ -38,24 +55,47 @@ export default function SettingsScreen() {
   // Language selection state
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [activeRadio, activeRadioSetter] = useState(languageTypes[0].index);
+  const [loadinglang, setLoadingLang] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
-  const languages = [
-    { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
-    { code: 'de', name: 'German', nativeName: 'Deutsch' },
-    { code: 'en', name: 'English', nativeName: 'English' },
-    { code: 'fr', name: 'French', nativeName: 'Français' },
-    { code: 'he', name: 'Hebrew', nativeName: 'עברית' },
-    { code: 'km', name: 'Khmer', nativeName: 'ខ្មែរ' },
-    { code: 'zh', name: 'Chinese', nativeName: '中文' },
-  ];
-
-  const handleLanguageSelect = useCallback((language) => {
-    setSelectedLanguage(language.name);
-    setLanguageModalVisible(false);
-    // Here you would typically save the language preference
-    // and potentially update your app's localization context
+  useEffect(() => {
+    selectLanguage();
   }, []);
+
+  async function selectLanguage() {
+    const lang = await AsyncStorage.getItem('enatega-language')
+    if (lang) {
+      const defLang = languageTypes.findIndex((el) => el.code === lang)
+      const langName = languageTypes[defLang].value
+      activeRadioSetter(defLang)
+      setSelectedLanguage(langName)
+    }
+  }
+
+  async function onSelectedLanguage() {
+    try {
+      setLoadingLang(true)
+      const languageInd = activeRadio
+      await AsyncStorage.setItem(
+        'enatega-language',
+        languageTypes[languageInd].code
+      )
+
+      var lang = await AsyncStorage.getItem('enatega-language')
+      if (lang) {
+        const defLang = languageTypes.findIndex((el) => el.code === lang)
+        const langName = languageTypes[defLang].value
+        setSelectedLanguage(langName)
+      }
+      i18next.changeLanguage(lang)
+      setLanguageModalVisible(false)
+    } catch (error) {
+      console.error('Error during language selection:', error)
+    } finally {
+      setLoadingLang(false)
+    }
+  }
 
   // Handle logout
   const handleLogout = async () => {
@@ -362,44 +402,74 @@ export default function SettingsScreen() {
 
       {/* Language Selection Modal */}
       <Modal
-        animationType="slide"
-        transparent={true}
-        visible={languageModalVisible}
-        onRequestClose={() => setLanguageModalVisible(false)}
+        isVisible={languageModalVisible}
+        onBackdropPress={() => setLanguageModalVisible(false)}
+        onBackButtonPress={() => setLanguageModalVisible(false)}
+        backdropOpacity={0.5}
+        style={styles.modal}
       >
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: currentTheme.itemCardColor }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: currentTheme.borderBottomColor }]}>
-              <Text style={[styles.modalTitle, { color: currentTheme.fontMainColor }]}>Select Language</Text>
-              <TouchableOpacity onPress={() => setLanguageModalVisible(false)}>
-                <FeatherIcon name="x" size={24} color={currentTheme.fontMainColor} />
-              </TouchableOpacity>
-            </View>
-            
-            <FlatList
-              data={languages}
-              keyExtractor={(item) => item.code}
-              renderItem={({ item }) => (
-                <TouchableOpacity 
-                  style={[
-                    styles.languageItem,
-                    { borderBottomColor: currentTheme.borderBottomColor },
-                    selectedLanguage === item.name && [
-                      styles.selectedLanguageItem,
-                      { backgroundColor: `${currentTheme.primary}20` }
-                    ]
-                  ]}
-                  onPress={() => handleLanguageSelect(item)}
-                >
-                  <Text style={[styles.languageName, { color: currentTheme.fontMainColor }]}>{item.name}</Text>
-                  <Text style={[styles.languageNativeName, { color: currentTheme.fontSecondColor }]}>{item.nativeName}</Text>
-                  {selectedLanguage === item.name && (
-                    <FeatherIcon name="check" size={20} color={currentTheme.primary} />
-                  )}
-                </TouchableOpacity>
-              )}
-            />
+        <View style={[styles.modalContainer, { backgroundColor: currentTheme.itemCardColor }]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: currentTheme.fontMainColor }]}>
+              Select Language
+            </Text>
+            <TouchableOpacity 
+              onPress={() => setLanguageModalVisible(false)}
+              style={styles.closeButton}
+            >
+              <FeatherIcon name="x" size={20} color={currentTheme.fontMainColor} />
+            </TouchableOpacity>
           </View>
+
+          <ScrollView style={styles.languageList}>
+            {languageTypes.map((item, index) => (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                key={index}
+                onPress={() => activeRadioSetter(item.index)}
+                style={styles.radioContainer}
+              >
+                <Text style={[styles.languageText, { color: currentTheme.fontMainColor }]}>
+                  {item.value}
+                </Text>
+                <RadioButton
+                  animation={'bounceIn'}
+                  size={20}
+                  outerColor={currentTheme.iconColorDark}
+                  innerColor={currentTheme.main}
+                  isSelected={activeRadio === item.index}
+                  onPress={() => activeRadioSetter(item.index)}
+                />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          
+          <View style={[styles.modalButtonsContainer, { borderTopColor: currentTheme.borderColor }]}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={[styles.modalButton, styles.cancelButton]}
+              onPress={() => setLanguageModalVisible(false)}
+            >
+              <Text style={[styles.modalButtonText, { color: currentTheme.fontSecondColor }]}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={[styles.modalButton, styles.selectButton]}
+              onPress={() => onSelectedLanguage()}
+            >
+              <Text style={[styles.modalButtonText, { color: currentTheme.main }]}>
+                Select
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          {loadinglang && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size='large' color={currentTheme.tagColor} />
+            </View>
+          )}
         </View>
       </Modal>
     </SafeAreaView>
@@ -432,4 +502,83 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 8,
   },
+
+  // Updated and new modal styles
+  modal: {
+    margin: 0,
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    paddingTop: 15,
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  closeButton: {
+    padding: 5,
+  },
+  languageList: {
+    paddingTop: 10,
+  },
+  radioContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  languageText: {
+    fontSize: 16,
+    flex: 1,
+  },
+  modalButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  cancelButton: {
+    borderRightWidth: 1,
+    borderRightColor: '#EEEEEE',
+  },
+  selectButton: {
+    borderLeftWidth: 1,
+    borderLeftColor: '#EEEEEE',
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  }
 });

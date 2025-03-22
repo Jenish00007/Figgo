@@ -17,23 +17,23 @@ const FdEmailBtn = props => {
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      style={styles(currentTheme).mainContainer}
+      style={[styles(currentTheme).mainContainer, { borderColor: theme.Figgo.yellow }]}
       onPress={props.onPress}>
       {props.loadingIcon ? (
-        <Spinner backColor="rgba(0,0,0,0.1)" spinnerColor={currentTheme.main} />
+        <Spinner backColor="rgba(0,0,0,0.1)" spinnerColor={theme.Figgo.yellow} />
       ) : (
         <>
           <MaterialIcons
             name="mail-outline"
             size={scale(18)}
-            color={currentTheme.newIconColor}
+            color={theme.Figgo.yellow}
           />
           <TextDefault
             H4
-            textColor={currentTheme.newFontcolor}
+            textColor={theme.Figgo.yellow}
             style={alignment.MLlarge}
             bold>
-            {t('ContinueWithEmail')}
+            {t('Continue With Phone')}
           </TextDefault>
         </>
       )}
