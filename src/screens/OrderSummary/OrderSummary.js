@@ -6,7 +6,9 @@ import {
   TouchableOpacity, 
   TextInput,
   Alert,
-  useColorScheme
+  ActivityIndicator,
+  useColorScheme,
+  StatusBar
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,6 +16,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useUserContext } from './../../context/User';
 import OrderSummaryStyles from './OrderSummaryStyles';
 import PaymentMethod from '../../components/Payment/PaymentMethod';
+import AuthContext from '../../context/Auth';
 import ThemeContext from '../../ui/ThemeContext/ThemeContext';
 import { theme } from '../../utils/themeColors';
 
@@ -21,12 +24,14 @@ const OrderSummary = ({ route }) => {
   // Get cart data from navigation params
   const { cartItems: navigationCartItems } = route.params || {};
   
+  const { token } = useContext(AuthContext);
   const { cart, clearCart, updateCart } = useUserContext();
   const navigation = useNavigation();
   
-  // Get theme from context
   const themeContext = useContext(ThemeContext);
   const currentTheme = theme[themeContext.ThemeValue];
+  
+  const colorScheme = useColorScheme();
   
   // Initialize with navigation params if available, otherwise use context
   const [cartItems, setCartItems] = useState(navigationCartItems || (cart?.items || []));
@@ -156,7 +161,7 @@ const OrderSummary = ({ route }) => {
 
   // Handle payment method selection
   const handleSelectPayment = (method) => {
-    setPaymentMethod(method);
+    setPaymentMethod("digital_payment");
   };
 
   // Handle form input changes
@@ -166,7 +171,6 @@ const OrderSummary = ({ route }) => {
 
   // Handle checkout completion
   const handlePlaceOrder = async () => {
-    // Refresh cart data one more time before placing order
     if (!navigationCartItems) {
       refreshCartData();
     }
@@ -192,20 +196,41 @@ const OrderSummary = ({ route }) => {
         date: new Date().toISOString(),
         status: 'Placed'
       };
-      
-      // Save order to AsyncStorage
-      const storedOrders = await AsyncStorage.getItem('orders');
-      const orders = storedOrders ? JSON.parse(storedOrders) : [];
-      orders.push(order);
-      await AsyncStorage.setItem('orders', JSON.stringify(orders));
-      
-      // Clear cart using context if we're using context
-      if (!navigationCartItems && clearCart) {
-        clearCart();
+
+      const headers = {
+        'zoneId': '[3,1]',
+        "moduleId": '1',
+        'X-localization': "en",
+        'Connection': "keep-alive",
+        'Authorization': token ? `Bearer ${token}` : '',
       }
+      const orderDeatil = `order_amount=${totalAmount}&payment_method=${paymentMethod}&order_type=delivery&store_id=${cartItems[0].item.store_id}&distance=9693.34`
+      const cust_Address =`address=${selectedAddress.address}&latitude=23.79354466376145&longitude=90.41166342794895` 
+      const cust_Detail=`contact_person_name=${selectedAddress.name}&contact_person_number=${selectedAddress.phone}&contact_person_email=${selectedAddress.email}`
+
+      const uri=`https://6ammart-admin.6amtech.com/api/v1/customer/order/place?${orderDeatil}&${cust_Address}&${cust_Detail}`
       
-      // Navigate to order confirmation
-      navigation.navigate('OrderConfirmation', { order });
+      const response = await fetch(uri, {
+        method: 'POST',
+        headers: headers
+      });
+      
+      const responseData = await response.json();
+      if (response.ok) {
+        if (!navigationCartItems && clearCart) {
+          clearCart();
+        }
+        
+        const storedOrders = await AsyncStorage.getItem('orders');
+        const orders = storedOrders ? JSON.parse(storedOrders) : [];
+        orders.push(order);
+        await AsyncStorage.setItem('orders', JSON.stringify(orders));
+        
+        navigation.navigate('OrderConfirmation', { order });
+      } else {
+        console.error('API Error:', responseData);
+        Alert.alert('Error', responseData.message || 'Failed to place order');
+      }
     } catch (error) {
       console.error('Error placing order', error);
       Alert.alert('Error', 'Failed to place order. Please check your connection and try again.');
@@ -241,6 +266,11 @@ const OrderSummary = ({ route }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.themeBackground }]}>
+      <StatusBar 
+        backgroundColor="#F7CA0F"
+        barStyle="dark-content"
+      />
+      
       {/* Checkout Progress Bar */}
       <View style={[styles.progressBar, { backgroundColor: currentTheme.itemCardColor }]}>
         <View style={styles.progressStep}>
@@ -492,12 +522,21 @@ const OrderSummary = ({ route }) => {
           <Text style={[styles.amountText, { color: currentTheme.fontMainColor }]}>₹{totalAmount.toFixed(2)}</Text>
         </View>
         <TouchableOpacity 
-          style={[styles.proceedButton, { backgroundColor: currentTheme.buttonBackground }]} 
+          style={[
+            styles.proceedButton, 
+            { backgroundColor: currentTheme.buttonBackground },
+            isLoading && { opacity: 0.7 }
+          ]} 
           onPress={proceedToNext}
+          disabled={isLoading}
         >
-          <Text style={[styles.proceedButtonText, { color: currentTheme.buttonText }]}>
-            {activeSection === 'address' ? 'Continue' : 'Place Order'}
-          </Text>
+          {isLoading ? (
+            <ActivityIndicator color={currentTheme.buttonText} />
+          ) : (
+            <Text style={[styles.proceedButtonText, { color: currentTheme.buttonText }]}>
+              {activeSection === 'address' ? 'Continue' : 'Place Order'}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>

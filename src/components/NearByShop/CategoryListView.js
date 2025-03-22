@@ -168,14 +168,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   openBadge: {
-    backgroundColor: '#E6F2EA',
+    backgroundColor: '#FFF8E1',
   },
   openText: {
-    color: '#28A745',
+    color: '#F7CA0F',
   },
   addIconView: {
     padding: 4,
-    backgroundColor: '#FFD700',
+    backgroundColor: '#F7CA0F',
     borderRadius: 8,
     marginRight: 4,
   },

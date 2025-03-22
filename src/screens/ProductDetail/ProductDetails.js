@@ -19,6 +19,7 @@ import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import AuthContext from '../../context/Auth';
 import { LocationContext } from '../../context/Location';
 import UserContext from '../../context/User';
+import ThemeContext from '../../ui/ThemeContext/ThemeContext';
 import { theme } from '../../utils/themeColors'; // Import the theme object
 import styles from './ProductDetailsStyles'; // Base styles
 
@@ -31,15 +32,14 @@ const ProductDetail = (profile) => {
     const { location } = useContext(LocationContext);
     const { token } = useContext(AuthContext);
     const { isLoggedIn } = useContext(UserContext);
+    const themeContext = useContext(ThemeContext);
+    const currentTheme = theme[themeContext.ThemeValue];
     const [loading, setLoading] = useState(false);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const flatListRef = useRef(null);
     
     // Get the current color scheme (system preference)
     const colorScheme = useColorScheme();
-    
-    // Use the Dark theme if system preference is dark, otherwise use Pink theme
-    const currentTheme = colorScheme === 'dark' ? theme.Dark : theme.Pink;
     
     // Check if the product has multiple images
     const hasMultipleImages = product?.images_full_url && product.images_full_url.length > 0;
@@ -150,7 +150,10 @@ const ProductDetail = (profile) => {
     
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+            <StatusBar 
+                backgroundColor="#F7CA0F"
+                barStyle="dark-content"
+            />
             
             <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
                 

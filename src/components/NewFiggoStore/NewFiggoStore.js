@@ -31,7 +31,12 @@ const NewFiggoStore = ({ item }) => {
           style={styles.coverImage}
           imageStyle={styles.coverImageStyle}>
           <View style={styles.favoriteContainer}>
-            <TouchableOpacity style={styles.favoriteButton}>
+            <TouchableOpacity 
+              style={[
+                styles.favoriteButton,
+                { backgroundColor: 'rgba(255, 255, 255, 0.8)' }
+              ]}
+            >
               <AddToFavourites restaurantId={item?.id}/>
             </TouchableOpacity>
           </View>
@@ -114,9 +119,16 @@ const styles = StyleSheet.create({
     right: scale(8),
   },
   favoriteButton: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: scale(15),
     padding: scale(6),
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 3.84,
   },
   contentContainer: {
     padding: scale(12),
@@ -178,7 +190,7 @@ const styles = StyleSheet.create({
   },
   distance: {
     fontSize: scale(12),
-    color: '#4CAF50',
+    color: '#F7CA0F',
     marginLeft: scale(4),
   },
   visitButtonContainer: {
@@ -186,7 +198,7 @@ const styles = StyleSheet.create({
     paddingLeft: scale(8),
   },
   visitButton: {
-    backgroundColor: '#FFE135',
+    backgroundColor: '#F7CA0F',
     paddingHorizontal: scale(16),
     paddingVertical: scale(6),
     borderRadius: scale(15),

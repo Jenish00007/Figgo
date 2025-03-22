@@ -109,25 +109,23 @@ function ImageTextCenterHeader(props, ref) {
     total: props.restaurant ? props.restaurant.avg_rating : '...',
     reviews: props.restaurant ? props.restaurant.reviews : '...',
     isAvailable: props.restaurant ? props.restaurant.isAvailable : true,
-    openingTimes: props.restaurant ? props.restaurant.openingTimes : [],
+    openingTimes: props.restaurant ? props.restaurant.schedules : [],
     isOpen: () => {
       if (!props.restaurant) return true
       const date = new Date()
       const day = date.getDay()
-      const hours = date.getHours()
-      const minutes = date.getMinutes()
-      const todaysTimings = props.restaurant.openingTimes.find(
-        (o) => o.day === DAYS[day]
+      
+      // Find today's schedule
+      const todaysTimings = props.restaurant.schedules?.find(
+        schedule => schedule.day === day
       )
-      const times = todaysTimings.times.filter(
-        (t) =>
-          hours >= Number(t.startTime[0]) &&
-          minutes >= Number(t.startTime[1]) &&
-          hours <= Number(t.endTime[0]) &&
-          minutes <= Number(t.endTime[1])
-      )
-
-      return times.length > 0
+      
+      if (!todaysTimings) return false
+      
+      const currentTime = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:00`
+      
+      // Check if current time is between opening and closing time
+      return currentTime >= todaysTimings.opening_time && currentTime <= todaysTimings.closing_time
     }
   }
 
@@ -345,19 +343,75 @@ function ImageTextCenterHeader(props, ref) {
                     style={[styles().restaurantImg]}
                   />
                 </View>
-                <View style={styles().restaurantTitle}>
+                <View style={[styles().restaurantTitle, { flex: 1 }]}>
                   <TextDefault
                     H4
                     bolder
-                    Center
                     textColor={currentTheme.fontMainColor}
                     numberOfLines={1}
                     ellipsizeMode='tail'
                   >
                     {aboutObject.restaurantName}
                   </TextDefault>
+                  
+                  {/* Store Status and Rating Row */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: scale(4), justifyContent: 'space-between' }}>
+                    {/* Open/Closed Status */}
+                    <View style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: props.restaurant?.open ? currentTheme.success : currentTheme.error,
+                      paddingHorizontal: scale(8),
+                      paddingVertical: scale(2),
+                      borderRadius: scale(12),
+                    }}>
+                      <MaterialCommunityIcons 
+                        name="clock-outline"
+                        size={scale(14)}
+                        color={currentTheme.white}
+                      />
+                      <TextDefault
+                        style={{ marginLeft: scale(4) }}
+                        textColor={currentTheme.white}
+                        small
+                      >
+                        {props.restaurant?.open ? t('Open') : t('Closed')} 
+                      </TextDefault>
+                      <TextDefault
+                        style={{ marginLeft: scale(4) }}
+                        textColor={currentTheme.white}
+                        small
+                      >
+                        {props.restaurant?.delivery_time}
+                      </TextDefault>
+                    </View>
+
+                    {/* Rating Badge */}
+                    <View style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: currentTheme.secondaryBackground,
+                      paddingHorizontal: scale(8),
+                      paddingVertical: scale(2),
+                      borderRadius: scale(12),
+                    }}>
+                      <MaterialIcons
+                        name="star"
+                        size={scale(14)}
+                        color={currentTheme.yellow}
+                      />
+                      <TextDefault
+                        textColor={currentTheme.fontMainColor}
+                        style={{ marginLeft: scale(4) }}
+                        small
+                      >
+                        {props.restaurant?.avg_rating} ({props.restaurant?.rating_count})
+                      </TextDefault>
+                    </View>
+                  </View>
                 </View>
               </Animated.View>
+
               <View style={{ display: 'flex', flexDirection: 'row', gap: 7 }}>
                 <TextDefault
                   style={styles().restaurantAbout}
@@ -375,112 +429,112 @@ function ImageTextCenterHeader(props, ref) {
                   style={styles().restaurantAbout}
                   textColor={currentTheme.fontMainColor}
                 >
-                  {configuration.currencySymbol}{' '}{aboutObject.minimum_shipping_charge} {t('deliveryCharges')}
+                  ₹{' '}{aboutObject.restaurantMinOrder} {t('minimum')}
                 </TextDefault>
               </View>
+
+              {/* Store Contact Info */}
+              <View style={{ marginTop: scale(8) }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(5) }}>
+                  <MaterialIcons
+                    name="phone"
+                    size={scale(18)}
+                    color={currentTheme.fontMainColor}
+                  />
+                  <TextDefault
+                    style={styles().restaurantAbout}
+                    textColor={currentTheme.fontMainColor}
+                  >
+                    {props.restaurant?.phone}
+                  </TextDefault>
+                </View>
+              </View>
+
+              {/* Store Address */}
+              <View style={{ marginTop: scale(8) }}>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: scale(5) }}>
+                  <MaterialIcons
+                    name="location-on"
+                    size={scale(18)}
+                    color={currentTheme.fontMainColor}
+                  />
+                  <TextDefault
+                    style={[styles().restaurantAbout, { flex: 1 }]}
+                    textColor={currentTheme.fontMainColor}
+                    numberOfLines={2}
+                  >
+                    {aboutObject.address}
+                  </TextDefault>
+                </View>
+              </View>
+
+              {/* Store Features */}
+              <View style={{ marginTop: scale(8), flexDirection: 'row', flexWrap: 'wrap', gap: scale(10) }}>
+                {props.restaurant?.delivery && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(4) }}>
+                    <MaterialCommunityIcons
+                      name="truck-delivery"
+                      size={scale(18)}
+                      color={currentTheme.fontMainColor}
+                    />
+                    <TextDefault
+                      style={styles().restaurantAbout}
+                      textColor={currentTheme.fontMainColor}
+                    >
+                      {t('Delivery Available')}
+                    </TextDefault>
+                  </View>
+                )}
+                
+                {props.restaurant?.take_away && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(4) }}>
+                    <MaterialCommunityIcons
+                      name="shopping"
+                      size={scale(18)}
+                      color={currentTheme.fontMainColor}
+                    />
+                    <TextDefault
+                      style={styles().restaurantAbout}
+                      textColor={currentTheme.fontMainColor}
+                    >
+                      {t('Takeaway Available')}
+                    </TextDefault>
+                  </View>
+                )}
+              </View>
+
+              {/* Store Hours */}
+              <View style={{ marginTop: scale(8) }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(5) }}>
+                  <MaterialCommunityIcons
+                    name="clock-outline"
+                    size={scale(18)}
+                    color={currentTheme.fontMainColor}
+                  />
+                  <TextDefault
+                    style={styles().restaurantAbout}
+                    textColor={currentTheme.fontMainColor}
+                  >
+                    {props.restaurant?.open ? 'Open' : 'Closed'} ({props.restaurant?.delivery_time})
+                  </TextDefault>
+                </View>
+              </View>
+
               <View
                 style={{
                   display: 'flex',
                   flexDirection: 'row',
                   gap: 7,
-                  marginTop: scale(5)
+                  marginTop: scale(10)
                 }}
               >
                 <TextDefault
                   style={styles().restaurantAbout}
                   textColor={currentTheme.fontMainColor}
                 >
-                  {configuration.currencySymbol}{' '}{aboutObject.restaurantMinOrder} {t('minimum')}
-                </TextDefault>
-                <TextDefault
-                  style={styles().restaurantAbout}
-                  textColor={currentTheme.fontMainColor}
-                >
-                  |
-                </TextDefault>
-                <TextDefault
-                  style={styles().restaurantAbout}
-                  textColor={currentTheme.fontMainColor}
-                >
-                  {t('serviceFeeApply')}
-                </TextDefault>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  marginTop: scale(15)
-                }}
-              >
-                <AnimatedTouchable
-                  activeOpacity={0.7}
-                  style={styles().ratingBox}
-                  onPress={() => {
-                    navigation.navigate('Reviews', {
-                      restaurantObject: { ...aboutObject, isOpen: null },
-                      tab: false
-                    })
-                  }}
-                >
-                  <MaterialIcons
-                    name='star-border'
-                    size={scale(20)}
-                    color={currentTheme.newIconColor}
-                  />
-
-                  <TextDefault
-                    textColor={currentTheme.fontNewColor}
-                    style={{
-                      fontWeight: '700',
-                      fontSize: scale(16)
-                    }}
-                  >
-                    {aboutObject.average}
-                  </TextDefault>
-                  <TextDefault
-                    textColor={currentTheme.fontNewColor}
-                    style={{
-                      fontWeight: '400',
-                      fontSize: scale(14),
-                      marginLeft: scale(5)
-                    }}
-                  >
-                    ({aboutObject.total})
-                  </TextDefault>
-                </AnimatedTouchable>
-                {/* <AnimatedTouchable
-                  activeOpacity={0.7}
-                  style={styles().ratingBox}
-                  disabled={props.loading}
-                  onPress={() => {
-                    navigation.navigate('Reviews', {
-                      restaurantObject: { ...aboutObject, isOpen: null },
-                      tab: false
-                    })
-                  }}
-                >
-                  <TextDefault
-                    textColor={currentTheme.editProfileButton}
-                    style={{
-                      fontSize: scale(14),
-                      fontWeight: '600'
-                    }}
-                  >
-                    {t('seeReviews')}
-                  </TextDefault>
-                </AnimatedTouchable> */}
-              </View>
-              <View style={[styles().ratingBox, { marginTop: scale(9) }]}>
-                <MaterialCommunityIcons name="timer-outline" size={scale(20)}
-                  color={currentTheme.newIconColor} />
-                <TextDefault
-                  textColor={currentTheme.fontNewColor}
-                  style={{
-                    fontWeight: '400',
-                    fontSize: scale(14)
-                  }}
-                >
-                  {aboutObject.deliveryTime}
+                  {props.restaurant?.delivery ? t('Delivery Available') : ''} 
+                  {props.restaurant?.delivery && props.restaurant?.take_away ? ' | ' : ''}
+                  {props.restaurant?.take_away ? t('Takeaway Available') : ''}
                 </TextDefault>
               </View>
             </Animated.View>

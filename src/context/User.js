@@ -99,7 +99,7 @@ export const UserProvider = props => {
   }
 
   //add to cart
- const addToCart = async (item) => {
+  const addToCart = async (item) => {
     try {
       if (!token) {
         throw new Error('User not logged in');
@@ -114,33 +114,47 @@ export const UserProvider = props => {
         'Content-Type': 'application/json'
       };
 
+      // List cart Items first to check if item already exists
+      const cartResponse = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/list`, {
+        'method': 'GET',
+        headers: headers,
+      });
+      const cartItems = await cartResponse.json();
+      const isProductInCart = cartItems?.some(cartItem => cartItem.item_id === item.id);
+
+      if (isProductInCart) {
+        throw new Error("This product is already in your cart.");
+      }
+
       // Add item to cart
       const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/add`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify({
           item_id: item.id,
-          quantity: item.quantity || 1,
+          quantity: 1,
           price: item.price,
           name: item.name,
-          image: item.image,
-          model: item.type === 'restaurant' ? 'Restaurant' : 'Item'
+          image: item.image_full_url,
+          model: "Item"
         }),
       });
 
+      const result = await response.text();
+      console.log("Add to Cart Response:", result);
+
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to add item to cart');
+        throw new Error(result.message || "Failed to add product to cart.");
       }
 
       // Update local cart state
       const updatedCart = [...cart, item];
       setCart(updatedCart);
 
-      return true;
+      return { success: true, message: "Product added to cart successfully!" };
     } catch (error) {
       console.error('Error in addToCart:', error);
-      throw error;
+      return { success: false, message: error.message };
     }
   };
     

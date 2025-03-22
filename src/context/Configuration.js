@@ -16,8 +16,8 @@ export const ConfigurationProvider = (props) => {
   const configuration =
     loading || error || !data.configuration
       ? {
-          currency: '',
-          currencySymbol: '',
+          currency: 'INR',
+          currencySymbol: '₹',
           deliveryRate: 0,
           expoClientID:
             '967541328677-d46sl62t52g5r3o5m0mnl2hpptr242nl.apps.googleusercontent.com',
