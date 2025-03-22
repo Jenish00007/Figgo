@@ -50,6 +50,7 @@ import Animated, {
   interpolate,
   useAnimatedStyle
 } from 'react-native-reanimated'
+import AddToFavourites from '../../Favourites/AddtoFavourites'
 
 const AnimatedText = Animated.createAnimatedComponent(Text)
 const AnimatedBorderless = Animated.createAnimatedComponent(BorderlessButton)
@@ -91,11 +92,10 @@ function ImageTextCenterHeader(props, ref) {
   }
 
   const handleAddToFavorites = () => {
-    if (!loadingMutation && profile) {
-      mutate({ variables: { id: props.restaurantId } })
-    }
+    <AddToFavourites restaurantId={props.restaurantId} />
   }
 
+  
   const aboutObject = {
     latitude: props.restaurant ? props.restaurant.latitude : '',
     longitude: props.restaurant ? props.restaurant.longitude : '',
@@ -282,7 +282,7 @@ function ImageTextCenterHeader(props, ref) {
                     ]}
                     onPress={handleAddToFavorites}
                   >
-                    <View>
+                    {/* <View>
                       {loadingMutation ? (
                         <Spinner
                           size={'small'}
@@ -296,7 +296,7 @@ function ImageTextCenterHeader(props, ref) {
                           color={currentTheme.newIconColor}
                         />
                       )}
-                    </View>
+                    </View> */}
                   </TouchableOpacity>
                   
                   <TouchableOpacity
@@ -353,7 +353,8 @@ function ImageTextCenterHeader(props, ref) {
                   >
                     {aboutObject.restaurantName}
                   </TextDefault>
-                  
+                   {/* Add the AddtoFavourites component here */}
+        
                   {/* Store Status and Rating Row */}
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: scale(4), justifyContent: 'space-between' }}>
                     {/* Open/Closed Status */}

@@ -32,7 +32,7 @@ export default function SettingsScreen() {
   
 
   const fullName = formetedProfileData ? 
-    `${formetedProfileData.f_name || ''} ${formetedProfileData.l_name || ''}`.trim() : 
+    `${formetedProfileData.f_name || ''}`.trim() : 
     'Welcome';
 
   // Language selection state
@@ -72,7 +72,7 @@ export default function SettingsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.themeBackground }]}>
       
         <StatusBar 
-          backgroundColor={theme.Figgo.yellow} 
+          backgroundColor="#F7CA0F" 
           barStyle="dark-content"
         />
         

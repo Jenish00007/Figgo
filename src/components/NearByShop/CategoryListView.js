@@ -1,12 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import {
   StyleSheet,
   View,
   Text,
-  Animated,
   Image,
   TouchableOpacity,
-  Pressable,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -25,40 +23,11 @@ const CategoryListView = ({ data }) => {
   if (!item) {
     return null;  // If item is undefined, return nothing or handle accordingly
   }
- const navigation = useNavigation();
-
-  const translateX = useRef(new Animated.Value(50));
-  const opacity = useRef(new Animated.Value(0));
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(translateX.current, {
-        toValue: 0,
-        duration: 300,
-        delay: index * (300 / 4),
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity.current, {
-        toValue: 1,
-        duration: 300,
-        delay: index * (300 / 4),
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [index]);
+  const navigation = useNavigation();
   const formattedDistance = item?.distance ? `${Math.round(item?.distance / 1000) || '100+'} km` : 'N/A';
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          opacity: opacity.current,
-          transform: [{ translateX: translateX.current }],
-        },
-      ]}
-    >
-
+    <View style={styles.container}>
       <TouchableOpacity onPress={() => navigation.navigate('Restaurant', { ...item })} style={{ height: 134, width: 280 }} touchOpacity={0.6} >
         <View style={styles.bgColorView} />
         <View style={{ ...StyleSheet.absoluteFillObject, flexDirection: 'row' }}>
@@ -103,7 +72,7 @@ const CategoryListView = ({ data }) => {
         </View>
       </TouchableOpacity>
     
-    </Animated.View>
+    </View>
   );
 };
 

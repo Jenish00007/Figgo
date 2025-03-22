@@ -10,7 +10,8 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  useColorScheme
+  useColorScheme,
+  StatusBar
 } from "react-native";
 import { Feather } from "@expo/vector-icons";  
 import UserContext from "../../context/User";
@@ -83,6 +84,10 @@ const ProfilePage = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={[styles.container, { backgroundColor: currentTheme.themeBackground }]}
     >
+      <StatusBar
+        backgroundColor="#F7CA0F"
+        barStyle="dark-content"
+      />
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
         <View style={styles.contentContainer}>
           <View style={[styles.profileCard, { backgroundColor: currentTheme.itemCardColor }]}>

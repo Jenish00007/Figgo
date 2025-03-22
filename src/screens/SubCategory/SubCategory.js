@@ -26,6 +26,8 @@ import BottomTab from '../../components/BottomTab/BottomTab';
 import Search from '../../components/Main/Search/Search';
 import ThemeContext from '../../ui/ThemeContext/ThemeContext'
 import NewFiggoStore from '../../components/NewFiggoStore/NewFiggoStore';
+import { scale } from '../../utils/scaling';
+import { Placeholder, Fade, PlaceholderLine } from 'rn-placeholder';
 
 const SubCategory = ({ route }) => {
   const { category } = route.params;
@@ -294,7 +296,77 @@ const SubCategory = ({ route }) => {
 
   };
 
-  console.log(search)
+ 
+
+  const [ItemLoading, setItemLoading] = useState(true);
+  const [toresLoading, settoresLoading] = useState(true);
+
+  // Add loading placeholder component
+  const ListLoadingComponent = ({ horizontal = true, count = 3, type = 'store' }) => {
+    const themeContext = useContext(ThemeContext);
+    const currentTheme = theme[themeContext.ThemeValue];
+
+    // Define sizes based on type
+    const sizes = {
+      store: { width: scale(130), height: scale(160) },
+      product: { width: scale(130), height: scale(160) },
+      allStore: { width: '100%', height: scale(120) }
+    };
+
+    const currentSize = sizes[type];
+
+    return (
+      <View style={{ 
+        flexDirection: horizontal ? 'row' : 'column',
+        paddingHorizontal: scale(12)
+      }}>
+        {[...Array(count)].map((_, index) => (
+          <View
+            key={index}
+            style={{
+              marginRight: horizontal ? scale(10) : 0,
+              marginBottom: !horizontal ? scale(10) : 0,
+              backgroundColor: currentTheme.placeHolderColor,
+              borderRadius: 8,
+              width: currentSize.width,
+              height: currentSize.height,
+              overflow: 'hidden'
+            }}>
+            <Placeholder
+              Animation={props => (
+                <Fade
+                  {...props}
+                  style={{ backgroundColor: currentTheme.placeHolderColor }}
+                  duration={500}
+                  iterationCount={1}
+                />
+              )}>
+              <PlaceholderLine 
+                style={{ 
+                  height: type === 'nearbyStore' ? '70%' : '60%', 
+                  marginBottom: 0,
+                  opacity: 0.7
+                }} 
+              />
+              <View style={{ padding: 8 }}>
+                <PlaceholderLine 
+                  width={80} 
+                  style={{ opacity: 0.5 }}
+                />
+                {type !== 'category' && (
+                  <PlaceholderLine 
+                    width={50} 
+                    style={{ opacity: 0.3 }}
+                  />
+                )}
+              </View>
+            </Placeholder>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   return (
     <>
       <SafeAreaView
@@ -419,7 +491,7 @@ const SubCategory = ({ route }) => {
                   justifyContent: 'center',
                   alignItems: 'center'
                 }]}>
-                  <ActivityIndicator size="large" color="#F7CA0F" />
+                  <ListLoadingComponent horizontal={false} count={3} type="allStore" />
                 </View>
               )}
 

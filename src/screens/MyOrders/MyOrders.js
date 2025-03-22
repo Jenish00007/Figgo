@@ -114,11 +114,9 @@ function MyOrders(props) {
   }, [])
   useFocusEffect(() => {
     if (Platform.OS === 'android') {
-      StatusBar.setBackgroundColor(currentTheme.menuBar)
+      StatusBar.setBackgroundColor('#F7CA0F')
     }
-    StatusBar.setBarStyle(
-      themeContext.ThemeValue === 'Dark' ? 'light-content' : 'dark-content'
-    )
+    StatusBar.setBarStyle('dark-content')
   })
   useEffect(() => {
     props.navigation.setOptions({
@@ -128,7 +126,7 @@ function MyOrders(props) {
           truncatedLabel=""
           backImage={() => (
             <View style={styles().backButton}>
-              <MaterialIcons name="arrow-back" size={25} color={currentTheme.newIconColor} />
+              <MaterialIcons name="arrow-back" size={25} color="#000000" />
             </View>
           )}
           onPress={() => {
@@ -139,7 +137,7 @@ function MyOrders(props) {
       headerTitle: t('titleOrders'),
       headerTitleAlign: 'center',
       headerTitleStyle: {
-        color: currentTheme.newFontcolor,
+        color: '#000000',
         fontWeight: 'bold'
       },
       headerTitleContainerStyle: {
@@ -150,11 +148,13 @@ function MyOrders(props) {
         marginLeft: 0
       },
       headerStyle: {
-        backgroundColor: currentTheme.newheaderBG,
-        elevation: 0
-      }
+        backgroundColor: '#F7CA0F',
+        elevation: 0,
+        shadowOpacity: 0
+      },
+      headerTintColor: '#000000'
     })
-  }, [props.navigation])
+  }, [props.navigation, selectedTab])
 
   const TabButton = ({ text, onPress, isSelected, currentTheme }) => {
     return (
@@ -189,6 +189,11 @@ function MyOrders(props) {
 
   return (
     <>
+      <StatusBar
+        backgroundColor="#F7CA0F"
+        barStyle="dark-content"
+        translucent={false}
+      />
       <View style={styles(currentTheme).container}>
         <View style={styles(currentTheme).tabContainer}>
           <TabButton

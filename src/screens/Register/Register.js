@@ -65,7 +65,7 @@ function Register(props) {
       style={[styles().flex, { backgroundColor: currentTheme.themeBackground }]}
     >
       <StatusBar
-        backgroundColor={currentTheme.themeBackground}
+        backgroundColor="#FFFFFF"
         barStyle="dark-content"
       />
       <KeyboardAvoidingView

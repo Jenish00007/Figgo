@@ -277,155 +277,219 @@ function Menu({ route, props }) {
       })
   }
 
+  // Add loading states
+  const [bannersLoading, setBannersLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [supermarketsLoading, setSupermarketsLoading] = useState(true);
+  const [nearbyMarketsLoading, setNearbyMarketsLoading] = useState(true);
+  const [nearbyMarketsOfferLoading, setNearbyMarketsOfferLoading] = useState(true);
+  const [popularItemLoading, setPopularItemLoading] = useState(true);
+  const [allStoresLoading, setAllStoresLoading] = useState(true);
 
+  // Add loading placeholder component
+  const ListLoadingComponent = ({ horizontal = true, count = 3, type = 'store' }) => {
+    // Define sizes based on type
+    const sizes = {
+      banner: { width: '100%', height: scale(150) },
+      category: { width: scale(80), height: scale(80) },
+      store: { width: scale(150), height: scale(180) },
+      nearbyStore: { width: scale(200), height: scale(120) },
+      offer: { width: scale(200), height: scale(120) },
+      product: { width: scale(130), height: scale(160) },
+      allStore: { width: '100%', height: scale(120) }
+    };
+
+    const currentSize = sizes[type];
+
+    return (
+      <View style={{ 
+        flexDirection: horizontal ? 'row' : 'column',
+        paddingHorizontal: scale(12)
+      }}>
+        {[...Array(count)].map((_, index) => (
+          <View
+            key={index}
+            style={{
+              marginRight: horizontal ? scale(10) : 0,
+              marginBottom: !horizontal ? scale(10) : 0,
+              backgroundColor: currentTheme.placeHolderColor,
+              borderRadius: 8,
+              width: currentSize.width,
+              height: currentSize.height,
+              overflow: 'hidden'
+            }}>
+            <Placeholder
+              Animation={props => (
+                <Fade
+                  {...props}
+                  style={{ backgroundColor: currentTheme.placeHolderColor }}
+                  duration={500}
+                  iterationCount={1}
+                />
+              )}>
+              <PlaceholderLine 
+                style={{ 
+                  height: type === 'nearbyStore' ? '70%' : '60%', 
+                  marginBottom: 0,
+                  opacity: 0.7
+                }} 
+              />
+              <View style={{ padding: 8 }}>
+                <PlaceholderLine 
+                  width={80} 
+                  style={{ opacity: 0.5 }}
+                />
+                {type !== 'category' && (
+                  <PlaceholderLine 
+                    width={50} 
+                    style={{ opacity: 0.3 }}
+                  />
+                )}
+              </View>
+            </Placeholder>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  // Update banner fetch
   useEffect(() => {
     const fetchBanners = async () => {
+      setBannersLoading(true);
       try {
         const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/banners?featured=1', {
-          method: 'GET', // GET request method
+          method: 'GET',
           headers: {
-            'Content-Type': 'application/json', // Ensures the server knows we're sending JSON
-            'zoneId': '[1]', // Pass zoneId in the headers
+            'Content-Type': 'application/json',
+            'zoneId': '[1]',
             'moduleId': moduleId
           }
         });
-
         const json = await response.json();
-
         if (json?.banners && json.banners.length > 0) {
-          setBanners(json.banners); // Set the fetched banners in the state
-          // console.log(json);
-        } else {
-          console.log('No banners found or invalid response');
+          setBanners(json.banners);
         }
       } catch (error) {
         console.error('Error fetching banners:', error);
+      } finally {
+        setBannersLoading(false);
       }
     };
-
     fetchBanners();
   }, [moduleId]);
 
-  // Fetch categories from API
+  // Update categories fetch
   useEffect(() => {
     const fetchCategories = async () => {
+      setCategoriesLoading(true);
       try {
         const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/categories', {
-          method: 'GET', // GET request method
+          method: 'GET',
           headers: {
-            'Content-Type': 'application/json', // Ensures the server knows we're sending JSON
-            'zoneId': '[1]', // Pass zoneId in the headers
+            'Content-Type': 'application/json',
+            'zoneId': '[1]',
             'moduleId': moduleId
           }
         });
         const json = await response.json();
-        // console.log(json);
         if (json?.length > 0) {
           setCategories(json);
-        } else {
-          console.log('No categories found or invalid response');
         }
       } catch (error) {
         console.error('Error fetching categories:', error);
+      } finally {
+        setCategoriesLoading(false);
       }
     };
-
     fetchCategories();
   }, [moduleId]);
 
-  // Fetch data from the API
+  // Update supermarkets fetch
   useEffect(() => {
     const fetchSupermarkets = async () => {
+      setSupermarketsLoading(true);
       try {
         const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/stores/latest?type=all', {
-          method: 'GET', // GET request method
+          method: 'GET',
           headers: {
-            'Content-Type': 'application/json', // Ensures the server knows we're sending JSON
-            'zoneId': '[1]', // Pass zoneId in the headers
+            'Content-Type': 'application/json',
+            'zoneId': '[1]',
             'moduleId': moduleId
           }
         });
         const json = await response.json();
-
-        // Check if data is valid before updating state
         if (json?.stores && json.stores.length > 0) {
           setSupermarkets(json.stores);
-          // console.log(json)
-        } else {
-          console.log('No supermarket data found');
         }
       } catch (error) {
         console.error('Error fetching supermarkets:', error);
+      } finally {
+        setSupermarketsLoading(false);
       }
     };
-
-    fetchSupermarkets()
+    fetchSupermarkets();
   }, [moduleId]);
 
-  // Fetch data from the API
+  // Update nearby markets fetch
   useEffect(() => {
     const fetchNearbymarkets = async () => {
+      setNearbyMarketsLoading(true);
       try {
         const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/stores/popular?type=all', {
-          method: 'GET', // GET request method
+          method: 'GET',
           headers: {
-            'Content-Type': 'application/json', // Ensures the server knows we're sending JSON
-            'zoneId': '[1]', // Pass zoneId in the headers
+            'Content-Type': 'application/json',
+            'zoneId': '[1]',
             'moduleId': moduleId
           }
         });
         const json = await response.json();
-
-        // Check if data is valid before updating state
         if (json?.stores && json.stores.length > 0) {
           setNearbymarkets(json.stores);
-          // console.log(json)
-        } else {
-          console.log('No supermarket data found');
         }
       } catch (error) {
-        console.error('Error fetching supermarkets:', error);
+        console.error('Error fetching nearby markets:', error);
+      } finally {
+        setNearbyMarketsLoading(false);
       }
     };
-
-    fetchNearbymarkets()
+    fetchNearbymarkets();
   }, [moduleId]);
 
-  // Fetch data from the API
+  // Update nearby markets offer fetch
   useEffect(() => {
     const fetchNearbymarketsOffer = async () => {
+      setNearbyMarketsOfferLoading(true);
       try {
         const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/stores/top-offer-near-me', {
-          method: 'GET', // GET request method
+          method: 'GET',
           headers: {
-            'Content-Type': 'application/json', // Ensures the server knows we're sending JSON
-            'zoneId': '[1]', // Pass zoneId in the headers
+            'Content-Type': 'application/json',
+            'zoneId': '[1]',
             'moduleId': moduleId
           }
         });
         const json = await response.json();
-
-        // Check if data is valid before updating state
         if (json?.stores && json.stores.length > 0) {
           setNearbymarketsOffer(json.stores);
-          // console.log(json)
-        } else {
-          console.log('No Nearby data found');
         }
       } catch (error) {
-        console.error('Error fetching nearbymarket', error);
+        console.error('Error fetching nearby market offers:', error);
+      } finally {
+        setNearbyMarketsOfferLoading(false);
       }
     };
-
-    fetchNearbymarketsOffer()
+    fetchNearbymarketsOffer();
   }, [moduleId]);
 
-  // Fetch data from the API
+  // Update popular items fetch
   useEffect(() => {
     const fetchPopularItem = async () => {
+      setPopularItemLoading(true);
       try {
         const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/items/popular?type=all', {
-          method: 'GET', // GET request method
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             'zoneId': '[1]',
@@ -433,55 +497,21 @@ function Menu({ route, props }) {
           }
         });
         const json = await response.json();
-
-        // Check if data is valid before updating state
         if (json?.products && json.products.length > 0) {
           setPopularItem(json.products);
-          // console.log(json)
-        } else {
-          console.log('No Popular data found');
         }
       } catch (error) {
-        console.error('Error fetching popularitem:', error);
+        console.error('Error fetching popular items:', error);
+      } finally {
+        setPopularItemLoading(false);
       }
     };
-
-    fetchPopularItem()
+    fetchPopularItem();
   }, [moduleId]);
 
-  // Fetch data from the API
-  useEffect(() => {
-    const fetchSpecialItem = async () => {
-      try {
-        const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/items/popular?type=all', {
-          method: 'GET', // GET request method
-          headers: {
-            'Content-Type': 'application/json',
-            'zoneId': '[1]',
-            'moduleId': moduleId
-          }
-        });
-        const json = await response.json();
-
-        // Check if data is valid before updating state
-        if (json?.products && json.products.length > 0) {
-          setSpecialItem(json.products);
-          // console.log(json)
-        } else {
-          console.log('No Popular data found');
-        }
-      } catch (error) {
-        console.error('Error fetching supermarkets:', error);
-      }
-    };
-
-    fetchSpecialItem()
-  }, [moduleId]);
-
-
-
-  //Filter Store Listing
+  // Update fetchData
   const fetchData = async (category) => {
+    setAllStoresLoading(true);
     let url = '';
     switch (category) {
       case 'popular':
@@ -500,7 +530,7 @@ function Menu({ route, props }) {
 
     try {
       const response = await fetch(url, {
-        method: 'GET', // GET request method
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'zoneId': '[1]',
@@ -511,6 +541,8 @@ function Menu({ route, props }) {
       setAllStore(data?.stores);
     } catch (error) {
       console.error("Error fetching stores data:", error);
+    } finally {
+      setAllStoresLoading(false);
     }
   };
 
@@ -566,21 +598,18 @@ function Menu({ route, props }) {
 
   //App not Available in YourArea
   const emptyView = () => {
-    if (loading || mutationLoading || loadingOrders) return loadingScreen()
-    else {
-      return (
-        <View style={styles().emptyViewContainer}>
-          <View style={styles(currentTheme).emptyViewBox}>
-            <TextDefault bold H4 center textColor={currentTheme.fontMainColor}>
-              {t('notAvailableinYourArea')}
-            </TextDefault>
-            <TextDefault textColor={currentTheme.fontMainColor} center>
-              {emptyViewDesc}
-            </TextDefault>
-          </View>
+    return (
+      <View style={styles().emptyViewContainer}>
+        <View style={styles(currentTheme).emptyViewBox}>
+          <TextDefault bold H4 center textColor={currentTheme.fontMainColor}>
+            {t('notAvailableinYourArea')}
+          </TextDefault>
+          <TextDefault textColor={currentTheme.fontMainColor} center>
+            {emptyViewDesc}
+          </TextDefault>
         </View>
-      )
-    }
+      </View>
+    )
   }
 
   //Footer Modal
@@ -614,61 +643,6 @@ function Menu({ route, props }) {
     </View>
   )
   // console.log(filters);
-  // Loading Animation 
-  function loadingScreen() {
-    return (
-      <View style={styles(currentTheme).screenBackground}>
-        <View style={styles(currentTheme).searchbar}>
-          <Search
-            search={''}
-            setSearch={() => { }}
-            newheaderColor={newheaderColor}
-            placeHolder={searchPlaceholderText}
-          />
-        </View>
-
-        <Placeholder
-          Animation={props => (
-            <Fade
-              {...props}
-              style={styles(currentTheme).placeHolderFadeColor}
-              duration={300}
-            />
-          )}
-          style={styles(currentTheme).placeHolderContainer}>
-          <PlaceholderLine style={styles().height200} />
-          <PlaceholderLine />
-        </Placeholder>
-        <Placeholder
-          Animation={props => (
-            <Fade
-              {...props}
-              style={styles(currentTheme).placeHolderFadeColor}
-              duration={300}
-            />
-          )}
-          style={styles(currentTheme).placeHolderContainer}>
-          <PlaceholderLine style={styles().height200} />
-          <PlaceholderLine />
-        </Placeholder>
-        <Placeholder
-          Animation={props => (
-            <Fade
-              {...props}
-              style={styles(currentTheme).placeHolderFadeColor}
-              duration={300}
-            />
-          )}
-          style={styles(currentTheme).placeHolderContainer}>
-          <PlaceholderLine style={styles().height200} />
-          <PlaceholderLine />
-        </Placeholder>
-      </View>
-    )
-  }
-
-  // if (error) return <ErrorView />
-  if (loading) return loadingScreen()
 
   //Search Function
   const searchAllShops = searchText => {
@@ -743,77 +717,89 @@ function Menu({ route, props }) {
                     />
                   </View>
                 ) : (
-                  < ScrollView
+                  <ScrollView
                     showsVerticalScrollIndicator={false}
                     showsHorizontalScrollIndicator={false}>
                     {/* Banners Section */}
                     <View style={{ padding: 10 }}>
-                      {banners.length > 0 ? (
+                      {bannersLoading ? (
+                        <ListLoadingComponent horizontal={false} count={1} type="banner" />
+                      ) : banners.length > 0 ? (
                         <CarouselSlider banners={banners} />
-                      ) : (
-                        <TextDefault style={styles().loadingText}>Loading banners...</TextDefault>
-                      )}
+                      ) : null}
                     </View>
 
                     {/* Categories Section */}
                     <TextDefault style={styles().sectionTitle}>Categories</TextDefault>
-                    <Categories categories={categories} />
+                    {categoriesLoading ? (
+                      <ListLoadingComponent count={4} type="category" />
+                    ) : (
+                      <Categories categories={categories} />
+                    )}
 
                     {/* Nearby Stores Section */}
                     <TextDefault style={styles().sectionTitle}>Nearby Stores</TextDefault>
-
-
-                    <FlatList
-                      data={supermarkets}
-                      horizontal={true}
-                      showsHorizontalScrollIndicator={false}
-                      renderItem={({ item, index }) => (
-                        <CategoryListView data={{ item, index }} />
-                      )}
-                      keyExtractor={(item) => item.id.toString()}
-                    />
-
-
+                    {supermarketsLoading ? (
+                      <ListLoadingComponent count={3} type="nearbyStore" />
+                    ) : (
+                      <FlatList
+                        data={supermarkets}
+                        horizontal={true}
+                        showsHorizontalScrollIndicator={false}
+                        renderItem={({ item, index }) => (
+                          <CategoryListView data={{ item, index }} />
+                        )}
+                        keyExtractor={(item) => item.id.toString()}
+                      />
+                    )}
 
                     {/* Top Offers Section */}
                     <TextDefault style={styles().sectionTitle}>Top Offers near me 🔥</TextDefault>
-                    <FlatList
-                      data={nearbymarketsOffer}
-                      horizontal={true}
-                      showsHorizontalScrollIndicator={false}
-                      renderItem={({ item }) => (
-                        <OfferCard
-                          item={item}
+                    {nearbyMarketsOfferLoading ? (
+                      <ListLoadingComponent count={3} type="offer" />
+                    ) : (
+                      <FlatList
+                        data={nearbymarketsOffer}
+                        horizontal={true}
+                        showsHorizontalScrollIndicator={false}
+                        renderItem={({ item }) => (
+                          <OfferCard item={item} />
+                        )}
+                        keyExtractor={(item) => item.id.toString()}
+                      />
+                    )}
 
-                        />
-                      )}
-                      keyExtractor={(item) => item.id.toString()}
-                    />
                     {/* Popular Items Section */}
                     <TextDefault style={styles().sectionTitle}>Most Popular Items 🔥</TextDefault>
-                    <FlatList
-                      data={popularItem}
-                      horizontal={true}
-                      showsHorizontalScrollIndicator={false}
-                      renderItem={({ item }) => (
-                        <Products
-                          item={item}
-                          horizontal={true}
-                        />
-                      )}
-                      keyExtractor={(item) => item.id.toString()}
-                    />
+                    {popularItemLoading ? (
+                      <ListLoadingComponent count={3} type="product" />
+                    ) : (
+                      <FlatList
+                        data={popularItem}
+                        horizontal={true}
+                        showsHorizontalScrollIndicator={false}
+                        renderItem={({ item }) => (
+                          <Products item={item} horizontal={true} />
+                        )}
+                        keyExtractor={(item) => item.id.toString()}
+                      />
+                    )}
+
                     {/* New on Figgo Section */}
                     <TextDefault style={styles().sectionTitle}>New on Figgo</TextDefault>
-                    <FlatList
-                      data={nearbymarkets}
-                      horizontal={true}
-                      showsHorizontalScrollIndicator={false}
-                      renderItem={({ item,index }) => (
-                        <CategoryListView data={{ item, index }} />
-                      )}
-                      keyExtractor={(item) => item.id.toString()}
-                    />
+                    {nearbyMarketsLoading ? (
+                      <ListLoadingComponent count={3} type="nearbyStore" />
+                    ) : (
+                      <FlatList
+                        data={nearbymarkets}
+                        horizontal={true}
+                        showsHorizontalScrollIndicator={false}
+                        renderItem={({ item, index }) => (
+                          <CategoryListView data={{ item, index }} />
+                        )}
+                        keyExtractor={(item) => item.id.toString()}
+                      />
+                    )}
 
                     {/* Filters Section */}
                     <Filters
@@ -821,20 +807,28 @@ function Menu({ route, props }) {
                       setFilters={setFilters}
                       applyFilters={applyFilters}
                     />
-                    <FlatList
-                      data={allStores}
-                      horizontal={false}
-                      showsVerticalScrollIndicator={false}
-                      contentContainerStyle={{
-                        paddingHorizontal: scale(12),
-                        paddingBottom: scale(16)
-                      }}
-                      ItemSeparatorComponent={() => <View style={{ height: scale(8) }} />}
-                      renderItem={({ item }) => (
-                        <NewFiggoStore item={item} />
-                      )}
-                      keyExtractor={(item) => item.id.toString()}
-                    />
+                    
+                    {/* All Stores Section */}
+                    {allStoresLoading ? (
+                      <View style={{ paddingHorizontal: scale(12) }}>
+                        <ListLoadingComponent horizontal={false} count={3} type="allStore" />
+                      </View>
+                    ) : (
+                      <FlatList
+                        data={allStores}
+                        horizontal={false}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{
+                          paddingHorizontal: scale(12),
+                          paddingBottom: scale(16)
+                        }}
+                        ItemSeparatorComponent={() => <View style={{ height: scale(8) }} />}
+                        renderItem={({ item }) => (
+                          <NewFiggoStore item={item} />
+                        )}
+                        keyExtractor={(item) => item.id.toString()}
+                      />
+                    )}
                   </ScrollView>
                 )}
               </View>
@@ -854,7 +848,7 @@ function Menu({ route, props }) {
             location={location}
           />
         </View>
-      </SafeAreaView >
+      </SafeAreaView>
       <BottomTab screen="HOME" />
     </>
   )

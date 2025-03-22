@@ -1,32 +1,9 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 export default function Categories({ categories }) {
   const navigation = useNavigation();
-
-  // Function to handle animation for each category item
-  const handleAnimation = (index) => {
-    const translateX = new Animated.Value(50); // Initialize animation value
-    const opacity = new Animated.Value(0); // Initialize opacity
-
-    Animated.parallel([
-      Animated.timing(translateX, {
-        toValue: 0,
-        duration: 300,
-        delay: index * (300 / 4), // Delay based on index
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 300,
-        delay: index * (300 / 4), // Delay based on index
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    return { translateX, opacity };
-  };
 
   return (
     <View>
@@ -34,35 +11,22 @@ export default function Categories({ categories }) {
         data={categories}
         showsHorizontalScrollIndicator={false}
         horizontal={true}
-        renderItem={({ item, index }) => {
-          const { translateX, opacity } = handleAnimation(index);
-
-          return (
-            <TouchableOpacity
-              onPress={() => navigation.push('SubCategory', { category: item })}
-            >
-              <Animated.View
-                style={[
-                  styles.container,
-                  {
-                    transform: [{ translateX }], // Applying animation
-                    opacity: opacity, // Applying animation
-                  },
-                ]}
-              >
-                {/* Circular image */}
-                <View style={styles.iconContainer}>
-                  <Image
-                    style={styles.icon}
-                    source={{ uri: item?.image_full_url }}
-                  />
-                </View>
-                <Text style={styles.text}>{item?.name}</Text>
-              </Animated.View>
-            </TouchableOpacity>
-          );
-        }}
-        keyExtractor={(item) => item.id.toString()} // Use a unique key for each item
+        renderItem={({ item, index }) => (
+          <TouchableOpacity
+            onPress={() => navigation.push('SubCategory', { category: item })}
+          >
+            <View style={styles.container}>
+              <View style={styles.iconContainer}>
+                <Image
+                  style={styles.icon}
+                  source={{ uri: item?.image_full_url }}
+                />
+              </View>
+              <Text style={styles.text}>{item?.name}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+        keyExtractor={(item) => item.id.toString()}
       />
     </View>
   );

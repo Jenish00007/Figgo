@@ -128,7 +128,7 @@ const ActiveOrders = ({ navigation }) => {
   return (
     <View style={[styles.container, {backgroundColor: currentTheme.themeBackground}]}>
       <StatusBar
-        backgroundColor={currentTheme.newheaderBG}
+        backgroundColor="#F7CA0F"
         barStyle="dark-content"
         translucent={false}
         animated={true}

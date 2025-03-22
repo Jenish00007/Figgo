@@ -1,6 +1,5 @@
-import { verticalScale, scale } from '../../utils/scaling'
 import { StyleSheet } from 'react-native'
-
+import { scale } from '../../utils/scaling'
 import { alignment } from '../../utils/alignment'
 
 const styles = (props = null) =>
@@ -9,13 +8,11 @@ const styles = (props = null) =>
       flex: 1
     },
     screenBackground: {
-      backgroundColor: props != null ? props.themeBackground : '#FFF',
-      ...alignment.PBlarge
+      backgroundColor: props !== null ? props.themeBackground : '#FFF'
     },
     mainContentContainer: {
-      width: '100%',
-      height: '100%',
-      alignSelf: 'center'
+      flex: 1,
+      backgroundColor: props !== null ? props.themeBackground : '#FFF'
     },
     searchbar: {
       ...alignment.PBmedium,

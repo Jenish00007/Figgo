@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, View, TouchableOpacity } from 'react-native'
+import { FlatList, StyleSheet, Text, View, TouchableOpacity, StatusBar } from 'react-native'
 import React, { useContext, useEffect, useCallback, useState } from 'react'
 import ThemeContext from '../../ui/ThemeContext/ThemeContext'
 import { theme } from '../../utils/themeColors'
@@ -111,6 +111,10 @@ function Notification() {
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.themeBackground }]}>
+      <StatusBar
+        backgroundColor="#F7CA0F"
+        barStyle="dark-content"
+      />
       {notifications.length === 0 ? (
         <Text style={[styles.message, { color: currentTheme.newFontcolor }]}>
           No Notifications Yet

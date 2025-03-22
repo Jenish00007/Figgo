@@ -14,6 +14,7 @@ import AuthContext from '../../context/Auth';
 import ThemeContext from '../../ui/ThemeContext/ThemeContext';
 import { theme } from '../../utils/themeColors'; // Import the theme object
 import { FontAwesome } from '@expo/vector-icons';
+import { StatusBar } from 'react-native';
 
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -93,6 +94,50 @@ const CartPage = () => {
     }
   };
 
+  const updateCartQuantity = async (cartId, newQuantity) => {
+    try {
+      const headers = {
+        'moduleId': '1',
+        'Content-Type': 'application/json; charset=UTF-8',
+        'zoneId': '[3,1]',
+        'X-localization': 'en',
+        'latitude': '23.793544663762145',
+        'longitude': '90.41166342794895',
+        'Authorization': `Bearer ${token}`
+      };
+
+      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/update`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          cart_id: cartId,
+          price: cartItems.find(item => item.id === cartId)?.price || 0,
+          quantity: newQuantity
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.message || 'Failed to update quantity');
+      }
+
+      // Refresh cart items after successful update
+      await fetchCartItems();
+      Alert.alert('Success', 'Quantity updated successfully');
+    } catch (error) {
+      console.error('Error updating cart quantity:', error);
+      Alert.alert('Error', error.message || 'Failed to update quantity');
+    }
+  };
+
+  const handleQuantityChange = (item, change) => {
+    const newQuantity = item.quantity + change;
+    if (newQuantity > 0) {
+      updateCartQuantity(item.id, newQuantity);
+    }
+  };
+
   const renderItem = ({ item }) => (
     <View style={[styles.card, { 
       borderColor: currentTheme.borderColor,
@@ -111,9 +156,23 @@ const CartPage = () => {
         <Text style={[styles.price, { color: currentTheme.primary }]}>
           ₹{item.price}
         </Text>
-        <Text style={[styles.quantity, { color: currentTheme.fontSecondColor }]}>
-          Qty: {item.quantity}
-        </Text>
+        <View style={styles.quantityContainer}>
+          <TouchableOpacity 
+            style={[styles.quantityButton, { backgroundColor: currentTheme.primary }]}
+            onPress={() => handleQuantityChange(item, -1)}
+          >
+            <Text style={styles.quantityButtonText}>-</Text>
+          </TouchableOpacity>
+          <Text style={[styles.quantity, { color: currentTheme.fontMainColor }]}>
+            {item.quantity}
+          </Text>
+          <TouchableOpacity 
+            style={[styles.quantityButton, { backgroundColor: currentTheme.primary }]}
+            onPress={() => handleQuantityChange(item, 1)}
+          >
+            <Text style={styles.quantityButtonText}>+</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <TouchableOpacity 
         style={styles.deleteButton}
@@ -140,6 +199,11 @@ const CartPage = () => {
     </View>
   );
 
+  // Calculate total price
+  const calculateTotal = () => {
+    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
+
   if (loading) {
     return (
       <View style={[styles.loadingContainer, 
@@ -161,6 +225,11 @@ const CartPage = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.themeBackground }]}>
+      <StatusBar 
+        backgroundColor="#F7CA0F"
+        barStyle="dark-content"
+      />
+      
       <FlatList
         data={cartItems}
         renderItem={renderItem}
@@ -171,6 +240,14 @@ const CartPage = () => {
           </Text>
         }
       />
+
+      {/* Total Price Section */}
+      <View style={[styles.totalSection, { backgroundColor: currentTheme.itemCardColor }]}>
+        <View style={styles.totalRow}>
+          <Text style={[styles.totalLabel, { color: currentTheme.fontMainColor }]}>Total Amount:</Text>
+          <Text style={[styles.totalAmount, { color: currentTheme.primary }]}>₹{calculateTotal().toFixed(2)}</Text>
+        </View>
+      </View>
 
       {/* Button Section */}
       <View style={styles.buttonContainer}>
@@ -251,7 +328,29 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     fontWeight: '600'
   },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  quantityButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  quantityButtonText: {
+    color: '#000000',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
   quantity: {
+    fontSize: 16,
+    marginHorizontal: 10,
+    minWidth: 30,
+    textAlign: 'center',
   },
   emptyMessage: {
     textAlign: 'center',
@@ -294,6 +393,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 10,
     top: 10,
+  },
+  totalSection: {
+    padding: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    marginBottom: 10,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  totalLabel: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  totalAmount: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
 });
 

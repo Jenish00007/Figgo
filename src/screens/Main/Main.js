@@ -60,6 +60,8 @@ import MainModalize from '../../components/Main/Modalize/MainModalize'
 import { escapeRegExp } from '../../utils/regex'
 import CarouselSlider from '../../components/Slider/Slider'
 import BottomTab from '../../components/BottomTab/BottomTab'
+import NewAddress from '../NewAddress/NewAddress'
+import NewFiggoStore from '../../components/NewFiggoStore/NewFiggoStore'
 
 const RESTAURANTS = gql`
   ${restaurantListPreview}
@@ -87,7 +89,75 @@ function Main(props) {
   const [stores, setStores] = useState([]);
   const [loadingdata, setLoading] = useState(true);
   const [banners, setBanners] = useState([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
   const [storeSearch, setStoreSearch] = useState([]);
+
+  // Add loading placeholder component
+  const ListLoadingComponent = ({ horizontal = true, count = 3, type = 'store' }) => {
+    // Define sizes based on type
+    const sizes = {
+      banner: { width: '100%', height: scale(150) },
+      category: { width: scale(80), height: scale(80) },
+      store: { width: scale(150), height: scale(180) },
+      nearbyStore: { width: scale(200), height: scale(120) },
+      offer: { width: scale(200), height: scale(120) },
+      product: { width: scale(130), height: scale(160) },
+      allStore: { width: '100%', height: scale(120) },
+      featuredStore: { width: scale(200), height: scale(220) }
+    };
+
+    const currentSize = sizes[type];
+
+    return (
+      <View style={{ 
+        flexDirection: horizontal ? 'row' : 'column',
+        paddingHorizontal: scale(12)
+      }}>
+        {[...Array(count)].map((_, index) => (
+          <View
+            key={index}
+            style={{
+              marginRight: horizontal ? scale(10) : 0,
+              marginBottom: !horizontal ? scale(10) : 0,
+              backgroundColor: currentTheme.placeHolderColor,
+              borderRadius: 8,
+              width: currentSize.width,
+              height: currentSize.height,
+              overflow: 'hidden'
+            }}>
+            <Placeholder
+              Animation={props => (
+                <Fade
+                  {...props}
+                  style={{ backgroundColor: currentTheme.placeHolderColor }}
+                  duration={500}
+                  iterationCount={1}
+                />
+              )}>
+              <PlaceholderLine 
+                style={{ 
+                  height: '60%', 
+                  marginBottom: 0,
+                  opacity: 0.7
+                }} 
+              />
+              <View style={{ padding: 8 }}>
+                <PlaceholderLine 
+                  width={80} 
+                  style={{ opacity: 0.5 }}
+                />
+                <PlaceholderLine 
+                  width={50} 
+                  style={{ opacity: 0.3 }}
+                />
+              </View>
+            </Placeholder>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   useEffect(() => {
     // Function to fetch data from API
     const fetchStores = async () => {
@@ -157,28 +227,25 @@ function Main(props) {
 
   useEffect(() => {
     const fetchBanners = async () => {
+      setBannersLoading(true);
       try {
         const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/banners?featured=1', {
-          method: 'GET', // GET request method
+          method: 'GET',
           headers: {
-            'Content-Type': 'application/json', // Ensures the server knows we're sending JSON
-            'zoneId': '[1]', // Pass zoneId in the headers
+            'Content-Type': 'application/json',
+            'zoneId': '[1]',
           }
         });
-
         const json = await response.json();
-
         if (json?.banners && json.banners.length > 0) {
-          setBanners(json.banners); // Set the fetched banners in the state
-          // console.log(json);
-        } else {
-          console.log('No banners found or invalid response');
+          setBanners(json.banners);
         }
       } catch (error) {
         console.error('Error fetching banners:', error);
+      } finally {
+        setBannersLoading(false);
       }
     };
-
     fetchBanners();
   }, []);
 
@@ -447,7 +514,9 @@ function Main(props) {
                       }
                       data={searchAllShops(search)}
 
-                      renderItem={({ item }) => <Item item={item} />}
+                      renderItem={({ item }) => (
+                        <NewFiggoStore item={item} />
+                      )}
                     />
                   </View>
                 ) : (
@@ -457,11 +526,11 @@ function Main(props) {
                   >
 
                     <View style={{ padding: 10 }}>
-                      {banners.length > 0 ? (
-                        <CarouselSlider banners={banners} /> // Pass fetched banners to CarouselSlider
-                      ) : (
-                        <TextDefault>Loading banners...</TextDefault>
-                      )}
+                      {bannersLoading ? (
+                        <ListLoadingComponent horizontal={false} count={1} type="banner" />
+                      ) : banners.length > 0 ? (
+                        <CarouselSlider banners={banners} />
+                      ) : null}
                     </View>
 
                     <View style={styles().mainItemsContainer}>
@@ -521,12 +590,20 @@ function Main(props) {
                     </View>
 
                     <View>
-
                       <View>
-                        <MainRestaurantCard
-                          orders={stores}
-                          title={'Featured Stores'}
-                        />
+                        {loadingdata ? (
+                          <View>
+                            <TextDefault H4 bold style={styles().sectionTitle}>
+                              Featured Stores
+                            </TextDefault>
+                            <ListLoadingComponent count={3} type="featuredStore" />
+                          </View>
+                        ) : (
+                          <MainRestaurantCard
+                            orders={stores}
+                            title={'Featured Stores'}
+                          />
+                        )}
                       </View>
                     </View>
                    

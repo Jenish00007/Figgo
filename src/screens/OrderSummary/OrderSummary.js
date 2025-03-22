@@ -8,7 +8,8 @@ import {
   Alert,
   ActivityIndicator,
   useColorScheme,
-  StatusBar
+  StatusBar,
+  StyleSheet
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -496,7 +497,27 @@ const OrderSummary = ({ route }) => {
         
         {/* Order Summary */}
         <View style={[styles.orderSummary, { backgroundColor: currentTheme.itemCardColor }]}>
-          <Text style={[styles.summaryTitle, { color: currentTheme.fontMainColor }]}>Price Details</Text>
+          <Text style={[styles.summaryTitle, { color: currentTheme.fontMainColor }]}>Order Summary</Text>
+          
+          {/* Cart Items */}
+          {cartItems.map((item, index) => (
+            <View key={index} style={styles.cartItem}>
+              <View style={styles.cartItemInfo}>
+                <Text style={[styles.itemName, { color: currentTheme.fontMainColor }]}>
+                  {item.item ? item.item.name : 'Unknown Item'}
+                </Text>
+                <Text style={[styles.itemQuantity, { color: currentTheme.fontSecondColor }]}>
+                  Quantity: {item.quantity}
+                </Text>
+              </View>
+              <Text style={[styles.itemPrice, { color: currentTheme.primary }]}>
+                ₹{(item.price * item.quantity).toFixed(2)}
+              </Text>
+            </View>
+          ))}
+
+          <View style={[styles.divider, { backgroundColor: currentTheme.borderColor }]} />
+          
           <View style={styles.summaryRow}>
             <Text style={{ color: currentTheme.fontSecondColor }}>Price ({cartItems.length} items)</Text>
             <Text style={{ color: currentTheme.fontMainColor }}>₹{totalAmount.toFixed(2)}</Text>
@@ -505,7 +526,7 @@ const OrderSummary = ({ route }) => {
             <Text style={{ color: currentTheme.fontSecondColor }}>Delivery Charges</Text>
             <Text style={[styles.freeDelivery, { color: currentTheme.success || '#388e3c' }]}>FREE</Text>
           </View>
-          <View style={[styles.divider, { backgroundColor: currentTheme.borderBottomColor }]} />
+          <View style={[styles.divider, { backgroundColor: currentTheme.borderColor }]} />
           <View style={styles.summaryRow}>
             <Text style={[styles.totalText, { color: currentTheme.fontMainColor }]}>Total Amount</Text>
             <Text style={[styles.totalText, { color: currentTheme.primary }]}>₹{totalAmount.toFixed(2)}</Text>
@@ -544,3 +565,31 @@ const OrderSummary = ({ route }) => {
 };
 
 export default OrderSummary;
+
+const styles = StyleSheet.create({
+  // ... existing styles ...
+  cartItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  cartItemInfo: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  itemQuantity: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  itemPrice: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // ... rest of existing styles ...
+});

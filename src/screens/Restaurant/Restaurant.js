@@ -336,9 +336,50 @@ function Restaurant(props) {
 
 
   useEffect(() => {
-    handleItemPress();
-    // fetchStoreDetailsById();
-  }, [moduleId]);
+    const fetchInitialProducts = async () => {
+      try {
+        // First fetch store details to get categories
+        const storeResponse = await fetch(`https://6ammart-admin.6amtech.com/api/v1/stores/details/${propsData.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'zoneId': '[1]',
+            'moduleId': moduleId
+          }
+        });
+        const storeJson = await storeResponse.json();
+        setStoreDetailsByAll(storeJson.category_details);
+
+        // Get first category ID and fetch its products
+        if (storeJson.category_details && storeJson.category_details.length > 0) {
+          const firstCategoryId = storeJson.category_details[0].id;
+          
+          // Fetch products of first category
+          const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/items/latest?store_id=${propsData.id}&category_id=${firstCategoryId}&offset=1&limit=13&type=all`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'zoneId': '[1]',
+              'moduleId': moduleId
+            }
+          });
+          const json = await response.json();
+
+          if (json?.products && Array.isArray(json.products)) {
+            const validProducts = json.products.filter(product => 
+              product && typeof product.price !== 'undefined'
+            );
+            setStoreDetailsById(validProducts);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching initial data:', error);
+        setStoreDetailsById([]);
+      }
+    };
+
+    fetchInitialProducts();
+  }, [moduleId, propsData.id]);
 
   const handleItemPress = async (ShopcategoriId) => {
     try {
@@ -469,10 +510,7 @@ function Restaurant(props) {
             translationY={translationY}
           />
 
-          {/* Add the AddtoFavourites component here */}
-          <View style={{ position: 'absolute', top: scale(50), right: scale(15), zIndex: 100 }}>
-            <AddtoFavourites restaurantId={propsData.id} />
-          </View>
+         
 
           {showSearchResults || searchOpen ? (
             <ScrollView

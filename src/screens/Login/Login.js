@@ -66,7 +66,7 @@ function Login(props) {
       edges={['bottom', 'left', 'right']}
       style={styles(currentTheme).safeAreaViewStyles}>
       <StatusBar
-        backgroundColor={currentTheme.themeBackground}
+        backgroundColor="#FFFFFF"
         barStyle="dark-content"
       />
       <KeyboardAvoidingView
