@@ -7,7 +7,8 @@ import {
   Platform,
   TextInput,
   Text,
-  Image
+  Image,
+  StatusBar
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import styles from './styles'
@@ -42,7 +43,8 @@ function Register(props) {
     countryCode,
     registerAction,
     onCountrySelect,
-    currentTheme
+    currentTheme,
+    themeContext
   } = useRegister()
 
   const { t } = useTranslation()
@@ -62,6 +64,10 @@ function Register(props) {
       edges={['bottom', 'left', 'right']}
       style={[styles().flex, { backgroundColor: currentTheme.themeBackground }]}
     >
+      <StatusBar
+        backgroundColor={currentTheme.themeBackground}
+        barStyle="dark-content"
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles().flex}
@@ -125,7 +131,7 @@ function Register(props) {
                 </View>
                 <View>
                   <TextInput
-                    placeholder={t('firstNamePH')}
+                    placeholder={t('Name')}
                     style={[
                       styles(currentTheme).textField,
                       firstnameError && styles(currentTheme).errorInput
@@ -144,7 +150,7 @@ function Register(props) {
                     </TextDefault>
                   )}
                 </View>
-                <View>
+                {/* <View>
                   <TextInput
                     placeholder={t('lastNamePH')}
                     style={[
@@ -164,7 +170,7 @@ function Register(props) {
                       {lastnameError}
                     </TextDefault>
                   )}
-                </View>
+                </View> */}
                 <View style={styles().passwordField}>
                   <TextInput
                     secureTextEntry={showPassword}

@@ -12,7 +12,7 @@ const useRegister = () => {
   const route = useRoute()
 
   const [firstname, setFirstname] = useState('')
-  const [lastname, setLastname] = useState('')
+  const [lastname, setLastname] = useState('Lastname')
   const [email, setEmail] = useState(route.params?.email || '')
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')

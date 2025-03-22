@@ -28,23 +28,9 @@ export const useLogin = () => {
   const { t } = useTranslation()
 
   const isPhoneNumber = (value) => {
-    // You can adjust this regex based on your phone number format requirements
-    const phoneRegex = /^\+?[\d\s-]{10,}$/
+    // Phone number should be in format +91XXXXXXXXXX
+    const phoneRegex = /^\+91\d{10}$/
     return phoneRegex.test(value)
-  }
-
-  const isEmail = (value) => {
-    const emailRegex = /^\w+([\\.-]?\w+)*@\w+([\\.-]?\w+)*(\.\w{2,3})+$/
-    return emailRegex.test(value)
-  }
-
-  const logout = async () => {
-    try {
-      await AsyncStorage.removeItem('token')
-      setTokenAsync(null)
-    } catch (error) {
-      console.error('Error during logout:', error)
-    }
   }
 
   function validateCredentials() {
@@ -53,10 +39,10 @@ export const useLogin = () => {
     setPasswordError(null)
 
     if (!input) {
-      setInputError(t('pleaseEnterEmailOrPhone'))
+      setInputError(t('pleaseEnterPhoneNumber'))
       result = false
-    } else if (!isEmail(input) && !isPhoneNumber(input)) {
-      setInputError(t('invalidEmailOrPhone'))
+    } else if (!isPhoneNumber(input)) {
+      setInputError(t('invalidPhoneNumber'))
       result = false
     }
 
@@ -84,6 +70,7 @@ export const useLogin = () => {
           ).data
         }
       }
+
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
@@ -93,25 +80,22 @@ export const useLogin = () => {
           email_or_phone: input,
           password: password,
           login_type: 'manual',
-          field_type: isPhoneNumber(input) ? 'phone' : 'email',
+          field_type: 'phone',
           alreadyInApp: false
         })
       })
+
       const data = await response.json()
       if (!response.ok) {
         if (response.status === 401 || data.message === 'Unauthenticated') {
-          // Clear token and trigger logout
           await logout()
           throw new Error('Session expired. Please login again.')
         }
         throw new Error(data.message || 'Login failed')
       }
-    
 
-      // Assuming the API returns a token
       if (data.token) {
         await setTokenAsync(data.token)
-       
         navigation.navigate({
           name: 'Main',
           merge: true
@@ -128,6 +112,15 @@ export const useLogin = () => {
     }
   }
 
+  const logout = async () => {
+    try {
+      await AsyncStorage.removeItem('token')
+      setTokenAsync(null)
+    } catch (error) {
+      console.error('Error during logout:', error)
+    }
+  }
+
   return {
     input,
     setInput,
@@ -139,6 +132,7 @@ export const useLogin = () => {
     passwordError,
     loading,
     loginAction,
-    currentTheme
+    currentTheme,
+    themeContext
   }
 }

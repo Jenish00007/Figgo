@@ -7,7 +7,8 @@ import {
   ScrollView,
   Platform,
   Image,
-  TextInput
+  TextInput,
+  StatusBar
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import styles from './styles'
@@ -31,9 +32,23 @@ function Login(props) {
     loginAction,
     currentTheme,
     showPassword,
-    setShowPassword
+    setShowPassword,
+    themeContext
   } = useLogin()
   const { t } = useTranslation()
+
+  const handlePhoneInput = (text) => {
+    // Remove any non-digit characters
+    const cleaned = text.replace(/\D/g, '')
+    
+    // If the number starts with 91, add + prefix
+    if (cleaned.startsWith('91')) {
+      setInput('+' + cleaned)
+    } else {
+      // If it's just a number, add +91 prefix
+      setInput('+91' + cleaned)
+    }
+  }
 
   useLayoutEffect(() => {
     props.navigation.setOptions(
@@ -50,6 +65,10 @@ function Login(props) {
     <SafeAreaView
       edges={['bottom', 'left', 'right']}
       style={styles(currentTheme).safeAreaViewStyles}>
+      <StatusBar
+        backgroundColor={currentTheme.themeBackground}
+        barStyle="dark-content"
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles().flex}>
@@ -62,7 +81,7 @@ function Login(props) {
             <View style={styles().subContainer}>
               <View style={styles().logoContainer}>
                 <Image
-                  source={require('../../assets/images/logo.png')} // Ensure this path is correct
+                  source={require('../../assets/images/logo.png')}
                   style={styles().logo}
                 />
               </View>
@@ -75,7 +94,6 @@ function Login(props) {
                     ...alignment.MTlarge,
                     ...alignment.MBmedium
                   }}>
-                  {/* {t('Login or Phone')} */}
                   Login
                 </TextDefault>
               </View>
@@ -83,15 +101,16 @@ function Login(props) {
                 <View>
                   <View>
                     <TextInput
-                      placeholder={t('Email or Phone')}
+                      placeholder="Enter Phone Number"
                       style={[
                         styles(currentTheme).textField,
                         inputError ? styles(currentTheme).errorInput : {}
                       ]}
                       placeholderTextColor={currentTheme.fontSecondColor}
                       value={input}
-                      onChangeText={e => setInput(e.trim())}
-                      keyboardType="email-address"
+                      onChangeText={handlePhoneInput}
+                      keyboardType="phone-pad"
+                      maxLength={13}
                     />
                     {inputError && (
                       <TextDefault
@@ -138,19 +157,6 @@ function Login(props) {
                       </TextDefault>
                     </View>
                   )}
-                  {/* <TouchableOpacity
-                    style={alignment.MBsmall}
-                    activeOpacity={0.7}
-                    onPress={() =>
-                      props.navigation.navigate('ForgotPassword', { input })
-                    }>
-                    <TextDefault
-                      textColor={currentTheme.main}
-                      style={alignment.MTsmall}
-                      bolder>
-                      {t('forgotPassword')}
-                    </TextDefault>
-                  </TouchableOpacity> */}
                 </View>
                 <View style={[styles.termsContainer, { alignItems: 'center', justifyContent: 'center' }]}>
                   <TextDefault textColor="black" style={{ textAlign: 'center' }}>
@@ -197,7 +203,6 @@ function Login(props) {
                   </TextDefault>
                 </View>
 
-
                 {/* Or Divider */}
                 <View style={[styles.orContainer, { alignItems: 'center', justifyContent: 'center' }]}>
                   <TextDefault textColor="black" style={{ textAlign: 'center' }}>
@@ -228,7 +233,6 @@ function Login(props) {
                     </View>
                   </TouchableOpacity>
                 </View> */}
-
 
               </View>
             </View>

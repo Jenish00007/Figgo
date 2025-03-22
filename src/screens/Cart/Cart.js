@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import AuthContext from '../../context/Auth';
 import ThemeContext from '../../ui/ThemeContext/ThemeContext';
 import { theme } from '../../utils/themeColors'; // Import the theme object
+import { FontAwesome } from '@expo/vector-icons';
 
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -62,6 +63,36 @@ const CartPage = () => {
     }
   };
 
+  const deleteCartItem = async (cartId) => {
+    try {
+      const headers = {
+        'moduleId': '1',
+        'Content-Type': 'application/json; charset=UTF-8',
+        'zoneId': '[3,1]',
+        'X-localization': 'en',
+        'latitude': '23.793544663762145',
+        'longitude': '90.41166342794895',
+        'Authorization': `Bearer ${token}`
+      };
+
+      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/remove-item?cart_id=${cartId}`, {
+        method: 'DELETE',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete item');
+      }
+
+      // Refresh cart items after successful deletion
+      await fetchCartItems();
+      Alert.alert('Success', 'Item removed from cart');
+    } catch (error) {
+      console.error('Error deleting cart item:', error);
+      Alert.alert('Error', 'Failed to remove item from cart');
+    }
+  };
+
   const renderItem = ({ item }) => (
     <View style={[styles.card, { 
       borderColor: currentTheme.borderColor,
@@ -84,6 +115,28 @@ const CartPage = () => {
           Qty: {item.quantity}
         </Text>
       </View>
+      <TouchableOpacity 
+        style={styles.deleteButton}
+        onPress={() => {
+          Alert.alert(
+            'Remove Item',
+            'Are you sure you want to remove this item from your cart?',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel'
+              },
+              {
+                text: 'Remove',
+                style: 'destructive',
+                onPress: () => deleteCartItem(item.id)
+              }
+            ]
+          );
+        }}
+      >
+        <FontAwesome name="trash" size={20} color={currentTheme.textErrorColor} />
+      </TouchableOpacity>
     </View>
   );
 
@@ -235,7 +288,13 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '600'
-  }
+  },
+  deleteButton: {
+    padding: 10,
+    position: 'absolute',
+    right: 10,
+    top: 10,
+  },
 });
 
 export default CartPage;

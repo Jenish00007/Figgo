@@ -209,14 +209,28 @@ const SubCategory = ({ route }) => {
       const json = await response.json();
       
       if (contentType === 'products') {
-        if (json?.products && json?.products.length > 0) {
-          setProducts(json.products);
+        if (json?.products && Array.isArray(json.products)) {
+          // Filter out any invalid products
+          const validProducts = json.products.filter(product => 
+            product && 
+            typeof product === 'object' && 
+            product.id && 
+            product.name
+          );
+          setProducts(validProducts);
         } else {
           setProducts([]);
         }
       } else {
-        if (json?.stores && json?.stores.length > 0) {
-          setStores(json.stores);
+        if (json?.stores && Array.isArray(json.stores)) {
+          // Filter out any invalid stores
+          const validStores = json.stores.filter(store => 
+            store && 
+            typeof store === 'object' && 
+            store.id && 
+            store.name
+          );
+          setStores(validStores);
         } else {
           setStores([]);
         }
@@ -224,6 +238,12 @@ const SubCategory = ({ route }) => {
     } catch (error) {
       console.error('Error fetching search results:', error);
       setError('Error fetching search results');
+      // Set empty arrays on error
+      if (contentType === 'products') {
+        setProducts([]);
+      } else {
+        setStores([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -394,8 +414,12 @@ const SubCategory = ({ route }) => {
 
               {/* Loading State */}
               {loading && (
-                <View style={styles().loadingContainer}>
-                  <ActivityIndicator size="large" color="#008800" />
+                <View style={[styles().loadingContainer, {
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }]}>
+                  <ActivityIndicator size="large" color="#F7CA0F" />
                 </View>
               )}
 
@@ -421,11 +445,12 @@ const SubCategory = ({ route }) => {
                     }}
                     contentContainerStyle={{ 
                       padding: 10,
-                      paddingBottom: 20
+                      paddingBottom: 20,
+                      flexGrow: 1
                     }}
                     renderItem={({ item }) => (
                       <View style={{ 
-                        width: '48%', // Slightly less than 50% to account for spacing
+                        width: '48%',
                         marginBottom: 10
                       }}>
                         <Products
@@ -436,15 +461,18 @@ const SubCategory = ({ route }) => {
                     )}
                     keyExtractor={(item) => item.id.toString()}
                     ListEmptyComponent={
-                      <View style={[styles().emptyContainer, { 
-                        padding: 20,
+                      <View style={{ 
+                        flex: 1,
+                        justifyContent: 'center',
                         alignItems: 'center',
-                        justifyContent: 'center'
-                      }]}>
-                        <Text style={[styles().emptyText, {
+                        padding: 20,
+                        minHeight: 200
+                      }}>
+                        <Text style={{
                           fontSize: 16,
-                          color: currentTheme.fontSecondColor
-                        }]}>No products found</Text>
+                          color: currentTheme.fontSecondColor,
+                          textAlign: 'center'
+                        }}>No products found</Text>
                       </View>
                     }
                   />
@@ -454,7 +482,8 @@ const SubCategory = ({ route }) => {
                     vertical={true}
                     style={[styles().storesList, { 
                       padding: 16,
-                      marginTop: 5
+                      marginTop: 5,
+                      flex: 1
                     }]}
                     showsVerticalScrollIndicator={false}
                     showsHorizontalScrollIndicator={false}
@@ -462,11 +491,20 @@ const SubCategory = ({ route }) => {
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) =>  <NewFiggoStore
                     item={item}
-                    
                   />}
                     ListEmptyComponent={
-                      <View style={styles().emptyContainer}>
-                        <Text style={styles().emptyText}>No stores found</Text>
+                      <View style={{ 
+                        flex: 1,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        padding: 20,
+                        minHeight: 200
+                      }}>
+                        <Text style={{
+                          fontSize: 16,
+                          color: currentTheme.fontSecondColor,
+                          textAlign: 'center'
+                        }}>No stores found</Text>
                       </View>
                     }
                   />
