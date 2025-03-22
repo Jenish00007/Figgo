@@ -141,7 +141,7 @@ const supermarketStyles = StyleSheet.create({
     distanceIcon: {
         width: 16,
         height: 16,
-        tintColor: 'green',
+        tintColor: '#F7CA0F',
     },
     distance: {
         fontSize: 12,
@@ -159,10 +159,10 @@ const supermarketStyles = StyleSheet.create({
         fontWeight: '600',
     },
     openBadge: {
-        backgroundColor: '#E8F5E9',
+        backgroundColor: '#FFF8E1',
     },
     openText: {
-        color: '#2E7D32',
+        color: '#F7CA0F',
         fontSize: 12,
         fontWeight: '600',
     },

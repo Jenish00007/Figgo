@@ -103,7 +103,7 @@ const AddToFavourites = ({ product, restaurantId }) => {
             <Ionicons
                 name={isFavourite ? 'heart' : 'heart-outline'}
                 size={28}
-                color={isFavourite ? 'red' : 'gray'}
+                color={isFavourite ? '#F7CA0F' : 'gray'}
             />
         </TouchableOpacity>
     );

@@ -1,28 +1,22 @@
 import React, { useContext } from 'react';
-import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, Image, Alert, Dimensions } from 'react-native';
+import { View, Text, ImageBackground, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { modelId } from 'expo-device';
 import AddToFavourites from '../Favourites/AddtoFavourites';
-import UserContext from '../../context/User';
 import { LocationContext } from '../../context/Location';
 import AuthContext from '../../context/Auth';
-import ConfigurationContext from '../../context/Configuration';
+import UserContext from '../../context/User';
 
-const { width } = Dimensions.get('window');
-const COLUMN_WIDTH = (width - 30) / 2; // 30 is total horizontal padding (15 on each side)
-
-const Products = ({ item, horizontal = true }) => {
+const Products = ({ item }) => {
   const navigation = useNavigation();
-  const { isLoggedIn } = useContext(UserContext);
+  const { addToCart, isLoggedIn } = useContext(UserContext);
   const { location } = useContext(LocationContext);
   const { token } = useContext(AuthContext);
-  const configuration = useContext(ConfigurationContext);
   
   // Function to limit the product name to 10 characters
   const getShortenedName = (name) => {
     if (name.length > 10) {
-      return name.slice(0, 17) + '...'; // Truncate after 10 characters and add '...'
+      return name.slice(0, 17) + '...';
     }
     return name;
   };
@@ -35,106 +29,82 @@ const Products = ({ item, horizontal = true }) => {
 
     // Check if product is in stock
     if (item?.stock <= 0) {
-      Alert.alert("Out of Stock", "This product is currently unavailable.");
+      Alert.alert(
+        'Out of Stock',
+        'This item is currently not available.',
+        [{ text: 'OK', style: 'cancel' }],
+        { cancelable: true }
+      );
       return;
     }
 
     try {
-      const headers = {
-        'moduleId': '1',
-        'zoneId': '[1]',
-        'latitude': location?.latitude?.toString() || '23.79354466376145',
-        'longitude': location?.longitude?.toString() || '90.41166342794895',
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
-
-      // List cart Items
-      const cartResponse = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/list`, {
-        'method': 'GET',
-        headers: headers,
-      });
-      const cartItems = await cartResponse.json();
-      const isProductInCart = cartItems?.some(cartItem => cartItem.item_id === item.id);
-
-      if (isProductInCart) {
-        Alert.alert("Info", "This product is already in your cart.");
-        return;
-      }
-
-      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/add`, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify({
-          item_id: item.id,
-          quantity: 1,
-          price: item.price,
-          name: item.name,
-          image: item.image_full_url,
-          model: "Item"
-        }),
-      });
-
-      const result = await response.text();
-      console.log("Add to Cart Response:", result);
-
-      if (response.ok) {
-        Alert.alert("Success", "Product added to cart successfully!");
+      const result = await addToCart(item);
+      if (result.success) {
+        Alert.alert("Success", result.message);
       } else {
-        Alert.alert("Error", result.message || "Failed to add product to cart.");
+        Alert.alert("Error", result.message);
       }
     } catch (error) {
       console.error("Error adding to cart:", error);
       Alert.alert("Error", "An error occurred while adding to cart.");
     }
   };
-
+      
   return (
-    <View style={styles.itemWrapper}>
-      <TouchableOpacity
-        onPress={() => navigation.push('ProductDetail',{product:item })}
-      >
-        <View style={styles.itemContainer}>
-          <View style={styles.imageContainer}>
-            <ImageBackground
-              source={{ uri: item.image_full_url }}
-              style={styles.cardImageBG}
-              resizeMode="cover"
-            >
-              <View style={styles.favoritePosition}>
-                <AddToFavourites product={item}/>
-              </View>
-            </ImageBackground>
-          </View>
-          <Text style={styles.cardTitle}>{getShortenedName(item.name)}</Text>
-          <View style={styles.cardFooterRow}>
-            <View style={styles.priceContainer}>
-              <Text style={styles.cardPriceCurrency}>₹</Text>
-              <Text style={styles.cardPrice}>{item.price}</Text>
-              {item?.discount > 0 && (
-                <Text style={styles.discountedPrice}>
-                  ₹{(parseFloat(item.price) + parseFloat(item.discount)).toFixed(2)}
-                </Text>
-              )}
+    <View style={styles.container}>
+      <View style={styles.itemWrapper}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('ProductDetail', { product: item })}
+          activeOpacity={0.8}
+        >
+          <View style={styles.itemContainer}>
+            <View style={styles.imageContainer}>
+              <ImageBackground
+                source={{ uri: item.image_full_url }}
+                style={styles.cardImageBG}
+                resizeMode="cover"
+              >
+                <View style={styles.favoritePosition}>
+                  <AddToFavourites product={item}/>
+                </View>
+              </ImageBackground>
             </View>
-            <TouchableOpacity onPress={handleAddToCart}>
-              <Icon style={styles.addIcon} name="add-circle" size={24} color="#F7CA0F" />
-            </TouchableOpacity>
+            <Text style={styles.cardTitle}>{getShortenedName(item.name)}</Text>
+            <View style={styles.cardFooterRow}>
+              <View style={styles.priceContainer}>
+                <Text style={styles.cardPriceCurrency}>₹</Text>
+                <Text style={styles.cardPrice}>{item.price}</Text>
+              </View>
+              <TouchableOpacity 
+                onPress={handleAddToCart}
+                style={[styles.addButton, { backgroundColor: '#F7CA0F' }]}
+              >
+                <Icon name="add" size={20} color="#000000" />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 10,
+    paddingHorizontal: 10,
+  },
   itemWrapper: {
-    width: COLUMN_WIDTH,
-    paddingHorizontal: 5,
-    paddingVertical: 5,
+    flex: 1,
+    marginBottom: 10,
   },
   itemContainer: {
-    padding: 10,
+    padding: 12,
     borderRadius: 12,
     backgroundColor: 'white',
     shadowColor: "rgba(0, 0, 0, 0.5)",
@@ -143,17 +113,17 @@ const styles = StyleSheet.create({
       height: 11,
     },
     elevation: 24,
-    height: 220, // Fixed height for consistent card size
+    marginBottom: 10,
+    width: 150,
   },
   imageContainer: {
     position: 'relative',
     width: '100%',
-    marginBottom: 8,
-    height: 120, // Fixed height for image container
+    marginBottom: 10,
   },
   cardImageBG: {
     width: '100%',
-    height: '100%',
+    height: 130,
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -165,19 +135,18 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     color: 'black',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     width: '100%',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 5,
     overflow: 'hidden',
-    height: 40, // Fixed height for title
   },
   cardFooterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 'auto', // Push to bottom of container
+    marginTop: 5,
   },
   priceContainer: {
     flexDirection: 'row',
@@ -185,21 +154,29 @@ const styles = StyleSheet.create({
   },
   cardPriceCurrency: {
     color: 'black',
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: '700',
+    marginRight: 2,
   },
   cardPrice: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: '700',
+    color: 'black',
   },
-  discountedPrice: {
-    fontSize: 12,
-    textDecorationLine: 'line-through',
-    color: '#666',
-    marginLeft: 5,
-  },
-  addIcon: {
-    marginLeft: 5,
+  addButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });
 

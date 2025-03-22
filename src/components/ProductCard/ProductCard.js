@@ -1,65 +1,88 @@
 // components/ProductCard.js
-import React from 'react';
-import { View, Image, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
-
-export const ProductCard = ({ 
-  item,
-  discount,
-  onAddToCart,
-  imageUrl,
-  title,
-  originalPrice,
-  price,
-  unit
-}) => {
-  // Handle unit display
-  const getUnitDisplay = () => {
-    if (!unit) return '';
-    if (typeof unit === 'string') return unit;
-    if (typeof unit === 'object' && unit.translations) {
-      // Get the first translation or fallback to empty string
-      const firstTranslation = Object.values(unit.translations)[0];
-      return firstTranslation?.name || '';
+import React, { useContext } from 'react';
+import { View, Image, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import AddToFavourites from '../Favourites/AddtoFavourites';
+import { LocationContext } from '../../context/Location';
+import AuthContext from '../../context/Auth';
+import { useNavigation } from '@react-navigation/native';
+import UserContext from '../../context/User';
+// Assuming styles are defined here
+export const ProductCard = ({ item }) => {
+  const { isLoggedIn, addToCart } = useContext(UserContext);
+  const { location } = useContext(LocationContext);
+  const { token } = useContext(AuthContext);
+  const navigation = useNavigation();
+ 
+  // Function to limit the product name to 10 characters
+  const getShortenedName = (name) => {
+    if (name.length > 10) {
+      return name.slice(0, 17) + '...';
     }
-    return '';
+    return name;
+  };
+
+  const handleAddToCart = async () => {
+    if (!isLoggedIn) {
+      navigation.navigate('Login');
+      return;
+    }
+
+    // Check if product is in stock
+    if (item?.stock <= 0) {
+      Alert.alert(
+        'Out of Stock',
+        'This item is currently not available.',
+        [{ text: 'OK', style: 'cancel' }],
+        { cancelable: true }
+      );
+      return;
+    }
+
+    try {
+      const result = await addToCart(item);
+      if (result.success) {
+        Alert.alert("Success", result.message);
+      } else {
+        Alert.alert("Error", result.message);
+      }
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      Alert.alert("Error", "An error occurred while adding to cart.");
+    }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        {/* Offer label on the left */}
-        {discount > 0 && (
-          <View style={styles.discountBadge}>
-            <Text style={styles.discountText}>{discount}% OFF</Text>
+      <View style={styles.itemWrapper}>
+        <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product: item })} activeOpacity={0.8}>
+          <View style={styles.itemContainer}>
+            <View style={styles.imageContainer}>
+              <Image
+                source={{ uri: item.image_full_url }}
+                style={styles.cardImageBG}
+                resizeMode="cover"
+              />
+              <View style={styles.favoritePosition}>
+                <AddToFavourites product={item}/>
+              </View>
+            </View>
+            <Text style={styles.cardTitle}>{getShortenedName(item.name)}</Text>
+            <View style={styles.cardFooterRow}>
+              <View style={styles.priceContainer}>
+                <Text style={styles.cardPriceCurrency}>₹</Text>
+                <Text style={styles.cardPrice}>{item.price}</Text>
+              </View>
+              <TouchableOpacity 
+                onPress={handleAddToCart}
+                style={[styles.addButton, { backgroundColor: '#F7CA0F' }]}
+              >
+                <Icon name="add" size={20} color="#000000" />
+              </TouchableOpacity>
+            </View>
           </View>
-        )}
-
-        {/* Heart icon on the right */}
-        <TouchableOpacity>
-          <Icon name="heart" size={24} color="#FF6347" style={styles.heartIcon} />
         </TouchableOpacity>
       </View>
-      <Image 
-        source={{ uri: imageUrl }} 
-        style={styles.productImage} 
-      />
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.unit}>{getUnitDisplay()}</Text>
-      <View style={styles.priceContainer}>
-        {discount > 0 && (
-          <Text style={styles.originalPrice}>₹ {originalPrice}</Text>
-        )}
-        <Text style={styles.price}>₹ {price}</Text>
-      </View>
-
-      {/* Add Icon at the bottom-right */}
-      <TouchableOpacity 
-        style={styles.addIconContainer}
-        onPress={onAddToCart}
-      >
-        <Icon name="plus" size={20} color="#fff" style={styles.addIcon} />
-      </TouchableOpacity>
     </View>
   );
 };
@@ -67,88 +90,92 @@ export const ProductCard = ({
 // Define the styles here
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-    padding: 12,
-    marginVertical: 8,
-    marginHorizontal: 8,
-    width: '100%',
-    height: 280,
-    position: 'relative',
-  },
-  header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 10,
+    paddingHorizontal: 10,
   },
-  discountBadge: {
-    backgroundColor: '#FF6347',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    zIndex: 1,
+  itemWrapper: {
+    flex: 1,
+    marginBottom: 10,
   },
-  discountText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
+  itemContainer: {
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'white',
+    shadowColor: "rgba(0, 0, 0, 0.5)",
+    shadowOffset: {
+      width: 0,
+      height: 11,
+    },
+    elevation: 24,
+    marginBottom: 10,
+    width: 150,
   },
-  heartIcon: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 1,
-  },
-  productImage: {
+  imageContainer: {
+    position: 'relative',
     width: '100%',
-    height: 120,
-    resizeMode: 'contain',
-    marginVertical: 10,
+    marginBottom: 10,
   },
-  title: {
+  cardImageBG: {
+    width: '100%',
+    height: 130,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  favoritePosition: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    zIndex: 1,
+  },
+  cardTitle: {
+    color: 'black',
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
-    marginVertical: 4,
+    width: '100%',
+    textAlign: 'center',
+    marginBottom: 5,
+    overflow: 'hidden',
   },
-  unit: {
-    fontSize: 12,
-    color: '#757575',
+  cardFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 5,
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
   },
-  originalPrice: {
-    fontSize: 14,
-    color: '#BDBDBD',
-    textDecorationLine: 'line-through',
-    marginRight: 8,
+  cardPriceCurrency: {
+    color: 'black',
+    fontSize: 18,
+    fontWeight: '700',
+    marginRight: 2,
   },
-  price: {
-    fontSize: 16,
-    color: '#008800',
-    fontWeight: 'bold',
+  cardPrice: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'black',
   },
-  addIconContainer: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-    backgroundColor: '#FF6347',
-    borderRadius: 20,
-    padding: 8,
+  addButton: {
+    backgroundColor: '#F7CA0F',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
     elevation: 3,
-  },
-  addIcon: {
-    alignSelf: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });
 

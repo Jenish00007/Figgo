@@ -12,7 +12,7 @@ import {
   Platform,
   Image,
   Dimensions,
-  SectionList, FlatList
+  SectionList, FlatList, StyleSheet
 } from 'react-native'
 import Animated, {
   Extrapolation,
@@ -56,6 +56,7 @@ import { LocationContext } from '../../context/Location'
 import PopularIcon from '../../assets/SVG/popular'
 import { escapeRegExp } from '../../utils/regex'
 import AddtoFavourites from './../../components/Favourites/AddtoFavourites'
+import AuthContext from '../../context/Auth'
 
 const { height } = Dimensions.get('screen')
 const moduleId = '1'
@@ -88,7 +89,9 @@ function Restaurant(props) {
   const translationY = useSharedValue(0)
   const circle = useSharedValue(0)
   const themeContext = useContext(ThemeContext)
-
+  const { addToCart, isLoggedIn, restaurant: restaurantCart, setCartRestaurant, cartCount, addQuantity, clearCart, checkItemCart } = useContext(UserContext);
+  const { location } = useContext(LocationContext);
+  const { token } = useContext(AuthContext);
   const currentTheme = theme[themeContext.ThemeValue]
   const configuration = useContext(ConfigurationContext)
   const [selectedLabel, selectedLabelSetter] = useState(0)
@@ -99,15 +102,6 @@ function Restaurant(props) {
   const [storeDetailsById, setStoreDetailsById] = useState([])
   // const [shopcategoriId, setShopcategoriId] = useState([])
   const [showSearchResults, setShowSearchResults] = useState(false)
-  const {
-    restaurant: restaurantCart,
-    setCartRestaurant,
-    cartCount,
-    addCartItem,
-    addQuantity,
-    clearCart,
-    checkItemCart
-  } = useContext(UserContext)
 
   const { data, refetch, networkStatus, loading, error } = useRestaurant(
     propsData._id
@@ -140,46 +134,12 @@ function Restaurant(props) {
     translationY.value = 0
   }
 
-  // useEffect(() => {
-  //   if (search === '') {
-  //     // setFilterData([])
-  //     const filteredData = []
-  //     deals?.forEach((category) => {
-  //       category.data.forEach((deals) => {
-  //         filteredData.push(deals)
-  //       })
-  //     })
-  //     setFilterData(filteredData)
-  //     setShowSearchResults(false)
-  //   } else if (deals) {
-  //     const escapedSearchText = escapeRegExp(search);
-  //     const regex = new RegExp(escapedSearchText, 'i')
-  //     const filteredData = []
-  //     deals.forEach((category) => {
-  //       category.data.forEach((deals) => {
-  //         const title = deals.title.search(regex)
-  //         if (title < 0) {
-  //           const description = deals.description.search(regex)
-  //           if (description > 0) {
-  //             filteredData.push(deals)
-  //           }
-  //         } else {
-  //           filteredData.push(deals)
-  //         }
-  //       })
-  //     })
-  //     setFilterData(filteredData)
-  //     setShowSearchResults(true)
-  //   }
-  // }, [search, searchOpen])
 
   useFocusEffect(() => {
     if (Platform.OS === 'android') {
-      StatusBar.setBackgroundColor(currentTheme.menuBar)
+      StatusBar.setBackgroundColor('#FFFFFF')
     }
-    StatusBar.setBarStyle(
-      themeContext.ThemeValue === 'Dark' ? 'light-content' : 'dark-content'
-    )
+    StatusBar.setBarStyle('dark-content')
   })
   useEffect(() => {
     async function Track() {
@@ -187,33 +147,6 @@ function Restaurant(props) {
     }
     Track()
   }, [])
-
-  // useEffect(() => {
-  //   if (
-  //     data &&
-  //     data?.restaurant &&
-  //     (!data?.restaurant.isAvailable || !isOpen())
-  //   ) {
-  //     Alert.alert(
-  //       '',
-  //       'Restaurant Closed at the moment',
-  //       [
-  //         {
-  //           text: 'Go back to restaurants',
-  //           onPress: () => {
-  //             navigation.goBack()
-  //           },
-  //           style: 'cancel'
-  //         },
-  //         {
-  //           text: 'See Menu',
-  //           onPress: () => console.log('see menu')
-  //         }
-  //       ],
-  //       { cancelable: false }
-  //     )
-  //   }
-  // }, [data])
 
   const zIndexAnimation = useAnimatedStyle(() => {
     return {
@@ -250,51 +183,7 @@ function Restaurant(props) {
     }
   }
 
-  const onPressItem = async (food) => {
-    if (!storeDetailsByAll?.status === 1  || !isOpen()) {
-      Alert.alert(
-        '',
-        t('restaurantClosed'),
-        [
-          {
-            text: t('backToRestaurants'),
-            onPress: () => {
-              navigation.goBack()
-            },
-            style: 'cancel'
-          },
-          {
-            text: t('seeMenu'),
-            onPress: () => console.log('see menu')
-          }
-        ],
-        { cancelable: false }
-      )
-      return
-    }
-    if (!restaurantCart || food.restaurant === restaurantCart) {
-      await addToCart(food, food.restaurant !== restaurantCart)
-    } else if (food.restaurant !== restaurantCart) {
-      Alert.alert(
-        '',
-        t('clearCartText'),
-        [
-          {
-            text: t('Cancel'),
-            onPress: () => console.log('Cancel Pressed'),
-            style: 'cancel'
-          },
-          {
-            text: t('okText'),
-            onPress: async () => {
-              await addToCart(food, true)
-            }
-          }
-        ],
-        { cancelable: false }
-      )
-    }
-  }
+
 
   function wrapContentAfterWords(content, numWords) {
     const words = content.split(' ')
@@ -307,26 +196,7 @@ function Restaurant(props) {
     return wrappedContent.join('\n')
   }
 
-  const addToCart = async (food, clearFlag) => {
-    if (
-      food?.variations?.length === 1 &&
-      food?.variations[0].addons?.length === 0
-    ) {
-      await setCartRestaurant(food.restaurant)
-      const result = checkItemCart(food._id)
-      if (result.exist) await addQuantity(result.key)
-      else await addCartItem(food._id, food.variations[0]._id, 1, [], clearFlag)
-      animate()
-    } else {
-      if (clearFlag) await clearCart()
-      navigation.navigate('ItemDetail', {
-        food,
-        addons: restaurant.addons,
-        options: restaurant.options,
-        restaurant: restaurant._id
-      })
-    }
-  }
+
 
   function tagCart(itemId) {
     if (checkItemCart) {
@@ -470,27 +340,27 @@ function Restaurant(props) {
     // fetchStoreDetailsById();
   }, [moduleId]);
 
-    const handleItemPress = async (ShopcategoriId) => {
-      try {
-        const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/items/latest?store_id=${propsData.id}&category_id=${ShopcategoriId}&offset=1&limit=13&type=all`, {
-          method: 'GET', // GET request method
-          headers: {
-            'Content-Type': 'application/json', // Ensures the server knows we're sending JSON
-            'zoneId': '[1]', // Pass zoneId in the headers
-            'moduleId': moduleId
-          }
-        });
-        const json = await response.json();
+  const handleItemPress = async (ShopcategoriId) => {
+    try {
+      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/items/latest?store_id=${propsData.id}&category_id=${ShopcategoriId}&offset=1&limit=13&type=all`, {
+        method: 'GET', // GET request method
+        headers: {
+          'Content-Type': 'application/json', // Ensures the server knows we're sending JSON
+          'zoneId': '[1]', // Pass zoneId in the headers
+          'moduleId': moduleId
+        }
+      });
+      const json = await response.json();
 
 
-        setStoreDetailsById(json.products);
-        console.log(propsData.id);
-        
-        console.log(ShopcategoriId);
-      } catch (error) {
-        console.error('Error fetching fetchStoreDetailsById:', error);
-      }
-    };
+      setStoreDetailsById(json.products);
+      console.log(propsData.id);
+
+      console.log(ShopcategoriId);
+    } catch (error) {
+      console.error('Error fetching fetchStoreDetailsById:', error);
+    }
+  };
 
 
 
@@ -521,30 +391,46 @@ function Restaurant(props) {
     fetchStoreDetailsByAll();
   }, [moduleId]);
   // Code that processes the dummy data
-  // const restaurant = data1.restaurant;
-  // const allDeals = restaurant.categories.filter((cat) => cat?.foods?.length);
-  // const deals = allDeals.map((c, index) => ({
-  //   ...c,
-  //   data: c.foods,
-  //   index: dataList?.length > 0 ? index + 1 : index
-  // }));
+  
 
-  // const updatedDeals =
-  //   data1?.length > 0
-  //     ? [
-  //       {
-  //         title: 'Popular',
-  //         id: new Date().getTime(),
-  //         data: dataList?.slice(0, 4),
-  //         index: 0
-  //       },
-  //       ...deals
-  //     ]
-  //     : [...deals];
+  const handleAddToCart = async (item) => {
+    if (!isLoggedIn) {
+      navigation.navigate('Login');
+      return;
+    }
 
-  // console.log(updatedDeals);
+    // Check if product is in stock
+    if (item?.stock <= 0) {
+      Alert.alert(
+        '',
+        'Restaurant Closed at the moment',
+        [
+          {
+            text: 'Go back to restaurants',
+            onPress: () => {
+              navigation.goBack()
+            },
+            style: 'cancel'
+          }
+        ],
+        { cancelable: false }
+      );
+      return;
+    }
 
- 
+    try {
+      const result = await addToCart(item);
+      if (result.success) {
+        Alert.alert("Success", result.message);
+      } else {
+        Alert.alert("Error", result.message);
+      }
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      Alert.alert("Error", "An error occurred while adding to cart.");
+    }
+  };
+
   return (
     <>
       <SafeAreaView style={styles(currentTheme).flex}>
@@ -553,7 +439,7 @@ function Restaurant(props) {
             ref={flatListRef}
             iconColor={iconColor}
             iconSize={iconSize}
-            onItemPress={handleItemPress} 
+            onItemPress={handleItemPress}
             iconBackColor={iconBackColor}
             iconRadius={iconRadius}
             iconTouchWidth={iconTouchWidth}
@@ -594,12 +480,7 @@ function Restaurant(props) {
                   <TouchableOpacity
                     style={styles(currentTheme).searchDealSection}
                     activeOpacity={0.7}
-                    onPress={() =>
-                      onPressItem({
-                        ...item,
-
-                      })
-                    }
+                    onPress={() => navigation.navigate('ProductDetail', { product: item })}
                   >
                     <View
                       style={{
@@ -643,10 +524,8 @@ function Restaurant(props) {
                                 bolder
                                 small
                               >
-                                {configuration.currencySymbol}{' '}
-                                {parseFloat(item.variations[0].price).toFixed(
-                                  2
-                                )}
+                                ₹{' '}
+                                {parseFloat(item.variations[0].price).toFixed(2)}
                               </TextDefault>
                               {item?.variations[0]?.discounted > 0 && (
                                 <TextDefault
@@ -656,26 +535,25 @@ function Restaurant(props) {
                                   small
                                   lineOver
                                 >
-                                  {configuration.currencySymbol}{' '}
-                                  {(
-                                    item.variations[0].price +
-                                    item.variations[0].discounted
-                                  ).toFixed(2)}
+                                  ₹{' '}
+                                  {(item.variations[0].price + item.variations[0].discounted).toFixed(2)}
                                 </TextDefault>
                               )}
                             </View>
                           </View>
                         </View>
                       </View>
-                      <View style={styles().addToCart}>
+                      <TouchableOpacity 
+                        style={[styles().addToCart, { backgroundColor: '#F7CA0F' }]}
+                        onPress={() => handleAddToCart(item)}
+                      >
                         <MaterialIcons
-                          name='add'
+                          name="add"
                           size={scale(20)}
-                          color={currentTheme.black}
+                          color="#000000"
                         />
-                      </View>
+                      </TouchableOpacity>
                     </View>
-                    {/* )} */}
                     {tagCart(item.id)}
                   </TouchableOpacity>
                 </View>
@@ -697,14 +575,7 @@ function Restaurant(props) {
                   <TouchableOpacity
                     style={styles(currentTheme).searchDealSection}
                     activeOpacity={0.7}
-                    onPress={() => {
-                      console.log(item.id); // Log the id
-                      onPressItem({
-                        ...item,
-                        categoryid: item.id,
-                      });
-                    }}
-
+                    onPress={() => navigation.navigate('ProductDetail', { product: item })}
                   >
                     <View
                       style={{
@@ -734,9 +605,6 @@ function Restaurant(props) {
                             >
                               {item.name}
                             </TextDefault>
-                            {/* <TextDefault style={styles(currentTheme).priceText} small>
-                              {wrapContentAfterWords(item.description, 5)}
-                            </TextDefault> */}
                             <View style={styles(currentTheme).dealPrice}>
                               <TextDefault
                                 numberOfLines={1}
@@ -745,7 +613,7 @@ function Restaurant(props) {
                                 bolder
                                 small
                               >
-                                {configuration.currencySymbol}{' '}
+                                ₹{' '}
                                 {parseFloat(item.price).toFixed(2)}
                               </TextDefault>
                               {item?.discount > 0 && (
@@ -756,23 +624,24 @@ function Restaurant(props) {
                                   small
                                   lineOver
                                 >
-                                  {configuration.currencySymbol}{' '}
-                                  {(
-                                    item.price + item.discount
-                                  ).toFixed(2)}
+                                  ₹{' '}
+                                  {(item.price + item.discount).toFixed(2)}
                                 </TextDefault>
                               )}
                             </View>
                           </View>
                         </View>
                       </View>
-                      <View style={styles().addToCart}>
+                      <TouchableOpacity 
+                        style={[styles().addToCart, { backgroundColor: '#F7CA0F' }]}
+                        onPress={() => handleAddToCart(item)}
+                      >
                         <MaterialIcons
                           name="add"
                           size={scale(20)}
-                          color={currentTheme.black}
+                          color="#000000"
                         />
-                      </View>
+                      </TouchableOpacity>
                     </View>
                     {tagCart(item.id)}
                   </TouchableOpacity>
