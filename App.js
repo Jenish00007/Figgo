@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import * as SplashScreen from 'expo-splash-screen'
 import { getCurrentLocation } from './src/ui/hooks/useLocation'
 import { LocationContext } from './src/context/Location'
+import AnimatedSplash from './src/components/AnimatedSplash'
 
 import {
   BackHandler,
@@ -70,6 +71,7 @@ export default function App() {
   const [theme, themeSetter] = useReducer(ThemeReducer, systemTheme === 'dark' ? 'Dark' : 'Pink')
   const [isUpdating, setIsUpdating] = useState(false)
   const [isInitializingLocation, setIsInitializingLocation] = useState(true)
+  const [showSplash, setShowSplash] = useState(true)
   useWatchLocation()
   useEffect(() => {
     const loadAppData = async () => {
@@ -245,43 +247,44 @@ export default function App() {
     reviewModalRef?.current?.close()
   }
 
-  if (appIsReady) {
+  const handleSplashComplete = () => {
+    setShowSplash(false)
+  }
+
+  if (!appIsReady || showSplash) {
     return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <ApolloProvider client={client}>
-          <ThemeContext.Provider
-            value={{ ThemeValue: theme, dispatch: themeSetter }}>
-            <StatusBar
-              backgroundColor={Theme[theme].newheaderColor}
-              barStyle={theme === 'Dark' ? 'light-content' : 'dark-content'}
-            />
-            <LocationContext.Provider value={{ location, setLocation }}>
-              <ConfigurationProvider>
-                <AuthProvider>
-                  <UserProvider>
-                    <OrdersProvider>
-                      <AppContainer />
-                      <ReviewModal ref={reviewModalRef} onOverlayPress={onOverlayPress} theme={Theme[theme]} orderId={orderId} />
-                    </OrdersProvider>
-                  </UserProvider>
-                </AuthProvider>
-              </ConfigurationProvider>
-            </LocationContext.Provider>
-            <FlashMessage MessageComponent={MessageComponent} />
-          </ThemeContext.Provider>
-        </ApolloProvider>
-      </GestureHandlerRootView>
-    )
-  } else {
-    return (
-      <View style={[styles.flex, styles.mainContainer, { backgroundColor: Theme[theme].startColor }]}>
-        <Text style={{ color: Theme[theme].white, fontSize: 16 }}>
-          Loading...
-        </Text>
-        <ActivityIndicator size="large" color={Theme[theme].white} />
+      <View style={{ flex: 1 }}>
+        <AnimatedSplash onAnimationComplete={handleSplashComplete} />
       </View>
     )
   }
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ApolloProvider client={client}>
+        <ThemeContext.Provider
+          value={{ ThemeValue: theme, dispatch: themeSetter }}>
+          <StatusBar
+            backgroundColor={Theme[theme].newheaderColor}
+            barStyle={theme === 'Dark' ? 'light-content' : 'dark-content'}
+          />
+          <LocationContext.Provider value={{ location, setLocation }}>
+            <ConfigurationProvider>
+              <AuthProvider>
+                <UserProvider>
+                  <OrdersProvider>
+                    <AppContainer />
+                    <ReviewModal ref={reviewModalRef} onOverlayPress={onOverlayPress} theme={Theme[theme]} orderId={orderId} />
+                  </OrdersProvider>
+                </UserProvider>
+              </AuthProvider>
+            </ConfigurationProvider>
+          </LocationContext.Provider>
+          <FlashMessage MessageComponent={MessageComponent} />
+        </ThemeContext.Provider>
+      </ApolloProvider>
+    </GestureHandlerRootView>
+  )
 }
 
 const styles = StyleSheet.create({
