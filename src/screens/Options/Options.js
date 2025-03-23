@@ -359,7 +359,9 @@ export default function SettingsScreen() {
             <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
+          <TouchableOpacity 
+            style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}
+            onPress={() => navigation.navigate('Help')}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="help-circle" size={20} />
             </View>
@@ -372,7 +374,9 @@ export default function SettingsScreen() {
             <FeatherIcon color={currentTheme.fontSecondColor} name="chevron-right" size={20} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
+          <TouchableOpacity 
+            style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}
+            onPress={() => navigation.navigate('About')}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="info" size={20} />
             </View>

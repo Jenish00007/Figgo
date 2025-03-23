@@ -1,171 +1,164 @@
-import React, { useContext, useEffect } from 'react'
-import { View, StatusBar, Platform, FlatList, Linking, TouchableOpacity } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import styles from './styles'
-import ThemeContext from '../../ui/ThemeContext/ThemeContext'
-import { theme } from '../../utils/themeColors'
-import TextDefault from '../../components/Text/TextDefault/TextDefault'
-import Analytics from '../../utils/analytics'
-import { useFocusEffect } from '@react-navigation/native'
-import { HeaderBackButton } from '@react-navigation/elements'
-import { MaterialIcons } from '@expo/vector-icons'
-import navigationService from '../../routes/navigationService'
-import { scale } from '../../utils/scaling'
-import { useTranslation } from 'react-i18next'
-import Accordion from '../../components/Accordion/Accordion'
-import { FontAwesome } from '@expo/vector-icons'
+import React from 'react';
+import {
+  SafeAreaView,
+  ScrollView,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Linking,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { theme } from '../../utils/themeColors';
+import ThemeContext from '../../ui/ThemeContext/ThemeContext';
+import { useContext } from 'react';
+import FeatherIcon from 'react-native-vector-icons/Feather';
 
-const FAQs = [
-  {
-    id: 1,
-    heading: 'faq1',
-    description: 'faq1Description'
-  },
-  {
-    id: 2,
-    heading: 'faq2',
-    description: 'faq2Description'
-  },
-  {
-    id: 3,
-    heading: 'faq3',
-    description: 'faq3Description'
-  },
-  {
-    id: 4,
-    heading: 'faq4',
-    description: 'faq4Description'
-  },
-  {
-    id: 5,
-    heading: 'faq5',
-    description: 'faq5Description'
-  },
-  {
-    id: 6,
-    heading: 'faq6',
-    description: 'faq6Description'
-  },
-  {
-    id: 7,
-    heading: 'faq7',
-    description: 'faq7Description'
-  }
-]
+export default function Help() {
+  const navigation = useNavigation();
+  const themeContext = useContext(ThemeContext);
+  const currentTheme = theme[themeContext.ThemeValue];
 
-const Help = props => {
-  const { t } = useTranslation()
-  const themeContext = useContext(ThemeContext)
-  const currentTheme = theme[themeContext.ThemeValue]
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: currentTheme.themeBackground,
+    },
+    header: {
+      backgroundColor: '#F7CA0F',
+      paddingTop: 20,
+      paddingBottom: 15,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 15,
+    },
+    headerTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: '#000',
+      flex: 1,
+      textAlign: 'center',
+    },
+    backButton: {
+      padding: 5,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    section: {
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: currentTheme.borderColor,
+    },
+    sectionTitle: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: '#F7CA0F',
+      marginBottom: 15,
+    },
+    faqItem: {
+      marginBottom: 15,
+      backgroundColor: currentTheme.itemCardColor,
+      borderRadius: 8,
+      padding: 15,
+      borderLeftWidth: 4,
+      borderLeftColor: '#F7CA0F',
+    },
+    faqQuestion: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: currentTheme.fontMainColor,
+      marginBottom: 8,
+    },
+    faqAnswer: {
+      fontSize: 14,
+      color: currentTheme.fontSecondColor,
+      lineHeight: 20,
+    },
+    contactItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: currentTheme.itemCardColor,
+      padding: 15,
+      borderRadius: 8,
+      marginBottom: 10,
+    },
+    contactIcon: {
+      marginRight: 15,
+    },
+    contactText: {
+      fontSize: 16,
+      color: currentTheme.fontMainColor,
+    },
+  });
 
-  const openWhatsAppChat = () => {
-    Linking.openURL('whatsapp://send?phone=15408006867')
-  }
+  const handleEmailPress = () => {
+    Linking.openURL('mailto:support@figgo.com');
+  };
 
-  useFocusEffect(() => {
-    if (Platform.OS === 'android') {
-      StatusBar.setBackgroundColor(currentTheme.menuBar)
-    }
-    StatusBar.setBarStyle(
-      themeContext.ThemeValue === 'Dark' ? 'light-content' : 'dark-content'
-    )
-  })
-
-  useEffect(() => {
-    async function Track() {
-      try {
-        await Analytics.track('NAVIGATE_TO_FAQS')
-      } catch(err){
-        // console.log('ERORORORO =>', err)
-      }
-    }
-    Track()
-  }, [])
-
-  useEffect(() => {
-    props.navigation.setOptions({
-      headerTitle: t('titleFAQ'),
-      headerTitleAlign: 'center',
-      headerRight: null,
-      headerTitleStyle: {
-        color: currentTheme.newFontcolor,
-        fontWeight: 'bold'
-      },
-      headerTitleContainerStyle: {
-        marginTop: '2%',
-        paddingLeft: scale(25),
-        paddingRight: scale(25),
-        height: '75%',
-        marginLeft: 0
-      },
-      headerStyle: {
-        backgroundColor: currentTheme.newheaderBG,
-        elevation: 0
-      },
-      headerLeft: () => (
-        <HeaderBackButton
-          truncatedLabel=""
-          backImage={() => (
-            <View>
-              <MaterialIcons name="arrow-back" size={25} color={currentTheme.newIconColor} />
-            </View>
-          )}
-          onPress={() => {
-            navigationService.goBack()
-          }}
-        />
-      )
-    })
-  }, [props.navigation])
+  const handlePhonePress = () => {
+    Linking.openURL('tel:+919876543210');
+  };
 
   return (
-    <SafeAreaView
-      edges={['bottom', 'right', 'left']}
-      style={styles(currentTheme).flex}
-    >
-      <StatusBar
-        barStyle='light-content'
-        backgroundColor={currentTheme.themeBackground}
-      />
-      <View
-        style={[styles(currentTheme).flex, styles(currentTheme).mainContainer]}
-      >
-        <FlatList
-          data={FAQs}
-          keyExtractor={(item) => 'Faq-' + item.id}
-          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          renderItem={({ item }) => (
-            <Accordion heading={t(item.heading)}>
-              <TextDefault textColor={currentTheme.newFontcolor}>
-                {t(item.description)}
-              </TextDefault>
-            </Accordion>
-          )}
-        />
+    <SafeAreaView style={styles.container}>
+     
 
-        <View>
-          <View style={styles(currentTheme).containerButton}>
-            <TouchableOpacity
-              activeOpacity={0.5}
-              style={styles(currentTheme).addButton}
-              onPress={openWhatsAppChat}
-            >
-              <View style={styles(currentTheme).contentContainer}>
-                <FontAwesome
-                  name='whatsapp'
-                  size={24}
-                  color={currentTheme.black}
-                />
-                <TextDefault bold H5 style={styles(currentTheme).whatsAppText}>
-                  {t('whatsAppText')}
-                </TextDefault>
-              </View>
-            </TouchableOpacity>
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+          
+          <View style={styles.faqItem}>
+            <Text style={styles.faqQuestion}>How do I track my order?</Text>
+            <Text style={styles.faqAnswer}>
+              You can track your order in real-time through the "My Orders" section of the app. 
+              Once your order is placed, you'll receive updates about its status.
+            </Text>
+          </View>
+
+          <View style={styles.faqItem}>
+            <Text style={styles.faqQuestion}>What payment methods do you accept?</Text>
+            <Text style={styles.faqAnswer}>
+              We accept all major credit cards, debit cards, and digital payment methods. 
+              Some restaurants may also accept cash on delivery.
+            </Text>
+          </View>
+
+          <View style={styles.faqItem}>
+            <Text style={styles.faqQuestion}>How do I change my delivery address?</Text>
+            <Text style={styles.faqAnswer}>
+              You can update your delivery address in the "Profile" section of the app. 
+              Make sure to save the new address before placing your next order.
+            </Text>
           </View>
         </View>
-      </View>
-    </SafeAreaView>
-  )
-}
 
-export default Help
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Contact Us</Text>
+          
+          <TouchableOpacity style={styles.contactItem} onPress={handleEmailPress}>
+            <FeatherIcon 
+              name="mail" 
+              size={24} 
+              color="#F7CA0F"
+              style={styles.contactIcon}
+            />
+            <Text style={styles.contactText}>Email: support@figgo.com</Text>
+          </TouchableOpacity>
+
+          
+
+          <View style={styles.contactItem}>
+            <FeatherIcon 
+              name="clock" 
+              size={24} 
+              color="#F7CA0F"
+              style={styles.contactIcon}
+            />
+            <Text style={styles.contactText}>Support Hours: 24/7</Text>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
