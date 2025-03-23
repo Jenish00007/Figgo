@@ -5,6 +5,9 @@ import * as Device from 'expo-device'
 import * as Font from 'expo-font'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import * as SplashScreen from 'expo-splash-screen'
+import { getCurrentLocation } from './src/ui/hooks/useLocation'
+import { LocationContext } from './src/context/Location'
+import AnimatedSplash from './src/components/AnimatedSplash'
 
 import {
   BackHandler,
@@ -13,7 +16,9 @@ import {
   LogBox,
   StyleSheet,
   ActivityIndicator,
-  I18nManager
+  I18nManager,
+  View,
+  Text
 } from 'react-native'
 import { ApolloProvider } from '@apollo/client'
 import { exitAlert } from './src/utils/androidBackButton'
@@ -25,7 +30,6 @@ import { ConfigurationProvider } from './src/context/Configuration'
 import { UserProvider } from './src/context/User'
 import { AuthProvider } from './src/context/Auth'
 import { theme as Theme } from './src/utils/themeColors'
-import { LocationProvider } from './src/context/Location'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import 'expo-dev-client'
 import useEnvVars, { isProduction } from './environment'
@@ -64,28 +68,64 @@ export default function App() {
   const responseListener = useRef()
   const [orderId, setOrderId] = useState()
   const systemTheme = useColorScheme()
-  // Theme Reducer
   const [theme, themeSetter] = useReducer(ThemeReducer, systemTheme === 'dark' ? 'Dark' : 'Pink')
   const [isUpdating, setIsUpdating] = useState(false)
+  const [isInitializingLocation, setIsInitializingLocation] = useState(true)
+  const [showSplash, setShowSplash] = useState(true)
   useWatchLocation()
   useEffect(() => {
     const loadAppData = async () => {
       try {
         await SplashScreen.preventAutoHideAsync()
+        await Font.loadAsync({
+          MuseoSans300: require('./src/assets/font/MuseoSans/MuseoSans300.ttf'),
+          MuseoSans500: require('./src/assets/font/MuseoSans/MuseoSans500.ttf'),
+          MuseoSans700: require('./src/assets/font/MuseoSans/MuseoSans700.ttf')
+        })
+
+        // Initialize location
+        const { coords, error } = await getCurrentLocation()
+        if (!error && coords) {
+          const apiUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.latitude}&lon=${coords.longitude}`
+          const response = await fetch(apiUrl)
+          const data = await response.json()
+          
+          if (!data.error) {
+            let address = data.display_name
+            if (address.length > 21) {
+              address = address.substring(0, 21) + '...'
+            }
+            
+            setLocation({
+              label: 'currentLocation',
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+              deliveryAddress: address
+            })
+          }
+        } else {
+          // Set default location in India (Delhi)
+          setLocation({
+            label: 'defaultLocation',
+            latitude: 28.6139,
+            longitude: 77.2090,
+            deliveryAddress: 'Delhi, India'
+          })
+        }
+
+        BackHandler.addEventListener('hardwareBackPress', exitAlert)
+        setAppIsReady(true)
       } catch (e) {
         console.warn(e)
+        // Set default location in India (Delhi) if there's an error
+        setLocation({
+          label: 'defaultLocation',
+          latitude: 28.6139,
+          longitude: 77.2090,
+          deliveryAddress: 'Delhi, India'
+        })
+        setAppIsReady(true)
       }
-      // await i18n.initAsync()
-      await Font.loadAsync({
-        MuseoSans300: require('./src/assets/font/MuseoSans/MuseoSans300.ttf'),
-        MuseoSans500: require('./src/assets/font/MuseoSans/MuseoSans500.ttf'),
-        MuseoSans700: require('./src/assets/font/MuseoSans/MuseoSans700.ttf')
-      })
-      // await permissionForPushNotificationsAsync()
-      await getActiveLocation()
-      BackHandler.addEventListener('hardwareBackPress', exitAlert)
-
-      setAppIsReady(true)
     }
 
     loadAppData()
@@ -175,17 +215,6 @@ export default function App() {
     )
   }
 
-  async function getActiveLocation() {
-    try {
-      const locationStr = await AsyncStorage.getItem('location')
-      if (locationStr) {
-        setLocation(JSON.parse(locationStr))
-      }
-    } catch (err) {
-      console.log(err)
-    }
-  }
-
   useEffect(() => {
     registerForPushNotificationsAsync()
 
@@ -218,36 +247,44 @@ export default function App() {
     reviewModalRef?.current?.close()
   }
 
-  if (appIsReady) {
-    return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <ApolloProvider client={client}>
-          <ThemeContext.Provider
-            value={{ ThemeValue: theme, dispatch: themeSetter }}>
-            <StatusBar
-              backgroundColor={Theme[theme].newheaderColor}
-              barStyle={theme === 'Dark' ? 'light-content' : 'dark-content'}
-            />
-            <LocationProvider>
-              <ConfigurationProvider>
-                <AuthProvider>
-                  <UserProvider>
-                    <OrdersProvider>
-                      <AppContainer />
-                      <ReviewModal ref={reviewModalRef} onOverlayPress={onOverlayPress} theme={Theme[theme]} orderId={orderId} />
-                    </OrdersProvider>
-                  </UserProvider>
-                </AuthProvider>
-              </ConfigurationProvider>
-            </LocationProvider>
-            <FlashMessage MessageComponent={MessageComponent} />
-          </ThemeContext.Provider>
-        </ApolloProvider>
-      </GestureHandlerRootView>
-    )
-  } else {
-    return null
+  const handleSplashComplete = () => {
+    setShowSplash(false)
   }
+
+  if (!appIsReady || showSplash) {
+    return (
+      <View style={{ flex: 1 }}>
+        <AnimatedSplash onAnimationComplete={handleSplashComplete} />
+      </View>
+    )
+  }
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ApolloProvider client={client}>
+        <ThemeContext.Provider
+          value={{ ThemeValue: theme, dispatch: themeSetter }}>
+          <StatusBar
+            backgroundColor={Theme[theme].newheaderColor}
+            barStyle={theme === 'Dark' ? 'light-content' : 'dark-content'}
+          />
+          <LocationContext.Provider value={{ location, setLocation }}>
+            <ConfigurationProvider>
+              <AuthProvider>
+                <UserProvider>
+                  <OrdersProvider>
+                    <AppContainer />
+                    <ReviewModal ref={reviewModalRef} onOverlayPress={onOverlayPress} theme={Theme[theme]} orderId={orderId} />
+                  </OrdersProvider>
+                </UserProvider>
+              </AuthProvider>
+            </ConfigurationProvider>
+          </LocationContext.Provider>
+          <FlashMessage MessageComponent={MessageComponent} />
+        </ThemeContext.Provider>
+      </ApolloProvider>
+    </GestureHandlerRootView>
+  )
 }
 
 const styles = StyleSheet.create({
