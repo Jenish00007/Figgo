@@ -271,17 +271,13 @@ function AppContainer() {
           navigationService.setGlobalRef(ref)
         }}
       >
-        {!location ? (
-          <LocationStack />
-        ) : (
-          <MainStack.Navigator initialRouteName='Drawer'>
-            <MainStack.Screen
-              options={{ headerShown: false }}
-              name='Drawer'
-              component={Drawer}
-            />
-          </MainStack.Navigator>
-        )}
+        <MainStack.Navigator initialRouteName='Drawer'>
+          <MainStack.Screen
+            options={{ headerShown: false }}
+            name='Drawer'
+            component={Drawer}
+          />
+        </MainStack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
   )

@@ -4,8 +4,8 @@
     "scheme": "figgo",
     "version": "1.0.0",
     "description": "Ordering app built in React Native using Expo for IOS and Android.",
-    "slug": "shopygram",
-    "owner": "jenish_65",
+    "slug": "lofigram",
+    "owner": "don05",
     "privacy": "public",
     "androidStatusBar": {
       "backgroundColor": "#000"
@@ -107,7 +107,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "9f042587-5507-4ccc-8440-9bed7243457e"
+        "projectId": "a79bc421-d1f4-4a46-8a0e-042308451c06"
       }
     }
   }

@@ -1,6 +1,34 @@
 import * as Location from 'expo-location'
 import { getLocationFromStorage } from './useWatchLocation'
 
+export const getCurrentLocation = async () => {
+  const { status, canAskAgain } = await Location.getForegroundPermissionsAsync()
+  
+  if (status === 'granted') {
+    try {
+      const location = await Location.getCurrentPositionAsync({
+        enableHighAccuracy: true
+      })
+      return { ...location, error: false }
+    } catch (e) {
+      return { error: true, message: e.message }
+    }
+  } else if (canAskAgain) {
+    const { status: newStatus } = await Location.requestForegroundPermissionsAsync()
+    if (newStatus === 'granted') {
+      try {
+        const location = await Location.getCurrentPositionAsync({
+          enableHighAccuracy: true
+        })
+        return { ...location, error: false }
+      } catch (e) {
+        return { error: true, message: e.message }
+      }
+    }
+  }
+  return { error: true, message: 'Location permission is required to use this app' }
+}
+
 export default function useLocation() {
   const getLocationPermission = async () => {
     const {
@@ -34,23 +62,6 @@ export default function useLocation() {
       }
     }
     return { status: finalStatus, canAskAgain: finalCanAskAgain }
-  }
-
-  const getCurrentLocation = async () => {
-    const location = await getLocationFromStorage()
-    if (location) return { coords: location }
-    const { status } = await askLocationPermission()
-    if (status === 'granted') {
-      try {
-        const location = await Location.getCurrentPositionAsync({
-          enableHighAccuracy: true
-        })
-        return { ...location, error: false }
-      } catch (e) {
-        return { error: true, message: e.message }
-      }
-    }
-    return { error: true, message: 'Location permission was not granted' }
   }
 
   return { getCurrentLocation, getLocationPermission }

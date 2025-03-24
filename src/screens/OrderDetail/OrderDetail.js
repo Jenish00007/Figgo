@@ -39,7 +39,8 @@ const { height: HEIGHT, width: WIDTH } = Dimensions.get('screen')
 function OrderDetail(props) {
   const [cancelModalVisible, setCancelModalVisible] = useState(false)
   const [order, setOrder] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
   const [error, setError] = useState(null)
   
   const Analytics = analytics()
@@ -73,7 +74,8 @@ function OrderDetail(props) {
         'zoneId': '[1]',
         'latitude': '23.79354466376145',
         'longitude': '90.41166342794895',
-        'Authorization': token ? `Bearer ${token}` : ''
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Accept': 'application/json'
       }
 
       const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/order/track?order_id=${id}`, {
@@ -96,6 +98,11 @@ function OrderDetail(props) {
       
       if (!orderData) {
         throw new Error('Order not found or invalid response format')
+      }
+
+      // Ensure order_status is set
+      if (!orderData.order_status) {
+        orderData.order_status = 'PENDING'
       }
 
       setOrder(orderData)
@@ -122,39 +129,59 @@ function OrderDetail(props) {
     Track()
   }, [])
 
-  const cancelModalToggle = () => {
-    setCancelModalVisible(!cancelModalVisible)
-  }
-
-  const handleCancelOrder = async () => {
+  const handleCancelOrder = async (reason) => {
     try {
+      setCancelling(true)
       const headers = {
         'moduleId': '1',
         'zoneId': '[1]',
-        'Authorization': token ? `Bearer ${token}` : ''
+        'latitude': '23.79354466376145',
+        'longitude': '90.41166342794895',
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
       }
 
-      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/order/cancel/${id}`, {
+      // Create form data
+      const formBody = []
+      formBody.push(`_method=put`)
+      formBody.push(`order_id=${id}`)
+      formBody.push(`reason=${encodeURIComponent(reason)}`)
+
+      const response = await fetch('https://6ammart-admin.6amtech.com/api/v1/customer/order/cancel', {
         method: 'POST',
         headers: headers,
+        body: formBody.join('&')
       })
+
+      if (!response || !response.ok) {
+        const errorData = await response?.json().catch(() => ({}))
+        throw new Error(errorData?.message || 'Failed to cancel order')
+      }
 
       const data = await response.json()
       
-      if (response.ok) {
-        FlashMessage({
-          message: 'Order cancelled successfully'
-        })
-        fetchOrderDetails() // Refresh order details
-      } else {
-        throw new Error(data.message || 'Failed to cancel order')
+      if (data.errors) {
+        throw new Error(data.errors[0]?.message || 'Failed to cancel order')
       }
-    } catch (error) {
+      
       FlashMessage({
-        message: error.message
+        message: 'Order cancelled successfully'
       })
+      
+      // Refresh order details
+      await fetchOrderDetails()
+      
+    } catch (error) {
+      console.error('Error cancelling order:', error)
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to cancel order. Please try again.'
+      )
+    } finally {
+      setCancelling(false)
+      setCancelModalVisible(false)
     }
-    cancelModalToggle()
   }
 
   useEffect(() => {
@@ -200,6 +227,9 @@ function OrderDetail(props) {
     store_discount_amount,
     order_status
   } = order
+
+  // Ensure order_status is valid before rendering ProgressBar
+  const validOrderStatus = order_status || 'PENDING'
 
   return (
     <View style={{ flex: 1 }}>
@@ -314,10 +344,9 @@ function OrderDetail(props) {
                     {remainingTime}-{remainingTime + 5} {t('mins')}
                   </TextDefault>
                   <ProgressBar
-                    configuration={configuration}
                     currentTheme={currentTheme}
-                    item={order}
-                    navigation={navigation}
+                    item={{ ...order, orderStatus: validOrderStatus }}
+                    customWidth={scale(50)}
                   />
                 </>
               )}
@@ -372,7 +401,7 @@ function OrderDetail(props) {
                 borderRadius: scale(8),
                 alignItems: 'center'
               }]}
-              onPress={cancelModalToggle}
+              onPress={() => setCancelModalVisible(true)}
             >
               <TextDefault
                 textColor={currentTheme.buttonTextPink}
@@ -388,10 +417,11 @@ function OrderDetail(props) {
       <CancelModal
         theme={currentTheme}
         modalVisible={cancelModalVisible}
-        setModalVisible={cancelModalToggle}
+        setModalVisible={() => setCancelModalVisible(false)}
         cancelOrder={handleCancelOrder}
-        loading={loading}
+        loading={cancelling}
         orderStatus={order_status}
+        orderId={id}
       />
     </View>
   )
