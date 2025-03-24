@@ -45,19 +45,20 @@ export const orderStatuses = [
 ]
 
 export const checkStatus = status => {
-  if (!status) return orderStatuses[0] // Return PENDING status as default
-  
-  const obj = orderStatuses.filter(x => x.key === status)
-  return obj.length > 0 ? obj[0] : orderStatuses[0] // Return first status if not found
+  const obj = orderStatuses.filter(x => {
+    return x.key === status
+  })
+  return obj[0]
 }
 
 export const ProgressBar = ({ currentTheme, item, customWidth }) => {
-  // Add null checks
-  if (!item || !item.orderStatus) return null
   if (item.orderStatus === ORDER_STATUS_ENUM.CANCELLED) return null
-
-  const status = checkStatus(item.orderStatus)
-  if (!status) return null
+  useSubscription(
+    gql`
+      ${subscriptionOrder}
+    `,
+    { variables: { id: item._id } }
+  )
 
   const defaultWidth = scale(50)
   const width = customWidth !== undefined ? customWidth : defaultWidth
@@ -65,9 +66,9 @@ export const ProgressBar = ({ currentTheme, item, customWidth }) => {
   return (
     <View style={{ marginTop: scale(10) }}>
       <View style={{ flexDirection: 'row' }}>
-        {Array(status.status)
+        {Array(checkStatus(item.orderStatus).status)
           .fill(0)
-          .map((_, index) => (
+          .map((item, index) => (
             <View
               key={index}
               style={{
@@ -78,9 +79,9 @@ export const ProgressBar = ({ currentTheme, item, customWidth }) => {
               }}
             />
           ))}
-        {Array(4 - status.status)
+        {Array(4 - checkStatus(item.orderStatus).status)
           .fill(0)
-          .map((_, index) => (
+          .map((item, index) => (
             <View
               key={index}
               style={{

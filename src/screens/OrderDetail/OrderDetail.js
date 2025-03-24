@@ -74,8 +74,7 @@ function OrderDetail(props) {
         'zoneId': '[1]',
         'latitude': '23.79354466376145',
         'longitude': '90.41166342794895',
-        'Authorization': token ? `Bearer ${token}` : '',
-        'Accept': 'application/json'
+        'Authorization': token ? `Bearer ${token}` : ''
       }
 
       const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/order/track?order_id=${id}`, {
@@ -98,11 +97,6 @@ function OrderDetail(props) {
       
       if (!orderData) {
         throw new Error('Order not found or invalid response format')
-      }
-
-      // Ensure order_status is set
-      if (!orderData.order_status) {
-        orderData.order_status = 'PENDING'
       }
 
       setOrder(orderData)
@@ -228,9 +222,6 @@ function OrderDetail(props) {
     order_status
   } = order
 
-  // Ensure order_status is valid before rendering ProgressBar
-  const validOrderStatus = order_status || 'PENDING'
-
   return (
     <View style={{ flex: 1 }}>
       <StatusBar
@@ -344,9 +335,10 @@ function OrderDetail(props) {
                     {remainingTime}-{remainingTime + 5} {t('mins')}
                   </TextDefault>
                   <ProgressBar
+                    configuration={configuration}
                     currentTheme={currentTheme}
-                    item={{ ...order, orderStatus: validOrderStatus }}
-                    customWidth={scale(50)}
+                    item={order}
+                    navigation={navigation}
                   />
                 </>
               )}

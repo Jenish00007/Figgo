@@ -73,6 +73,7 @@ export default function App() {
   const [isUpdating, setIsUpdating] = useState(false)
   const [showSplash, setShowSplash] = useState(true)
   const [locationError, setLocationError] = useState(null)
+  const [isInitializingLocation, setIsInitializingLocation] = useState(true)
   useWatchLocation()
 
   useEffect(() => {
@@ -89,6 +90,7 @@ export default function App() {
         const storedLocation = await AsyncStorage.getItem('location')
         if (storedLocation) {
           setLocation(JSON.parse(storedLocation))
+          setIsInitializingLocation(false)
           setAppIsReady(true)
           return
         }
@@ -115,18 +117,22 @@ export default function App() {
               }
               setLocation(newLocation)
               await AsyncStorage.setItem('location', JSON.stringify(newLocation))
+              setIsInitializingLocation(false)
               setAppIsReady(true)
             } else {
               setLocationError('Failed to get address from coordinates')
+              setIsInitializingLocation(false)
               setAppIsReady(true)
             }
           } catch (e) {
             console.warn('Error getting address:', e)
             setLocationError('Failed to get address from coordinates')
+            setIsInitializingLocation(false)
             setAppIsReady(true)
           }
         } else {
           setLocationError(message)
+          setIsInitializingLocation(false)
           setAppIsReady(true)
         }
 
@@ -134,6 +140,7 @@ export default function App() {
       } catch (e) {
         console.warn('Error in loadAppData:', e)
         setLocationError('Failed to initialize app')
+        setIsInitializingLocation(false)
         setAppIsReady(true)
       }
     }
@@ -261,9 +268,13 @@ export default function App() {
     setShowSplash(false)
   }
 
-  if (!appIsReady || showSplash) {
+  if (!appIsReady || showSplash || isInitializingLocation) {
     return (
       <View style={{ flex: 1 }}>
+        <StatusBar
+          backgroundColor="#F7CA0F"
+          barStyle="dark-content"
+        />
         <AnimatedSplash onAnimationComplete={handleSplashComplete} />
       </View>
     )
@@ -279,6 +290,7 @@ export default function App() {
           style={[styles.button, { backgroundColor: Theme[theme].white }]}
           onPress={async () => {
             try {
+              setIsInitializingLocation(true)
               const { coords, error, message } = await getCurrentLocation()
               if (!error && coords) {
                 const apiUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.latitude}&lon=${coords.longitude}`
@@ -309,6 +321,8 @@ export default function App() {
             } catch (e) {
               console.warn('Error in location retry:', e)
               setLocationError('Failed to get location. Please try again.')
+            } finally {
+              setIsInitializingLocation(false)
             }
           }}
         >
@@ -387,7 +401,6 @@ async function registerForPushNotificationsAsync() {
     alert('Must use physical device for Push Notifications')
   }
 }
-
 // async function schedulePushNotification() {
 //   await Notifications.scheduleNotificationAsync({
 //     content: {
@@ -398,3 +411,4 @@ async function registerForPushNotificationsAsync() {
 //     trigger: { seconds: 10 }
 //   })
 // }
+

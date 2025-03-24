@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Text } from 'react-native';
 import { theme } from '../utils/themeColors';
+import { StatusBar } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,6 +53,11 @@ const AnimatedSplash = ({ onAnimationComplete }) => {
 
   return (
     <View style={styles.container}>
+      <StatusBar
+        backgroundColor="#F7CA0F"
+        barStyle="dark-content"
+        translucent
+      />
       <Animated.View style={[styles.logoContainer, logoStyle]}>
         <Image 
           source={require('../assets/images/figgo_black.png')}
@@ -61,8 +67,6 @@ const AnimatedSplash = ({ onAnimationComplete }) => {
       </Animated.View>
       <Animated.View style={[styles.messageContainer, messageStyle]}>
         <Text style={styles.welcomeText}>Welcome to Figgo</Text>
-       
-       
       </Animated.View>
     </View>
   );
