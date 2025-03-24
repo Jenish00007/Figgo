@@ -18,8 +18,7 @@ import {
   ActivityIndicator,
   I18nManager,
   View,
-  Text,
-  TouchableOpacity
+  Text
 } from 'react-native'
 import { ApolloProvider } from '@apollo/client'
 import { exitAlert } from './src/utils/androidBackButton'
@@ -71,11 +70,9 @@ export default function App() {
   const systemTheme = useColorScheme()
   const [theme, themeSetter] = useReducer(ThemeReducer, systemTheme === 'dark' ? 'Dark' : 'Pink')
   const [isUpdating, setIsUpdating] = useState(false)
-  const [showSplash, setShowSplash] = useState(true)
-  const [locationError, setLocationError] = useState(null)
   const [isInitializingLocation, setIsInitializingLocation] = useState(true)
+  const [showSplash, setShowSplash] = useState(true)
   useWatchLocation()
-
   useEffect(() => {
     const loadAppData = async () => {
       try {
@@ -86,61 +83,39 @@ export default function App() {
           MuseoSans700: require('./src/assets/font/MuseoSans/MuseoSans700.ttf')
         })
 
-        // Check if location exists in AsyncStorage first
-        const storedLocation = await AsyncStorage.getItem('location')
-        if (storedLocation) {
-          setLocation(JSON.parse(storedLocation))
-          setIsInitializingLocation(false)
-          setAppIsReady(true)
-          return
-        }
-
-        // If no stored location, try to get current location
-        const { coords, error, message } = await getCurrentLocation()
+        // Initialize location
+        const { coords, error } = await getCurrentLocation()
         if (!error && coords) {
-          try {
-            const apiUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.latitude}&lon=${coords.longitude}`
-            const response = await fetch(apiUrl)
-            const data = await response.json()
-            
-            if (!data.error) {
-              let address = data.display_name
-              if (address.length > 21) {
-                address = address.substring(0, 21) + '...'
-              }
-              
-              const newLocation = {
-                label: 'currentLocation',
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-                deliveryAddress: address
-              }
-              setLocation(newLocation)
-              await AsyncStorage.setItem('location', JSON.stringify(newLocation))
-              setIsInitializingLocation(false)
-              setAppIsReady(true)
-            } else {
-              setLocationError('Failed to get address from coordinates')
-              setIsInitializingLocation(false)
-              setAppIsReady(true)
+          const apiUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.latitude}&lon=${coords.longitude}`
+          const response = await fetch(apiUrl)
+          const data = await response.json()
+          
+          if (!data.error) {
+            let address = data.display_name
+            if (address.length > 21) {
+              address = address.substring(0, 21) + '...'
             }
-          } catch (e) {
-            console.warn('Error getting address:', e)
-            setLocationError('Failed to get address from coordinates')
-            setIsInitializingLocation(false)
-            setAppIsReady(true)
+            
+            setLocation({
+              label: 'currentLocation',
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+              deliveryAddress: address
+            })
           }
-        } else {
-          setLocationError(message)
-          setIsInitializingLocation(false)
-          setAppIsReady(true)
         }
 
         BackHandler.addEventListener('hardwareBackPress', exitAlert)
+        setAppIsReady(true)
       } catch (e) {
-        console.warn('Error in loadAppData:', e)
-        setLocationError('Failed to initialize app')
-        setIsInitializingLocation(false)
+        console.warn(e)
+        // Set default location in India (Delhi) if there's an error
+        setLocation({
+          label: 'defaultLocation',
+          latitude: 28.6139,
+          longitude: 77.2090,
+          deliveryAddress: 'Delhi, India'
+        })
         setAppIsReady(true)
       }
     }
@@ -268,68 +243,10 @@ export default function App() {
     setShowSplash(false)
   }
 
-  if (!appIsReady || showSplash || isInitializingLocation) {
+  if (!appIsReady || showSplash) {
     return (
       <View style={{ flex: 1 }}>
-        <StatusBar
-          backgroundColor="#F7CA0F"
-          barStyle="dark-content"
-        />
         <AnimatedSplash onAnimationComplete={handleSplashComplete} />
-      </View>
-    )
-  }
-
-  if (locationError) {
-    return (
-      <View style={[styles.flex, styles.mainContainer, { backgroundColor: Theme[theme].startColor }]}>
-        <TextDefault textColor={Theme[theme].white} bold style={{ textAlign: 'center', marginBottom: 20 }}>
-          {locationError}
-        </TextDefault>
-        <TouchableOpacity 
-          style={[styles.button, { backgroundColor: Theme[theme].white }]}
-          onPress={async () => {
-            try {
-              setIsInitializingLocation(true)
-              const { coords, error, message } = await getCurrentLocation()
-              if (!error && coords) {
-                const apiUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.latitude}&lon=${coords.longitude}`
-                const response = await fetch(apiUrl)
-                const data = await response.json()
-                
-                if (!data.error) {
-                  let address = data.display_name
-                  if (address.length > 21) {
-                    address = address.substring(0, 21) + '...'
-                  }
-                  
-                  const newLocation = {
-                    label: 'currentLocation',
-                    latitude: coords.latitude,
-                    longitude: coords.longitude,
-                    deliveryAddress: address
-                  }
-                  setLocation(newLocation)
-                  await AsyncStorage.setItem('location', JSON.stringify(newLocation))
-                  setLocationError(null)
-                } else {
-                  setLocationError('Failed to get address from coordinates')
-                }
-              } else {
-                setLocationError(message)
-              }
-            } catch (e) {
-              console.warn('Error in location retry:', e)
-              setLocationError('Failed to get location. Please try again.')
-            } finally {
-              setIsInitializingLocation(false)
-            }
-          }}
-        >
-          <TextDefault textColor={Theme[theme].startColor} bold>
-            Enable Location
-          </TextDefault>
-        </TouchableOpacity>
       </View>
     )
   }
@@ -368,13 +285,7 @@ const styles = StyleSheet.create({
   },
   mainContainer: {
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20
-  },
-  button: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 5
+    alignItems: 'center'
   }
 })
 async function registerForPushNotificationsAsync() {
@@ -401,14 +312,3 @@ async function registerForPushNotificationsAsync() {
     alert('Must use physical device for Push Notifications')
   }
 }
-// async function schedulePushNotification() {
-//   await Notifications.scheduleNotificationAsync({
-//     content: {
-//       title: "You've got mail! 📬",
-//       body: 'Here is the notification body',
-//       data: { type: NOTIFICATION_TYPES.REVIEW_ORDER, _id: '65e068b2150aab288f2b821f' }
-//     },
-//     trigger: { seconds: 10 }
-//   })
-// }
-
