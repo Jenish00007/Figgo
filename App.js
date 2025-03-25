@@ -103,6 +103,14 @@ export default function App() {
               deliveryAddress: address
             })
           }
+        } else {
+          // Set default location in India (Delhi)
+          setLocation({
+            label: 'defaultLocation',
+            latitude: 28.6139,
+            longitude: 77.2090,
+            deliveryAddress: 'Delhi, India'
+          })
         }
 
         BackHandler.addEventListener('hardwareBackPress', exitAlert)
