@@ -31,7 +31,7 @@ const ProductDetail = (profile) => {
     const { product } = route.params;
     const { location } = useContext(LocationContext);
     const { token } = useContext(AuthContext);
-    const { isLoggedIn } = useContext(UserContext);
+    const { isLoggedIn, addToCart } = useContext(UserContext);
     const themeContext = useContext(ThemeContext);
     const currentTheme = theme[themeContext.ThemeValue];
     const [loading, setLoading] = useState(false);
@@ -82,7 +82,7 @@ const ProductDetail = (profile) => {
         return stars;
     };
 
-    const addToCart = async () => {
+    const handleAddToCart = async () => {
         if (!isLoggedIn) {
             navigation.navigate('Login');
             return;
@@ -95,50 +95,12 @@ const ProductDetail = (profile) => {
         }
 
         setLoading(true);
-
         try {
-            const headers = {
-                'moduleId': '1',
-                'zoneId': '[1]',
-                'latitude': location?.latitude?.toString() || '23.79354466376145',
-                'longitude': location?.longitude?.toString() || '90.41166342794895',
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            };
-            //List cart Items
-            const cartResponse = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/list`, {
-                'method': 'GET',
-                headers: headers,
-                });
-            const cartItems = await cartResponse.json();
-            const isProductInCart = cartItems?.some(item => item.item_id === product.id);
-
-            if (isProductInCart) {
-                Alert.alert("Info", "This product is already in your cart.");
-                setLoading(false);
-                return;
-            }            
-
-            const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/add?guest_id=${profile.guest_id}`, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({
-                    item_id: product.id,
-                    quantity: 1, // Adjust quantity as needed
-                    price: product.price,
-                    name: product.name,
-                    image: product.image_full_url,
-                    model: "Item"
-                }),
-            });
-   
-            const result = await response.text();
-            console.log("Add to Cart Response:", result);
-
-            if (response.ok) {
-                Alert.alert("Success", "Product added to cart successfully!");
+            const result = await addToCart(product);
+            if (result.success) {
+                Alert.alert("Success", result.message);
             } else {
-                Alert.alert("Error", result.message || "Failed to add product to cart.");
+                Alert.alert("Error", result.message);
             }
         } catch (error) {
             console.error("Error adding to cart:", error);
@@ -281,7 +243,7 @@ const ProductDetail = (profile) => {
                         { backgroundColor: currentTheme.primary },
                         (loading || product?.stock <= 0) && { opacity: 0.7 }
                     ]}  
-                    onPress={addToCart}
+                    onPress={handleAddToCart}
                     disabled={loading || product?.stock <= 0}
                 >
                     <MaterialIcons name="add-shopping-cart" size={20} color="#fff" />

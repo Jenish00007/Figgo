@@ -9,6 +9,7 @@ import { LocationContext } from './Location'
 import AuthContext from './Auth'
 import analytics from '../utils/analytics'
 import { useTranslation } from 'react-i18next'
+import { Alert } from 'react-native'
 
 const UserContext = React.createContext({})
 
@@ -114,19 +115,80 @@ export const UserProvider = props => {
         'Content-Type': 'application/json'
       };
 
-      // List cart Items first to check if item already exists
+      // List cart Items first to check if item already exists and check store
       const cartResponse = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/list`, {
         'method': 'GET',
         headers: headers,
       });
       const cartItems = await cartResponse.json();
+      
+      // Check if product is already in cart
       const isProductInCart = cartItems?.some(cartItem => cartItem.item_id === item.id);
-
       if (isProductInCart) {
         throw new Error("This product is already in your cart.");
       }
 
-      // Add item to cart
+      // Check if cart has items from a different store
+      if (cartItems && cartItems.length > 0) {
+        const firstItemStoreId = cartItems[0].item.store_id;
+        if (firstItemStoreId !== item.store_id) {
+          // Show confirmation dialog
+          return new Promise((resolve, reject) => {
+            Alert.alert(
+              "Different Store",
+              "Your cart contains items from a different store. Adding this item will remove all items from your current cart. Do you want to continue?",
+              [
+                {
+                  text: "Cancel",
+                  onPress: () => resolve({ success: false, message: "Operation cancelled" }),
+                  style: "cancel"
+                },
+                {
+                  text: "Yes",
+                  onPress: async () => {
+                    try {
+                      // Delete all existing cart items
+                      for (const cartItem of cartItems) {
+                        await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/remove-item?cart_id=${cartItem.id}`, {
+                          method: 'DELETE',
+                          headers: headers
+                        });
+                      }
+
+                      // Add new item
+                      const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/add`, {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify({
+                          item_id: item.id,
+                          quantity: 1,
+                          price: item.price,
+                          name: item.name,
+                          image: item.image_full_url,
+                          model: "Item"
+                        }),
+                      });
+
+                      const result = await response.text();
+                      if (!response.ok) {
+                        throw new Error(result.message || "Failed to add product to cart.");
+                      }
+
+                      // Update local cart state
+                      setCart([item]);
+                      resolve({ success: true, message: "Product added to cart successfully!" });
+                    } catch (error) {
+                      reject(error);
+                    }
+                  }
+                }
+              ]
+            );
+          });
+        }
+      }
+
+      // If we get here, either cart is empty or item is from same store
       const response = await fetch(`https://6ammart-admin.6amtech.com/api/v1/customer/cart/add`, {
         method: 'POST',
         headers: headers,
@@ -141,8 +203,6 @@ export const UserProvider = props => {
       });
 
       const result = await response.text();
-      console.log("Add to Cart Response:", result);
-
       if (!response.ok) {
         throw new Error(result.message || "Failed to add product to cart.");
       }
