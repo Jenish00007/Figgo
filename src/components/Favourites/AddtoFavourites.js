@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { TouchableOpacity, Alert } from 'react-native';
+import { TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LocationContext } from '../../context/Location';
 import AuthContext from '../../context/Auth';
@@ -100,11 +100,15 @@ const AddToFavourites = ({ product, restaurantId }) => {
 
     return (
         <TouchableOpacity onPress={toggleFavourites} disabled={loading}>
-            <Ionicons
-                name={isFavourite ? 'heart' : 'heart-outline'}
-                size={28}
-                color={isFavourite ? '#F7CA0F' : 'gray'}
-            />
+            {loading ? (
+                <ActivityIndicator size="small" color="#F7CA0F" />
+            ) : (
+                <Ionicons
+                    name={isFavourite ? 'heart' : 'heart-outline'}
+                    size={28}
+                    color={isFavourite ? '#F7CA0F' : 'gray'}
+                />
+            )}
         </TouchableOpacity>
     );
 };

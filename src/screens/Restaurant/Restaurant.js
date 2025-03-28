@@ -12,7 +12,7 @@ import {
   Platform,
   Image,
   Dimensions,
-  SectionList, FlatList, StyleSheet
+  SectionList, FlatList, StyleSheet, ActivityIndicator
 } from 'react-native'
 import Animated, {
   Extrapolation,
@@ -100,7 +100,7 @@ function Restaurant(props) {
   const [search, setSearch] = useState('')
   const [storeDetailsByAll, setStoreDetailsByAll] = useState([])
   const [storeDetailsById, setStoreDetailsById] = useState([])
-  // const [shopcategoriId, setShopcategoriId] = useState([])
+  const [loadingItemId, setLoadingItemId] = useState(null)
   const [showSearchResults, setShowSearchResults] = useState(false)
 
   const { data, refetch, networkStatus, loading, error } = useRestaurant(
@@ -466,6 +466,7 @@ function Restaurant(props) {
       return;
     }
 
+    setLoadingItemId(item.id);
     try {
       const result = await addToCart(item);
       if (result.success) {
@@ -476,6 +477,8 @@ function Restaurant(props) {
     } catch (error) {
       console.error("Error adding to cart:", error);
       Alert.alert("Error", "An error occurred while adding to cart.");
+    } finally {
+      setLoadingItemId(null);
     }
   };
 
@@ -591,12 +594,17 @@ function Restaurant(props) {
                       <TouchableOpacity 
                         style={[styles().addToCart, { backgroundColor: '#F7CA0F' }]}
                         onPress={() => handleAddToCart(item)}
+                        disabled={loadingItemId === item.id}
                       >
-                        <MaterialIcons
-                          name="add"
-                          size={scale(20)}
-                          color="#000000"
-                        />
+                        {loadingItemId === item.id ? (
+                          <ActivityIndicator size="small" color="#000000" />
+                        ) : (
+                          <MaterialIcons
+                            name="add"
+                            size={scale(20)}
+                            color="#000000"
+                          />
+                        )}
                       </TouchableOpacity>
                     </View>
                     {tagCart(item.id)}
@@ -680,12 +688,17 @@ function Restaurant(props) {
                       <TouchableOpacity 
                         style={[styles().addToCart, { backgroundColor: '#F7CA0F' }]}
                         onPress={() => handleAddToCart(item)}
+                        disabled={loadingItemId === item.id}
                       >
-                        <MaterialIcons
-                          name="add"
-                          size={scale(20)}
-                          color="#000000"
-                        />
+                        {loadingItemId === item.id ? (
+                          <ActivityIndicator size="small" color="#000000" />
+                        ) : (
+                          <MaterialIcons
+                            name="add"
+                            size={scale(20)}
+                            color="#000000"
+                          />
+                        )}
                       </TouchableOpacity>
                     </View>
                     {tagCart(item.id)}

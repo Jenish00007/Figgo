@@ -19,6 +19,8 @@ import { StatusBar } from 'react-native';
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [updatingItemId, setUpdatingItemId] = useState(null);
+  const [updatingAction, setUpdatingAction] = useState(null); // 'increment' or 'decrement'
   
   const navigation = useNavigation();
   const { token } = useContext(AuthContext);
@@ -94,7 +96,9 @@ const CartPage = () => {
     }
   };
 
-  const updateCartQuantity = async (cartId, newQuantity) => {
+  const updateCartQuantity = async (cartId, newQuantity, action) => {
+    setUpdatingItemId(cartId);
+    setUpdatingAction(action);
     try {
       const headers = {
         'moduleId': '1',
@@ -128,21 +132,27 @@ const CartPage = () => {
     } catch (error) {
       console.error('Error updating cart quantity:', error);
       Alert.alert('Error', error.message || 'Failed to update quantity');
+    } finally {
+      setUpdatingItemId(null);
+      setUpdatingAction(null);
     }
   };
 
   const handleQuantityChange = (item, change) => {
     const newQuantity = item.quantity + change;
     if (newQuantity > 0) {
-      updateCartQuantity(item.id, newQuantity);
+      updateCartQuantity(item.id, newQuantity, change > 0 ? 'increment' : 'decrement');
     }
   };
 
   const renderItem = ({ item }) => (
-    <View style={[styles.card, { 
-      borderColor: currentTheme.borderColor,
-      backgroundColor: currentTheme.itemCardColor
-    }]}>
+    <TouchableOpacity 
+      onPress={() => navigation.navigate('ProductDetail', { product: item.item })}
+      style={[styles.card, { 
+        borderColor: currentTheme.borderColor,
+        backgroundColor: currentTheme.itemCardColor
+      }]}
+    >
       {item.item && item.item.image && (
         <Image
           source={{ uri: `https://6ammart-admin.6amtech.com/storage/app/public/product/${item.item.image}` }}
@@ -160,8 +170,13 @@ const CartPage = () => {
           <TouchableOpacity 
             style={[styles.quantityButton, { backgroundColor: currentTheme.primary }]}
             onPress={() => handleQuantityChange(item, -1)}
+            disabled={updatingItemId === item.id}
           >
-            <Text style={styles.quantityButtonText}>-</Text>
+            {updatingItemId === item.id && updatingAction === 'decrement' ? (
+              <ActivityIndicator size="small" color="#000000" />
+            ) : (
+              <Text style={styles.quantityButtonText}>-</Text>
+            )}
           </TouchableOpacity>
           <Text style={[styles.quantity, { color: currentTheme.fontMainColor }]}>
             {item.quantity}
@@ -169,12 +184,17 @@ const CartPage = () => {
           <TouchableOpacity 
             style={[styles.quantityButton, { backgroundColor: currentTheme.primary }]}
             onPress={() => handleQuantityChange(item, 1)}
+            disabled={updatingItemId === item.id}
           >
-            <Text style={styles.quantityButtonText}>+</Text>
+            {updatingItemId === item.id && updatingAction === 'increment' ? (
+              <ActivityIndicator size="small" color="#000000" />
+            ) : (
+              <Text style={styles.quantityButtonText}>+</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.deleteButton}
         onPress={() => {
           Alert.alert(
@@ -196,7 +216,7 @@ const CartPage = () => {
       >
         <FontAwesome name="trash" size={20} color={currentTheme.textErrorColor} />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 
   // Calculate total price
@@ -234,6 +254,8 @@ const CartPage = () => {
         data={cartItems}
         renderItem={renderItem}
         keyExtractor={(item, index) => `${item.id || index}`}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <Text style={[styles.emptyMessage, { color: currentTheme.fontSecondColor }]}>
             Your cart is empty

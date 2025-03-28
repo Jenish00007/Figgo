@@ -1,6 +1,6 @@
 // components/ProductCard.js
-import React, { useContext } from 'react';
-import { View, Image, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React, { useContext, useState } from 'react';
+import { View, Image, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AddToFavourites from '../Favourites/AddtoFavourites';
 import { LocationContext } from '../../context/Location';
@@ -13,6 +13,7 @@ export const ProductCard = ({ item }) => {
   const { location } = useContext(LocationContext);
   const { token } = useContext(AuthContext);
   const navigation = useNavigation();
+  const [isLoading, setIsLoading] = useState(false);
  
   // Function to limit the product name to 10 characters
   const getShortenedName = (name) => {
@@ -39,6 +40,7 @@ export const ProductCard = ({ item }) => {
       return;
     }
 
+    setIsLoading(true);
     try {
       const result = await addToCart(item);
       if (result.success) {
@@ -49,6 +51,8 @@ export const ProductCard = ({ item }) => {
     } catch (error) {
       console.error("Error adding to cart:", error);
       Alert.alert("Error", "An error occurred while adding to cart.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -76,8 +80,13 @@ export const ProductCard = ({ item }) => {
               <TouchableOpacity 
                 onPress={handleAddToCart}
                 style={[styles.addButton, { backgroundColor: '#F7CA0F' }]}
+                disabled={isLoading}
               >
-                <Icon name="add" size={20} color="#000000" />
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#000000" />
+                ) : (
+                  <Icon name="add" size={20} color="#000000" />
+                )}
               </TouchableOpacity>
             </View>
           </View>
