@@ -27,13 +27,16 @@ import { useTranslation } from 'react-i18next';
 
 // Define languageTypes before using it in state
 const languageTypes = [
-  { value: 'English', code: 'en', index: 0 },
-  { value: 'français', code: 'fr', index: 1 },
-  { value: 'ភាសាខ្មែរ', code: 'km', index: 2 },
-  { value: '中文', code: 'zh', index: 3 },
-  { value: 'Deutsche', code: 'de', index: 4 },
-  { value: 'العربية', code: 'ar', index: 5 },
-  { value: 'עִברִית', code: 'he', index: 6 }
+  { value: 'English (UK)', code: 'en', index: 0, nativeText: 'English', flag: 'https://flagcdn.com/w80/gb.png' },
+  { value: 'Egypt (عربي)', code: 'ar', index: 1, nativeText: 'عربي', flag: 'https://flagcdn.com/w80/eg.png' },
+  { value: 'India', code: 'hi', index: 2, nativeText: 'हिंदी', flag: 'https://flagcdn.com/w80/in.png' },
+  { value: 'Pakistan', code: 'ur', index: 3, nativeText: 'اردو', flag: 'https://flagcdn.com/w80/pk.png' },
+  { value: 'Bangladesh', code: 'bn', index: 4, nativeText: 'বাংলাদেশ', flag: 'https://flagcdn.com/w80/bd.png' },
+  { value: 'Philippines', code: 'tl', index: 5, nativeText: 'tagalog', flag: 'https://flagcdn.com/w80/ph.png' },
+  { value: 'Iran', code: 'fa', index: 6, nativeText: 'فارسی', flag: 'https://flagcdn.com/w80/ir.png' },
+  { value: 'Nepal', code: 'ne', index: 7, nativeText: 'नेपाली', flag: 'https://flagcdn.com/w80/np.png' },
+  { value: 'Srilanka (sinhala)', code: 'si', index: 8, nativeText: 'සිංහල', flag: 'https://flagcdn.com/w80/lk.png' },
+  { value: 'United states (tamil)', code: 'ta', index: 9, nativeText: 'தமிழ்', flag: 'https://flagcdn.com/w80/us.png' }
 ];
 
 export default function SettingsScreen() {
@@ -73,22 +76,20 @@ export default function SettingsScreen() {
     }
   }
 
-  async function onSelectedLanguage() {
+  async function onSelectedLanguage(selectedIndex) {
     try {
       setLoadingLang(true)
-      const languageInd = activeRadio
       await AsyncStorage.setItem(
         'enatega-language',
-        languageTypes[languageInd].code
+        languageTypes[selectedIndex].code
       )
 
-      var lang = await AsyncStorage.getItem('enatega-language')
-      if (lang) {
-        const defLang = languageTypes.findIndex((el) => el.code === lang)
-        const langName = languageTypes[defLang].value
-        setSelectedLanguage(langName)
-      }
-      i18next.changeLanguage(lang)
+      const lang = languageTypes[selectedIndex].code
+      const langName = languageTypes[selectedIndex].value
+      
+      setSelectedLanguage(langName)
+      activeRadioSetter(selectedIndex)
+      await i18next.changeLanguage(lang)
       setLanguageModalVisible(false)
     } catch (error) {
       console.error('Error during language selection:', error)
@@ -429,60 +430,49 @@ export default function SettingsScreen() {
       >
         <View style={[styles.modalContainer, { backgroundColor: currentTheme.itemCardColor }]}>
           <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: currentTheme.fontMainColor }]}>
-              Select Language
-            </Text>
             <TouchableOpacity 
               onPress={() => setLanguageModalVisible(false)}
-              style={styles.closeButton}
+              style={styles.backButton}
             >
-              <FeatherIcon name="x" size={20} color={currentTheme.fontMainColor} />
+              <FeatherIcon name="chevron-left" size={24} color={currentTheme.fontMainColor} />
             </TouchableOpacity>
+            <Text style={[styles.modalTitle, { color: currentTheme.fontMainColor }]}>
+              Language
+            </Text>
+            <View style={styles.headerRight} />
           </View>
 
-          <ScrollView style={styles.languageList}>
+          <ScrollView style={styles.languageList} showsVerticalScrollIndicator={false}>
             {languageTypes.map((item, index) => (
               <TouchableOpacity
                 activeOpacity={0.7}
                 key={index}
-                onPress={() => activeRadioSetter(item.index)}
-                style={styles.radioContainer}
+                onPress={() => onSelectedLanguage(item.index)}
+                style={[styles.languageItem, activeRadio === item.index && styles.selectedLanguageItem]}
               >
-                <Text style={[styles.languageText, { color: currentTheme.fontMainColor }]}>
-                  {item.value}
-                </Text>
-                <RadioButton
-                  animation={'bounceIn'}
-                  size={20}
-                  outerColor={currentTheme.iconColorDark}
-                  innerColor={currentTheme.main}
-                  isSelected={activeRadio === item.index}
-                  onPress={() => activeRadioSetter(item.index)}
-                />
+                <View style={styles.languageItemLeft}>
+                  <Image 
+                    source={{ uri: item.flag }} 
+                    style={styles.flagIcon} 
+                    resizeMode="cover"
+                  />
+                  <View style={styles.languageTexts}>
+                    <Text style={[styles.languageText, { color: currentTheme.fontMainColor }]}>
+                      {item.value}
+                    </Text>
+                    <Text style={[styles.nativeText, { color: currentTheme.fontSecondColor }]}>
+                      {item.nativeText}
+                    </Text>
+                  </View>
+                </View>
+                {activeRadio === item.index && (
+                  <View style={styles.checkmarkContainer}>
+                    <FeatherIcon name="check" size={24} color="#007AFF" />
+                  </View>
+                )}
               </TouchableOpacity>
             ))}
           </ScrollView>
-          
-          <View style={[styles.modalButtonsContainer, { borderTopColor: currentTheme.borderColor }]}>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={[styles.modalButton, styles.cancelButton]}
-              onPress={() => setLanguageModalVisible(false)}
-            >
-              <Text style={[styles.modalButtonText, { color: currentTheme.fontSecondColor }]}>
-                Cancel
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={[styles.modalButton, styles.selectButton]}
-              onPress={() => onSelectedLanguage()}
-            >
-              <Text style={[styles.modalButtonText, { color: currentTheme.main }]}>
-                Select
-              </Text>
-            </TouchableOpacity>
-          </View>
           
           {loadinglang && (
             <View style={styles.loadingContainer}>
@@ -529,66 +519,73 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     backgroundColor: 'white',
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-    paddingTop: 15,
-    maxHeight: '70%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: '85%',
+    paddingBottom: 100,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
+  },
+  backButton: {
+    padding: 8,
+    width: 40,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
   },
-  closeButton: {
-    padding: 5,
+  headerRight: {
+    width: 40,
   },
   languageList: {
-    paddingTop: 10,
+    flex: 1,
   },
-  radioContainer: {
+  languageItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 15,
+    paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
   },
-  languageText: {
-    fontSize: 16,
-    flex: 1,
+  selectedLanguageItem: {
+    backgroundColor: '#F8F8F8',
   },
-  modalButtonsContainer: {
+  languageItemLeft: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#EEEEEE',
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 10,
     alignItems: 'center',
+    flex: 1,
   },
-  modalButtonText: {
-    fontSize: 16,
+  flagIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 16,
+  },
+  languageTexts: {
+    flex: 1,
+  },
+  languageText: {
+    fontSize: 17,
     fontWeight: '500',
+    marginBottom: 4,
   },
-  cancelButton: {
-    borderRightWidth: 1,
-    borderRightColor: '#EEEEEE',
+  nativeText: {
+    fontSize: 15,
+    opacity: 0.7,
   },
-  selectButton: {
-    borderLeftWidth: 1,
-    borderLeftColor: '#EEEEEE',
+  checkmarkContainer: {
+    marginLeft: 12,
   },
   loadingContainer: {
     position: 'absolute',
@@ -599,5 +596,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
-  }
+  },
 });

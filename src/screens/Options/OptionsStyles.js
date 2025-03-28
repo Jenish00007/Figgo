@@ -172,16 +172,30 @@ const OptionsStyles = (currentTheme) => StyleSheet.create({
     borderBottomWidth: 1,
   },
   selectedLanguageItem: {
-    // Background color applied in component
+    backgroundColor: '#F8F8F8',
   },
-  languageName: {
-    fontSize: 16,
+  languageItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  flagIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 16,
+  },
+  languageTexts: {
+    flex: 1,
+  },
+  languageText: {
+    fontSize: 17,
     fontWeight: '500',
+    marginBottom: 4,
   },
-  languageNativeName: {
-    fontSize: 14,
-    marginRight: 'auto',
-    marginLeft: 12,
+  nativeText: {
+    fontSize: 15,
+    opacity: 0.7,
   },
 });
 
