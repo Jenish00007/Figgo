@@ -54,14 +54,6 @@ export const useLogin = () => {
     return result
   }
 
-  const isTokenExpired = (token) => {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.exp * 1000 < Date.now();
-    } catch (error) {
-      return true;
-    }
-  };
 
   async function loginAction() {
     if (!validateCredentials()) return
@@ -104,11 +96,6 @@ export const useLogin = () => {
       }
 
       if (data.token) {
-        if (isTokenExpired(data.token)) {
-          await logout()
-          throw new Error('Token is expired. Please login again.')
-        }
-        
         await setTokenAsync(data.token)
         navigation.navigate({
           name: 'Main',

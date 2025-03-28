@@ -546,6 +546,7 @@ function ImageTextCenterHeader(props, ref) {
       {!props.search && (
         <>
           {!props.loading && (
+           
             <FlatList
               ref={props.flatListRef}
               style={styles(currentTheme).flatListStyle}
@@ -553,7 +554,6 @@ function ImageTextCenterHeader(props, ref) {
               data={props.loading ? [] : props.topaBarData}
               horizontal={true}
               ListEmptyComponent={emptyView()}
-              showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item, index }) => (
