@@ -177,7 +177,7 @@ export default function SettingsScreen() {
           </View>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate("SelectLocation")}
+            onPress={() => navigation.navigate("Addresses")}
             style={[styles.row, { backgroundColor: currentTheme.itemCardColor }]}>
             <View style={[styles.rowIcon, { backgroundColor: currentTheme.primary }]}>
               <FeatherIcon color="#fff" name="map-pin" size={20} />
