@@ -168,21 +168,21 @@ function Menu({ route, props }) {
     selectedType === 'restaurant' ? t('noRestaurant') : t('noGrocery')
 
 
-    useEffect(() => {
-      if (location) {
-        const getZoneId = async () => {
-          try {
-            const response = await axios.get(`https://6ammart-admin.6amtech.com/api/v1/config/get-zone-id?lat=${location.latitude}&lng=${location.longitude}`)
-            if (response.data && response.data.zone_id) {
-              setLocalZoneId(response.data.zone_id)
-            }
-          } catch (error) {
-            console.error('Error fetching zone ID:', error)
-          }
-        }
-        getZoneId()
-      }
-    }, [location])
+    // useEffect(() => {
+    //   if (location) {
+    //     const getZoneId = async () => {
+    //       try {
+    //         const response = await axios.get(`https://6ammart-admin.6amtech.com/api/v1/config/get-zone-id?lat=${location.latitude}&lng=${location.longitude}`)
+    //         if (response.data && response.data.zone_id) {
+    //           setLocalZoneId(response.data.zone_id)
+    //         }
+    //       } catch (error) {
+    //         console.error('Error fetching zone ID:', error)
+    //       }
+    //     }
+    //     getZoneId()
+    //   }
+    // }, [location])
 
   //Theme setup android and ios
   useFocusEffect(() => {
@@ -368,7 +368,7 @@ function Menu({ route, props }) {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'zoneId': localZoneId,
+            'zoneId': zoneId,
             'moduleId': moduleId
           }
         });
@@ -383,7 +383,7 @@ function Menu({ route, props }) {
       }
     };
     fetchBanners();
-  }, [moduleId, localZoneId]);
+  }, [moduleId, zoneId]);
 
   // Update categories fetch
   useEffect(() => {
@@ -394,7 +394,7 @@ function Menu({ route, props }) {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'zoneId': localZoneId,
+            'zoneId': zoneId,
             'moduleId': moduleId
           }
         });
@@ -409,7 +409,7 @@ function Menu({ route, props }) {
       }
     };
     fetchCategories();
-  }, [moduleId, localZoneId]);
+  }, [moduleId, zoneId]);
 
   // Update supermarkets fetch
   useEffect(() => {
@@ -420,7 +420,7 @@ function Menu({ route, props }) {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'zoneId': localZoneId,
+            'zoneId': zoneId,
             'moduleId': moduleId
           }
         });
@@ -435,7 +435,7 @@ function Menu({ route, props }) {
       }
     };
     fetchSupermarkets();
-  }, [moduleId, localZoneId]);
+  }, [moduleId, zoneId]);
 
   // Update nearby markets fetch
   useEffect(() => {
@@ -446,7 +446,7 @@ function Menu({ route, props }) {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'zoneId': localZoneId,
+            'zoneId': zoneId,
             'moduleId': moduleId
           }
         });
@@ -461,7 +461,7 @@ function Menu({ route, props }) {
       }
     };
     fetchNearbymarkets();
-  }, [moduleId, localZoneId]);
+  }, [moduleId, zoneId]);
 
   // Update nearby markets offer fetch
   useEffect(() => {
@@ -472,7 +472,7 @@ function Menu({ route, props }) {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'zoneId': localZoneId,
+            'zoneId': zoneId,
             'moduleId': moduleId
           }
         });
@@ -487,7 +487,7 @@ function Menu({ route, props }) {
       }
     };
     fetchNearbymarketsOffer();
-  }, [moduleId, localZoneId]);
+  }, [moduleId, zoneId]);
 
   // Update popular items fetch
   useEffect(() => {
@@ -498,7 +498,7 @@ function Menu({ route, props }) {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'zoneId': localZoneId,
+            'zoneId': zoneId,
             'moduleId': moduleId
           }
         });
@@ -513,7 +513,7 @@ function Menu({ route, props }) {
       }
     };
     fetchPopularItem();
-  }, [moduleId, localZoneId]);
+  }, [moduleId, zoneId]);
 
   // Update fetchData
   const fetchData = async (category) => {
@@ -539,7 +539,7 @@ function Menu({ route, props }) {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-              'zoneId': localZoneId,
+              'zoneId': zoneId,
           'moduleId': moduleId
         }
       });
