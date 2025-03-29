@@ -59,7 +59,7 @@ import AddtoFavourites from './../../components/Favourites/AddtoFavourites'
 import AuthContext from '../../context/Auth'
 
 const { height } = Dimensions.get('screen')
-const moduleId = '1'
+
 // Animated Section List component
 const AnimatedSectionList = Animated.createAnimatedComponent(SectionList)
 const TOP_BAR_HEIGHT = height * 0.05
@@ -102,6 +102,8 @@ function Restaurant(props) {
   const [storeDetailsById, setStoreDetailsById] = useState([])
   const [loadingItemId, setLoadingItemId] = useState(null)
   const [showSearchResults, setShowSearchResults] = useState(false)
+  const moduleId = propsData.module_id
+
 
   const { data, refetch, networkStatus, loading, error } = useRestaurant(
     propsData._id

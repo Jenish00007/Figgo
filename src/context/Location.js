@@ -11,6 +11,11 @@ export const LocationProvider = ({ children }) => {
   const [cities, setCities] = useState([])
   const [loadingCountry, setLoadingCountry] = useState(true)
   const [errorCountry, setErrorCountry] = useState('')
+  const [zoneId, setZoneId] = useState('[1]')
+  const [zoneData, setZoneData] = useState(null)
+
+ 
+
 
   useEffect(() => {
     const getActiveLocation = async () => {
@@ -121,7 +126,9 @@ export const LocationProvider = ({ children }) => {
       value={{
         location,
         setLocation,
-        cities
+        cities,
+        zoneId,
+        zoneData
       }}>
       {children}
     </LocationContext.Provider>

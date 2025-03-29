@@ -31,21 +31,17 @@ import { Placeholder, PlaceholderLine, Fade } from 'rn-placeholder'
 import gql from 'graphql-tag'
 import { useLocation } from '../../ui/hooks'
 import Search from '../../components/Main/Search/Search'
-import Item from '../../components/Main/Stores/Item'
 import UserContext from '../../context/User'
+import { LocationContext } from '../../context/Location'
 import { getCuisines, restaurantListPreview } from '../../apollo/queries'
 import { selectAddress } from '../../apollo/mutations'
 import { scale } from '../../utils/scaling'
 import styles from './styles'
-import TextError from '../../components/Text/TextError/TextError'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import ThemeContext from '../../ui/ThemeContext/ThemeContext'
 import { theme } from '../../utils/themeColors'
 import navigationOptions from '../Main/navigationOptions'
 import TextDefault from '../../components/Text/TextDefault/TextDefault'
-import { LocationContext } from '../../context/Location'
-import { ActiveOrdersAndSections } from '../../components/Main/ActiveOrdersAndSections'
-import { alignment } from '../../utils/alignment'
 import analytics from '../../utils/analytics'
 import { useTranslation } from 'react-i18next'
 import Filters from '../../components/Filter/FilterSlider'
@@ -54,26 +50,17 @@ import CustomHomeIcon from '../../assets/SVG/imageComponents/CustomHomeIcon'
 import CustomOtherIcon from '../../assets/SVG/imageComponents/CustomOtherIcon'
 import CustomWorkIcon from '../../assets/SVG/imageComponents/CustomWorkIcon'
 import CustomApartmentIcon from '../../assets/SVG/imageComponents/CustomApartmentIcon'
-import ErrorView from '../../components/ErrorView/ErrorView'
 import Spinner from '../../components/Spinner/Spinner'
 import MainModalize from '../../components/Main/Modalize/MainModalize'
-
 import { escapeRegExp } from '../../utils/regex'
 import CarouselSlider from '../../components/Slider/Slider'
 import Categories from '../../components/Categories/Categories'
 import BottomTab from '../../components/BottomTab/BottomTab'
-import StoreCard from '../../components/StoreCard/StoreCard'
-import ProductCard from '../../components/ProductCard/ProductCard'
-
-import HighlightCard from '../../components/HighlightCard/HighlightCard'
-import { SupermarketCard } from '../../components/SupermarketCard/SupermarketCard'
 import OfferCard from '../../components/OfferCard/OfferCard'
-import NearByStore from '../../components/NearByStore/NearByStore'
 import Products from '../../components/Products/Products'
 import CategoryListView from '../../components/NearByShop/CategoryListView'
-import { MainRestaurantCard } from '../../components/Main/MainRestaurantCard'
 import NewFiggoStore from '../../components/NewFiggoStore/NewFiggoStore'
-import NewRestaurantCard from '../../components/Main/FeaturedStores/NewRestaurantCard'
+import axios from 'axios'
 
 
 
@@ -129,6 +116,7 @@ function Menu({ route, props }) {
   const currentTheme = theme[themeContext.ThemeValue]
   const { getCurrentLocation } = useLocation()
   const locationData = location
+  const [localZoneId, setLocalZoneId] = useState('[1]')
 
   const [banners, setBanners] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -139,6 +127,7 @@ function Menu({ route, props }) {
   const [specialItem, setSpecialItem] = useState([]);
   const [allStores, setAllStore] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [zoneId, setZoneId] = useState('[1]')
   const { data, refetch, networkStatus, loading, error } = useQuery(
     RESTAURANTS,
     {
@@ -177,6 +166,23 @@ function Menu({ route, props }) {
     selectedType === 'restaurant' ? t('allRestaurant') : t('allGrocery')
   const emptyViewDesc =
     selectedType === 'restaurant' ? t('noRestaurant') : t('noGrocery')
+
+
+    useEffect(() => {
+      if (location) {
+        const getZoneId = async () => {
+          try {
+            const response = await axios.get(`https://6ammart-admin.6amtech.com/api/v1/config/get-zone-id?lat=${location.latitude}&lng=${location.longitude}`)
+            if (response.data && response.data.zone_id) {
+              setLocalZoneId(response.data.zone_id)
+            }
+          } catch (error) {
+            console.error('Error fetching zone ID:', error)
+          }
+        }
+        getZoneId()
+      }
+    }, [location])
 
   //Theme setup android and ios
   useFocusEffect(() => {
@@ -362,7 +368,7 @@ function Menu({ route, props }) {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'zoneId': '[1]',
+            'zoneId': localZoneId,
             'moduleId': moduleId
           }
         });
@@ -377,7 +383,7 @@ function Menu({ route, props }) {
       }
     };
     fetchBanners();
-  }, [moduleId]);
+  }, [moduleId, localZoneId]);
 
   // Update categories fetch
   useEffect(() => {
@@ -388,7 +394,7 @@ function Menu({ route, props }) {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'zoneId': '[1]',
+            'zoneId': localZoneId,
             'moduleId': moduleId
           }
         });
@@ -403,7 +409,7 @@ function Menu({ route, props }) {
       }
     };
     fetchCategories();
-  }, [moduleId]);
+  }, [moduleId, localZoneId]);
 
   // Update supermarkets fetch
   useEffect(() => {
@@ -414,7 +420,7 @@ function Menu({ route, props }) {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'zoneId': '[1]',
+            'zoneId': localZoneId,
             'moduleId': moduleId
           }
         });
@@ -429,7 +435,7 @@ function Menu({ route, props }) {
       }
     };
     fetchSupermarkets();
-  }, [moduleId]);
+  }, [moduleId, localZoneId]);
 
   // Update nearby markets fetch
   useEffect(() => {
@@ -440,7 +446,7 @@ function Menu({ route, props }) {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'zoneId': '[1]',
+            'zoneId': localZoneId,
             'moduleId': moduleId
           }
         });
@@ -455,7 +461,7 @@ function Menu({ route, props }) {
       }
     };
     fetchNearbymarkets();
-  }, [moduleId]);
+  }, [moduleId, localZoneId]);
 
   // Update nearby markets offer fetch
   useEffect(() => {
@@ -466,7 +472,7 @@ function Menu({ route, props }) {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'zoneId': '[1]',
+            'zoneId': localZoneId,
             'moduleId': moduleId
           }
         });
@@ -481,7 +487,7 @@ function Menu({ route, props }) {
       }
     };
     fetchNearbymarketsOffer();
-  }, [moduleId]);
+  }, [moduleId, localZoneId]);
 
   // Update popular items fetch
   useEffect(() => {
@@ -492,7 +498,7 @@ function Menu({ route, props }) {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'zoneId': '[1]',
+            'zoneId': localZoneId,
             'moduleId': moduleId
           }
         });
@@ -507,7 +513,7 @@ function Menu({ route, props }) {
       }
     };
     fetchPopularItem();
-  }, [moduleId]);
+  }, [moduleId, localZoneId]);
 
   // Update fetchData
   const fetchData = async (category) => {
@@ -533,7 +539,7 @@ function Menu({ route, props }) {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'zoneId': '[1]',
+              'zoneId': localZoneId,
           'moduleId': moduleId
         }
       });
